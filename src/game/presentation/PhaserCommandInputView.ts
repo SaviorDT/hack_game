@@ -239,8 +239,20 @@ export class PhaserCommandInputView implements CommandInputView {
     if (event.key === 'Backspace') {
       event.preventDefault()
       if (this.cursorIndex > 0) {
-        characters.splice(this.cursorIndex - 1, 1)
-        this.cursorIndex -= 1
+        if (event.ctrlKey || event.metaKey) {
+          let deleteStart = this.cursorIndex
+          while (deleteStart > 0 && /\s/.test(characters[deleteStart - 1])) {
+            deleteStart -= 1
+          }
+          while (deleteStart > 0 && !/\s/.test(characters[deleteStart - 1])) {
+            deleteStart -= 1
+          }
+          characters.splice(deleteStart, this.cursorIndex - deleteStart)
+          this.cursorIndex = deleteStart
+        } else {
+          characters.splice(this.cursorIndex - 1, 1)
+          this.cursorIndex -= 1
+        }
         this.value = characters.join('')
         this.markCursorActive()
         this.render()

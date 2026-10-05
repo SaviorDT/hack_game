@@ -25,6 +25,7 @@ export class PhaserCommandInputView implements CommandInputView {
   private scene: Phaser.Scene | undefined
   private onSubmit: ((rawText: string) => void) | undefined
   private completionProvider: CommandCompletionProvider | undefined
+  private reverseColorTexts: Phaser.GameObjects.Text[] = []
   private background: Phaser.GameObjects.Image | undefined
   private commandText: Phaser.GameObjects.Text | undefined
   private placeholderText: Phaser.GameObjects.Text | undefined
@@ -35,7 +36,7 @@ export class PhaserCommandInputView implements CommandInputView {
   private cursorBlinkEvent: Phaser.Time.TimerEvent | undefined
   private prompt = '~/room1$ '
   private value = ''
-  private readonly transcript: string[] = []
+  private readonly transcript: { text: string; reverseColorLines: readonly string[] }[] = []
   private cursorIndex = 0
   private cursorVisible = true
   private activeCursorVisible = true
@@ -168,8 +169,8 @@ export class PhaserCommandInputView implements CommandInputView {
     this.render()
   }
 
-  appendOutput(text: string): void {
-    this.transcript.push(text)
+  appendOutput(text: string, reverseColorLines: readonly string[] = []): void {
+    this.transcript.push({ text, reverseColorLines })
     this.render()
   }
 
@@ -190,6 +191,7 @@ export class PhaserCommandInputView implements CommandInputView {
     this.placeholderText?.destroy()
     this.cursorBlock?.destroy()
     this.cursorGlyph?.destroy()
+    this.clearReverseColorTexts()
     this.scrollbarTrack?.destroy()
     this.scrollbarThumb?.destroy()
 
@@ -201,6 +203,7 @@ export class PhaserCommandInputView implements CommandInputView {
     this.placeholderText = undefined
     this.cursorBlock = undefined
     this.cursorGlyph = undefined
+    this.reverseColorTexts = []
     this.scrollbarTrack = undefined
     this.scrollbarThumb = undefined
     this.cursorBlinkEvent = undefined
@@ -312,7 +315,10 @@ export class PhaserCommandInputView implements CommandInputView {
   private submit(): void {
     const submittedText = this.value
 
-    this.transcript.push(`${this.prompt}${submittedText}`)
+    this.transcript.push({
+      text: `${this.prompt}${submittedText}`,
+      reverseColorLines: [],
+    })
     this.value = ''
     this.cursorIndex = 0
     this.scrollOffset = 0
@@ -480,14 +486,18 @@ export class PhaserCommandInputView implements CommandInputView {
     this.charactersPerLine = charactersPerLine
     this.visibleLineCount = VISIBLE_LINE_COUNT
     const activeLine = this.showActivePrompt ? `${this.prompt}${this.value}` : ''
+    const transcriptLines = this.transcript.flatMap((entry) =>
+      this.wrapText(entry.text, this.charactersPerLine).map((line) => ({
+        text: line,
+        reverseColor: entry.reverseColorLines.includes(line),
+      })),
+    )
     const allLines = [
-      ...this.transcript.flatMap((entry) => this.wrapText(entry, this.charactersPerLine)),
+      ...transcriptLines.map((line) => line.text),
       ...this.wrapText(activeLine, this.charactersPerLine),
     ]
 
-    const transcriptLineCount = this.transcript.flatMap((entry) =>
-      this.wrapText(entry, this.charactersPerLine),
-    ).length
+    const transcriptLineCount = transcriptLines.length
     const cursorPosition = this.showActivePrompt
       ? Array.from(this.prompt).length + this.cursorIndex
       : 0
@@ -512,7 +522,34 @@ export class PhaserCommandInputView implements CommandInputView {
     this.placeholderText.setVisible(this.value.length === 0 && cursorVisible)
     this.placeholderText.setFontSize(fontSize)
     this.placeholderText.setLineSpacing(lineSpacing)
-    this.commandText.setText(visibleLines.join('\n'))
+    this.clearReverseColorTexts()
+    const renderedLines = visibleLines.map((line, index) => {
+      const transcriptLine = transcriptLines[firstVisibleRow + index]
+      if (!transcriptLine?.reverseColor) {
+        return line
+      }
+
+      const reverseText = this.scene?.add
+        .text(
+          this.textLeft,
+          this.textTop + index * (fontSize + lineSpacing),
+          line,
+          {
+            fontFamily: FONT_FAMILY,
+            fontSize,
+            color: FIELD_COLOR,
+            backgroundColor: TEXT_COLOR,
+            lineSpacing,
+          },
+        )
+        .setOrigin(0, 0)
+        .setDepth(11.5)
+      if (reverseText) {
+        this.reverseColorTexts.push(reverseText)
+      }
+      return ' '.repeat(line.length)
+    })
+    this.commandText.setText(renderedLines.join('\n'))
 
     const cursorX = this.textLeft + cursorColumn * this.characterWidth
     const cursorY = this.textTop + (cursorRow - firstVisibleRow) * (fontSize + lineSpacing)
@@ -566,6 +603,13 @@ export class PhaserCommandInputView implements CommandInputView {
       }
       return wrappedLines
     })
+  }
+
+  private clearReverseColorTexts(): void {
+    for (const text of this.reverseColorTexts) {
+      text.destroy()
+    }
+    this.reverseColorTexts = []
   }
 
   private measureCharacterWidth(): number {

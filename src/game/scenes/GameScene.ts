@@ -43,7 +43,10 @@ export class GameScene extends Phaser.Scene {
         : [result.feedback]
 
       for (const feedback of feedbackList) {
-        commandInputView.appendOutput(feedback.text)
+        commandInputView.appendOutput(
+          feedback.text,
+          'reverseColorLines' in feedback ? feedback.reverseColorLines : undefined,
+        )
       }
 
       this.commandExecutionPending =

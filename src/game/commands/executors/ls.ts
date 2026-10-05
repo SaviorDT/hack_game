@@ -23,7 +23,11 @@ export class LsCommandExecutor implements CommandExecutor {
 
     return {
       status: 'success',
-      feedback: [{ kind: 'popup', text: entries.length > 0 ? entries.join('\n') : 'Nothing to list.' }],
+      feedback: [{
+        kind: 'popup',
+        text: entries.length > 0 ? entries.join('\n') : 'Nothing to list.',
+        reverseColorLines: currentRoom.exits.map((exit) => exit.label),
+      }],
     }
   }
 }

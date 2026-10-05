@@ -1,5 +1,5 @@
 import type Phaser from 'phaser'
-import type { CommandInputView } from './CommandInputView.ts'
+import type { CommandCompletionProvider, CommandInputView } from './CommandInputView.ts'
 
 export const COMMAND_INPUT_TEXTURE_KEY = 'command-input-textbox'
 
@@ -24,6 +24,7 @@ const CURSOR_BLINK_MS = 500
 export class PhaserCommandInputView implements CommandInputView {
   private scene: Phaser.Scene | undefined
   private onSubmit: ((rawText: string) => void) | undefined
+  private completionProvider: CommandCompletionProvider | undefined
   private background: Phaser.GameObjects.Image | undefined
   private commandText: Phaser.GameObjects.Text | undefined
   private placeholderText: Phaser.GameObjects.Text | undefined
@@ -53,10 +54,15 @@ export class PhaserCommandInputView implements CommandInputView {
   private isDraggingScrollbar = false
   private scrollbarDragOffset = 0
 
-  mount(scene: Phaser.Scene, onSubmit: (rawText: string) => void): void {
+  mount(
+    scene: Phaser.Scene,
+    onSubmit: (rawText: string) => void,
+    completionProvider?: CommandCompletionProvider,
+  ): void {
     this.destroy()
     this.scene = scene
     this.onSubmit = onSubmit
+    this.completionProvider = completionProvider
 
     const camera = scene.cameras.main
     const left = (camera.width - TEXTBOX_WIDTH) / 2
@@ -189,6 +195,7 @@ export class PhaserCommandInputView implements CommandInputView {
 
     this.scene = undefined
     this.onSubmit = undefined
+    this.completionProvider = undefined
     this.background = undefined
     this.commandText = undefined
     this.placeholderText = undefined
@@ -215,6 +222,12 @@ export class PhaserCommandInputView implements CommandInputView {
     if (event.key === 'Enter') {
       event.preventDefault()
       this.submit()
+      return
+    }
+
+    if (event.key === 'Tab') {
+      event.preventDefault()
+      this.completeCurrentToken()
       return
     }
 
@@ -308,6 +321,64 @@ export class PhaserCommandInputView implements CommandInputView {
     this.render()
 
     this.onSubmit?.(submittedText)
+  }
+
+  private completeCurrentToken(): void {
+    if (!this.completionProvider) {
+      return
+    }
+
+    const characters = Array.from(this.value)
+    let tokenStart = this.cursorIndex
+    while (tokenStart > 0 && !/\s/.test(characters[tokenStart - 1])) {
+      tokenStart -= 1
+    }
+
+    let tokenEnd = this.cursorIndex
+    while (tokenEnd < characters.length && !/\s/.test(characters[tokenEnd])) {
+      tokenEnd += 1
+    }
+
+    const prefix = characters.slice(tokenStart, this.cursorIndex).join('')
+    const candidates = this.value.length === 0 && this.cursorIndex === 0
+      ? ['help']
+      : this.completionProvider(this.value, this.cursorIndex)
+    const matches = [...new Set(
+      candidates.filter((candidate) => candidate.toLowerCase().startsWith(prefix.toLowerCase())),
+    )]
+    if (matches.length === 0) {
+      return
+    }
+
+    const commonPrefix = this.getCommonPrefix(matches)
+    if (matches.length > 1 && commonPrefix.length <= prefix.length) {
+      return
+    }
+
+    const completedToken = matches.length === 1 ? matches[0] : commonPrefix
+    const shouldAddSpace = matches.length === 1 && tokenEnd === characters.length
+    const replacement = shouldAddSpace ? `${completedToken} ` : completedToken
+    characters.splice(tokenStart, tokenEnd - tokenStart, ...Array.from(replacement))
+    this.value = characters.join('')
+    this.cursorIndex = tokenStart + Array.from(replacement).length
+    this.markCursorActive()
+    this.render()
+  }
+
+  private getCommonPrefix(values: readonly string[]): string {
+    let prefix = values[0] ?? ''
+    for (const value of values.slice(1)) {
+      let index = 0
+      while (
+        index < prefix.length &&
+        index < value.length &&
+        prefix[index].toLowerCase() === value[index].toLowerCase()
+      ) {
+        index += 1
+      }
+      prefix = prefix.slice(0, index)
+    }
+    return prefix
   }
 
   private readonly handleWheel = (

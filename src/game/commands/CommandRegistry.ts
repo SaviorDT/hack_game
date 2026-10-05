@@ -9,4 +9,5 @@ export interface RegisteredCommand {
 
 export interface CommandRegistry {
   resolve(name: string): RegisteredCommand | undefined
+  names(): readonly string[]
 }

@@ -54,7 +54,9 @@ export class GameScene extends Phaser.Scene {
         )
         commandInputView.finishExecution()
       }
-    })
+    }, (rawText, cursorIndex) =>
+      this.session.getCommandCompletionCandidates(rawText, cursorIndex),
+    )
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       commandInputView.destroy()

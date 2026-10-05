@@ -1,8 +1,8 @@
-import { getMutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { ParsedCommand } from '../ParsedCommand.ts'
 import type { CommandResult } from '../CommandResult.ts'
 import type { WorldState } from '../../domain/WorldState.ts'
 import type { CommandExecutor } from './base.ts'
+import { getRoomDirectoryEntries } from '../RoomDirectory.ts'
 
 export class LsCommandExecutor implements CommandExecutor {
   execute(command: ParsedCommand, state: WorldState): CommandResult {
@@ -19,34 +19,7 @@ export class LsCommandExecutor implements CommandExecutor {
       return { status: 'rejected', feedback: { kind: 'popup', text: 'No room is currently active.' } }
     }
 
-    const entries: string[] = []
-
-    for (const objectId of currentRoom.objectIds) {
-      const worldObject = state.worldObjects.find((candidate) => candidate.id === objectId)
-      if (!worldObject || worldObject.metadata.role === 'player') {
-        continue
-      }
-
-      const name = worldObject.metadata.name
-      if (typeof name !== 'string') {
-        continue
-      }
-
-      const discoverable = worldObject.metadata.discoverable === true
-      const objectState = getMutableWorldObjectState<Record<string, string | number | boolean | null>>(
-        worldObject,
-      )
-
-      if (discoverable) {
-        objectState.discovered = true
-      }
-
-      if (objectState.discovered === true) {
-        entries.push(name)
-      }
-    }
-
-    entries.push(...currentRoom.exits.map((exit) => exit.label))
+    const entries = getRoomDirectoryEntries(state, currentRoom, true)
 
     return {
       status: 'success',

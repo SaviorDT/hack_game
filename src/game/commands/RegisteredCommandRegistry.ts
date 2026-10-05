@@ -14,4 +14,8 @@ export class RegisteredCommandRegistry implements CommandRegistry {
   resolve(name: string): RegisteredCommand | undefined {
     return this.commands.get(name)
   }
+
+  names(): readonly string[] {
+    return [...this.commands.keys()]
+  }
 }

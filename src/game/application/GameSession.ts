@@ -37,6 +37,14 @@ export class GameSession {
     return this.dependencies.commandSubmission.submit(rawText, this.dependencies.worldState)
   }
 
+  getCommandCompletionCandidates(rawText: string, cursorIndex: number): readonly string[] {
+    return this.dependencies.commandSubmission.getCompletionCandidates(
+      rawText,
+      cursorIndex,
+      this.dependencies.worldState,
+    )
+  }
+
   saveCurrentState(): void {
     this.dependencies.saveRepository.save(
       {

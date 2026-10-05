@@ -61,7 +61,7 @@ An implemented, allow-listed operation that a player submits to affect or inspec
 _Avoid_: Shell command (when referring to execution on the host computer)
 
 **Command Input**:
-A field where the player enters one command; long commands wrap at a fixed character count and are still submitted as one command. Tab completes `help` at the first token, room exits after `cd`, and visible room entries in later arguments. A unique match completes the token (adding a space at the end); multiple matches extend their common prefix or display candidates. Hidden objects remain unavailable to completion until discovered with `ls`.
+A field where the player enters one command; long commands wrap at a fixed character count and are still submitted as one command. Tab on an empty input completes `help`; otherwise it completes registered commands at the first token, room exits after `cd`, and visible room entries in later arguments. A unique match completes the token (adding a space at the end); ambiguous matches extend their common prefix when possible. Hidden objects remain unavailable to completion until discovered with `ls`. Ctrl+Backspace deletes the preceding word and its preceding whitespace. Up/Down navigate submitted command history; Down past the newest entry restores the draft.
 _Avoid_: Terminal (when referring to the input field)
 
 **Command History**:

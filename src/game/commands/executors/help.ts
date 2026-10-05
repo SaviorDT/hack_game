@@ -18,6 +18,7 @@ export class HelpCommandExecutor implements CommandExecutor {
     return {
       status: 'success',
       feedback: [{ kind: 'popup', text: `Available commands:\n${this.commandNames.join('\n')}` }],
+      // feedback: [{ kind: 'popup', text: `Available commands:\n${this.commandNames.join('\n')}\nPro tips:\nTyping autocomplete: Tab\nDelete a whole word: Ctrl+Backspace\nNavigate history: Arrow Up/Down` }],
     }
   }
 }

@@ -46,6 +46,8 @@ export class LsCommandExecutor implements CommandExecutor {
       }
     }
 
+    entries.push(...currentRoom.exits.map((exit) => exit.label))
+
     return {
       status: 'success',
       feedback: [{ kind: 'popup', text: entries.length > 0 ? entries.join('\n') : 'Nothing to list.' }],

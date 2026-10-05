@@ -1,5 +1,9 @@
 import type Phaser from 'phaser'
-import type { CommandCompletionProvider, CommandInputView } from './CommandInputView.ts'
+import type {
+  CommandCompletionProvider,
+  CommandHistoryProvider,
+  CommandInputView,
+} from './CommandInputView.ts'
 
 export const COMMAND_INPUT_TEXTURE_KEY = 'command-input-textbox'
 
@@ -25,6 +29,7 @@ export class PhaserCommandInputView implements CommandInputView {
   private scene: Phaser.Scene | undefined
   private onSubmit: ((rawText: string) => void) | undefined
   private completionProvider: CommandCompletionProvider | undefined
+  private historyProvider: CommandHistoryProvider | undefined
   private reverseColorTexts: Phaser.GameObjects.Text[] = []
   private background: Phaser.GameObjects.Image | undefined
   private commandText: Phaser.GameObjects.Text | undefined
@@ -38,6 +43,8 @@ export class PhaserCommandInputView implements CommandInputView {
   private value = ''
   private readonly transcript: { text: string; reverseColorLines: readonly string[] }[] = []
   private cursorIndex = 0
+  private historyIndex: number | undefined
+  private historyDraft = ''
   private cursorVisible = true
   private activeCursorVisible = true
   private showActivePrompt = true
@@ -59,11 +66,13 @@ export class PhaserCommandInputView implements CommandInputView {
     scene: Phaser.Scene,
     onSubmit: (rawText: string) => void,
     completionProvider?: CommandCompletionProvider,
+    historyProvider?: CommandHistoryProvider,
   ): void {
     this.destroy()
     this.scene = scene
     this.onSubmit = onSubmit
     this.completionProvider = completionProvider
+    this.historyProvider = historyProvider
 
     const camera = scene.cameras.main
     const left = (camera.width - TEXTBOX_WIDTH) / 2
@@ -198,6 +207,7 @@ export class PhaserCommandInputView implements CommandInputView {
     this.scene = undefined
     this.onSubmit = undefined
     this.completionProvider = undefined
+    this.historyProvider = undefined
     this.background = undefined
     this.commandText = undefined
     this.placeholderText = undefined
@@ -209,6 +219,8 @@ export class PhaserCommandInputView implements CommandInputView {
     this.cursorBlinkEvent = undefined
     this.value = ''
     this.cursorIndex = 0
+    this.historyIndex = undefined
+    this.historyDraft = ''
     this.transcript.length = 0
     this.showActivePrompt = true
     this.scrollOffset = 0
@@ -234,11 +246,18 @@ export class PhaserCommandInputView implements CommandInputView {
       return
     }
 
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault()
+      this.navigateHistory(event.key === 'ArrowUp' ? -1 : 1)
+      return
+    }
+
     const characters = Array.from(this.value)
 
     if (event.key === 'Backspace') {
       event.preventDefault()
       if (this.cursorIndex > 0) {
+        this.resetHistoryNavigation()
         if (event.ctrlKey || event.metaKey) {
           let deleteStart = this.cursorIndex
           while (deleteStart > 0 && /\s/.test(characters[deleteStart - 1])) {
@@ -263,6 +282,7 @@ export class PhaserCommandInputView implements CommandInputView {
     if (event.key === 'Delete') {
       event.preventDefault()
       if (this.cursorIndex < characters.length) {
+        this.resetHistoryNavigation()
         characters.splice(this.cursorIndex, 1)
         this.value = characters.join('')
         this.markCursorActive()
@@ -303,11 +323,6 @@ export class PhaserCommandInputView implements CommandInputView {
       return
     }
 
-    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-      event.preventDefault()
-      return
-    }
-
     if (
       event.key.length === 1 &&
       /^[\x20-\x7e]$/.test(event.key) &&
@@ -316,6 +331,7 @@ export class PhaserCommandInputView implements CommandInputView {
       !event.altKey
     ) {
       event.preventDefault()
+      this.resetHistoryNavigation()
       characters.splice(this.cursorIndex, 0, event.key)
       this.cursorIndex += 1
       this.value = characters.join('')
@@ -333,12 +349,53 @@ export class PhaserCommandInputView implements CommandInputView {
     })
     this.value = ''
     this.cursorIndex = 0
+    this.historyIndex = undefined
+    this.historyDraft = ''
     this.scrollOffset = 0
     this.showActivePrompt = false
     this.markCursorActive()
     this.render()
 
     this.onSubmit?.(submittedText)
+  }
+
+  private navigateHistory(direction: -1 | 1): void {
+    const history = this.historyProvider?.() ?? []
+    if (history.length === 0) {
+      return
+    }
+
+    if (this.historyIndex === undefined) {
+      if (direction > 0) {
+        return
+      }
+      this.historyDraft = this.value
+      this.historyIndex = history.length - 1
+    } else {
+      const nextIndex = this.historyIndex + direction
+      if (nextIndex < 0) {
+        return
+      }
+      if (nextIndex >= history.length) {
+        this.historyIndex = undefined
+        this.value = this.historyDraft
+        this.cursorIndex = Array.from(this.value).length
+        this.markCursorActive()
+        this.render()
+        return
+      }
+      this.historyIndex = nextIndex
+    }
+
+    this.value = history[this.historyIndex] ?? ''
+    this.cursorIndex = Array.from(this.value).length
+    this.markCursorActive()
+    this.render()
+  }
+
+  private resetHistoryNavigation(): void {
+    this.historyIndex = undefined
+    this.historyDraft = ''
   }
 
   private completeCurrentToken(): void {

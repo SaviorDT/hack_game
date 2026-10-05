@@ -59,6 +59,7 @@ export class GameScene extends Phaser.Scene {
       }
     }, (rawText, cursorIndex) =>
       this.session.getCommandCompletionCandidates(rawText, cursorIndex),
+    () => this.session.getWorldState().commandHistory,
     )
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {

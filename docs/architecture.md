@@ -38,7 +38,7 @@ The synchronous submission pipeline is:
 4. If the requirements pass, the registered command's `CommandExecutor` updates domain state.
 5. `CommandResult` returns success feedback or a failure reason to the in-game feedback view.
 
-Syntax parsing, allow-list lookup, requirement checking, and execution are separate responsibilities. `ls` marks discoverable objects in the current Room as discovered; the view reveals them from world state. `cd <room>` resolves an Exit and sets the Player Character's action and destination. Requirement failures are returned to the UI with their reason. Feedback uses a required variant: object-attached feedback has a target object ID; general feedback has no object target. The game event that creates feedback selects the variant.
+Syntax parsing, allow-list lookup, requirement checking, and execution are separate responsibilities. `ls` marks discoverable objects in the current Room as discovered; the view reveals them from world state. `cd <room>` resolves an Exit and sets the Player Character's action and destination; room paths accept an optional trailing slash, and tab completion displays exits with one. Requirement failures are returned to the UI with their reason. Feedback uses a required variant: object-attached feedback has a target object ID; general feedback has no object target. The game event that creates feedback selects the variant.
 
 ### World and process model
 
@@ -54,7 +54,7 @@ Syntax parsing, allow-list lookup, requirement checking, and execution are separ
 
 ### First room behavior
 
-Room 1 starts with the Player Character in the upper-left, a hidden Dagger in the lower-left, and a hidden Guard on the right. The room's right-side Exit leads to Room 2. `ls` discovers the dagger and guard. `cd room2` gives the Player Character a travel goal; its process chooses a direct route if the objects have not been discovered, or collects and equips the dagger before luring the guard if they have.
+Room 1 starts with the Player Character in the upper-left, a hidden Dagger in the lower-left, and a hidden Guard on the right. The room's right-side Exit leads to Room 2. `ls` discovers the dagger and guard. `cd room2/` gives the Player Character a travel goal; its process chooses a direct route if the objects have not been discovered, or collects and equips the dagger before luring the guard if they have.
 
 The Guard process starts pursuit while the Player Character is in the room's right half and stops moving when the Player Character leaves it. An unarmed player caught by the guard ends the game. With the dagger equipped, the player can retreat, attack the guard from the left side, and then reach the exit. Entering Room 2 sets the Congratulations outcome.
 

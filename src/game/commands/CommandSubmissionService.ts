@@ -64,7 +64,7 @@ export class CommandSubmissionService {
 
     const directoryEntries = getRoomDirectoryEntries(state, currentRoom, false)
     if (commandMatch[1].toLowerCase() === 'cd') {
-      return currentRoom.exits.map((exit) => exit.label)
+      return currentRoom.exits.map((exit) => `${exit.label}/`)
     }
 
     return directoryEntries

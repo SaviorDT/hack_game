@@ -99,6 +99,7 @@ function moveToward(
 }
 
 export class PlayerMovementProcess implements WorldObjectProcess {
+  readonly id = PROCESS_IDS.player
   readonly definitionId = PROCESS_IDS.player
 
   tick(context: ProcessTickContext): void {
@@ -197,13 +198,12 @@ export class PlayerMovementProcess implements WorldObjectProcess {
         moveToward(player, attackPosition, player.speed, context.tickDurationMs)
         return
       }
-      case 'idle':
-        return
     }
   }
 }
 
 export class DaggerPickupProcess implements WorldObjectProcess {
+  readonly id = PROCESS_IDS.dagger
   readonly definitionId = PROCESS_IDS.dagger
 
   tick(context: ProcessTickContext): void {
@@ -235,6 +235,7 @@ export class DaggerPickupProcess implements WorldObjectProcess {
 }
 
 export class GuardResponseProcess implements WorldObjectProcess {
+  readonly id = PROCESS_IDS.guard
   readonly definitionId = PROCESS_IDS.guard
 
   tick(context: ProcessTickContext): void {

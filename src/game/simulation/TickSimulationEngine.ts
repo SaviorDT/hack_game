@@ -14,6 +14,7 @@ export interface ProcessTickContext {
 }
 
 export interface WorldObjectProcess extends ProcessDefinition {
+  readonly definitionId: ProcessDefinitionId
   tick(context: ProcessTickContext): void
 }
 

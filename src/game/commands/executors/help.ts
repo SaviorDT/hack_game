@@ -7,7 +7,7 @@ export class HelpCommandExecutor implements CommandExecutor {
   private readonly commandNames: readonly string[]
 
   constructor(commandNames: readonly string[]) {
-    this.commandNames = commandNames
+    this.commandNames = [...commandNames].sort((left, right) => left.localeCompare(right))
   }
 
   execute(command: ParsedCommand, _state: WorldState): CommandResult {

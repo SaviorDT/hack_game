@@ -53,20 +53,19 @@ export class CommandSubmissionService {
       ? textBeforeCursor.slice(commandMatch[0].length)
       : ''
 
-    if (!commandMatch || !/\s/.test(textAfterCommand)) {
+    const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
+    if (!currentRoom) {
       return this.registry.names()
     }
 
-    const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
-    if (!currentRoom) {
-      return []
-    }
-
     const directoryEntries = getRoomDirectoryEntries(state, currentRoom, false)
-    if (commandMatch[1].toLowerCase() === 'cd') {
+    if (commandMatch?.[1].toLowerCase() === 'cd' && /\s/.test(textAfterCommand)) {
       return currentRoom.exits.map((exit) => `${exit.label}/`)
     }
 
-    return directoryEntries
+    const roomEntries = directoryEntries.map((entry) =>
+      currentRoom.exits.some((exit) => exit.label === entry) ? `${entry}/` : entry,
+    )
+    return [...this.registry.names(), ...roomEntries]
   }
 }

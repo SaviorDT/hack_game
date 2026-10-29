@@ -46,23 +46,13 @@ export class CommandSubmissionService {
     return registeredCommand.executor.execute(parseResult.command, state)
   }
 
-  getCompletionCandidates(rawText: string, cursorIndex: number, state: WorldState): readonly string[] {
-    const textBeforeCursor = rawText.slice(0, cursorIndex)
-    const commandMatch = textBeforeCursor.match(/^\s*(\S+)/)
-    const textAfterCommand = commandMatch
-      ? textBeforeCursor.slice(commandMatch[0].length)
-      : ''
-
+  getCompletionCandidates(_rawText: string, _cursorIndex: number, state: WorldState): readonly string[] {
     const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
     if (!currentRoom) {
       return this.registry.names()
     }
 
     const directoryEntries = getRoomDirectoryEntries(state, currentRoom, false)
-    if (commandMatch?.[1].toLowerCase() === 'cd' && /\s/.test(textAfterCommand)) {
-      return currentRoom.exits.map((exit) => `${exit.label}/`)
-    }
-
     const roomEntries = directoryEntries.map((entry) =>
       currentRoom.exits.some((exit) => exit.label === entry) ? `${entry}/` : entry,
     )

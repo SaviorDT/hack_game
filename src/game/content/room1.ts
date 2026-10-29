@@ -35,12 +35,15 @@ export const ROOM_LAYOUT = {
   bottom: 700,
   rightHalfStartX: 960,
   exit: { x: 1770, y: 365 },
+  exitZone: { x: 1770, y: 365, width: 60, height: 160 },
   playerStart: { x: 250, y: 205 },
   daggerStart: { x: 325, y: 610 },
   guardStart: { x: 1490, y: 365 },
-  lurePoint: { x: 1120, y: 365 },
-  retreatPoint: { x: 830, y: 365 },
 } as const
+
+export const CHARACTER_SIZE = { width: 110, height: 160 } as const
+export const DAGGER_SIZE = { width: 72, height: 72 } as const
+export const MAX_HEALTH = 100
 
 const alwaysActiveRule = (processDefinitionId: string) => ({
   condition: ALWAYS_ACTIVE_BEHAVIOR,
@@ -79,24 +82,26 @@ export function createInitialWorldState(): WorldState {
       {
         x: ROOM_LAYOUT.playerStart.x,
         y: ROOM_LAYOUT.playerStart.y,
+        ...CHARACTER_SIZE,
         speed: 240,
-        health: 1,
+        health: MAX_HEALTH,
+        maxHealth: MAX_HEALTH,
         alive: true,
         discovered: true,
-        action: 'idle',
-        targetRoomId: null,
-        targetExitX: ROOM_LAYOUT.exit.x,
-        targetExitY: ROOM_LAYOUT.exit.y,
         weaponId: null,
+        attackCooldownMs: 0,
+        moveX: 0,
+        moveY: 0,
       },
     ),
     createRoomWorldObject(
       WORLD_OBJECT_IDS.dagger,
-      { name: 'dagger', role: 'weapon', discoverable: true },
+      { name: 'dagger', role: 'weapon', weaponId: 'dagger', discoverable: true },
       [alwaysActiveRule(PROCESS_IDS.dagger)],
       {
         x: ROOM_LAYOUT.daggerStart.x,
         y: ROOM_LAYOUT.daggerStart.y,
+        ...DAGGER_SIZE,
         discovered: false,
         equippedBy: null,
       },
@@ -108,10 +113,14 @@ export function createInitialWorldState(): WorldState {
       {
         x: ROOM_LAYOUT.guardStart.x,
         y: ROOM_LAYOUT.guardStart.y,
+        ...CHARACTER_SIZE,
         speed: 210,
-        health: 1,
+        health: MAX_HEALTH,
+        maxHealth: MAX_HEALTH,
         alive: true,
         discovered: false,
+        weaponId: 'guard-strike',
+        attackCooldownMs: 0,
         alerted: false,
         chasing: false,
         attacking: false,

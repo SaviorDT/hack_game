@@ -55,6 +55,11 @@ export class InputModeController {
     this.suppressedKeys.delete(key)
   }
 
+  releaseAll(): void {
+    this.heldKeys.clear()
+    this.suppressedKeys.clear()
+  }
+
   moveVector(): MoveVector {
     return this.currentMode === 'command' ? this.latchedVector : this.heldVector()
   }

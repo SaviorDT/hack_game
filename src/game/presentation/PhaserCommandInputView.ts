@@ -24,6 +24,9 @@ const PLACEHOLDER_COLOR = '#777777'
 const CURSOR_COLOR = 0xd6d6d6
 const FIELD_COLOR = '#101010'
 const CURSOR_BLINK_MS = 500
+const DISABLED_ALPHA = 0.45
+const ENABLE_HINT = 'Press Enter to type a command'
+const COMPLETION_HINT = 'help'
 
 export class PhaserCommandInputView implements CommandInputView {
   private scene: Phaser.Scene | undefined
@@ -47,7 +50,8 @@ export class PhaserCommandInputView implements CommandInputView {
   private historyDraft = ''
   private cursorVisible = true
   private activeCursorVisible = true
-  private showActivePrompt = true
+  private inputEnabled = false
+  private keyGate: ((event: KeyboardEvent) => boolean) | undefined
   private baseCharacterWidth = FONT_SIZE
   private characterWidth = FONT_SIZE
   private charactersPerLine = 1
@@ -183,9 +187,19 @@ export class PhaserCommandInputView implements CommandInputView {
     this.render()
   }
 
-  finishExecution(): void {
-    this.showActivePrompt = true
+  setInputEnabled(enabled: boolean): void {
+    if (this.inputEnabled === enabled) {
+      return
+    }
+
+    this.inputEnabled = enabled
+    this.historyIndex = undefined
+    this.markCursorActive()
     this.render()
+  }
+
+  setKeyGate(gate: (event: KeyboardEvent) => boolean): void {
+    this.keyGate = gate
   }
 
   destroy(): void {
@@ -222,15 +236,19 @@ export class PhaserCommandInputView implements CommandInputView {
     this.historyIndex = undefined
     this.historyDraft = ''
     this.transcript.length = 0
-    this.showActivePrompt = true
+    this.inputEnabled = false
+    this.keyGate = undefined
     this.scrollOffset = 0
     this.maxScrollOffset = 0
     this.isDraggingScrollbar = false
   }
 
   private readonly handleKeyboardEvent = (event: KeyboardEvent): void => {
-    if (!this.showActivePrompt) {
-      event.preventDefault()
+    if (this.keyGate && !this.keyGate(event)) {
+      return
+    }
+
+    if (!this.inputEnabled) {
       return
     }
 
@@ -352,7 +370,6 @@ export class PhaserCommandInputView implements CommandInputView {
     this.historyIndex = undefined
     this.historyDraft = ''
     this.scrollOffset = 0
-    this.showActivePrompt = false
     this.markCursorActive()
     this.render()
 
@@ -554,7 +571,7 @@ export class PhaserCommandInputView implements CommandInputView {
     this.characterWidth = characterWidth
     this.charactersPerLine = charactersPerLine
     this.visibleLineCount = VISIBLE_LINE_COUNT
-    const activeLine = this.showActivePrompt ? `${this.prompt}${this.value}` : ''
+    const activeLine = `${this.prompt}${this.value}`
     const transcriptLines = this.transcript.flatMap((entry) =>
       this.wrapText(entry.text, this.charactersPerLine).map((line) => ({
         text: line,
@@ -567,11 +584,8 @@ export class PhaserCommandInputView implements CommandInputView {
     ]
 
     const transcriptLineCount = transcriptLines.length
-    const cursorPosition = this.showActivePrompt
-      ? Array.from(this.prompt).length + this.cursorIndex
-      : 0
-    const cursorRow = transcriptLineCount +
-      (this.showActivePrompt ? Math.floor(cursorPosition / this.charactersPerLine) : 0)
+    const cursorPosition = Array.from(this.prompt).length + this.cursorIndex
+    const cursorRow = transcriptLineCount + Math.floor(cursorPosition / this.charactersPerLine)
     while (allLines.length <= cursorRow) {
       allLines.push('')
     }
@@ -581,14 +595,18 @@ export class PhaserCommandInputView implements CommandInputView {
     const firstVisibleRow = this.maxScrollOffset - this.scrollOffset
     const visibleLines = allLines.slice(firstVisibleRow, firstVisibleRow + this.visibleLineCount)
     const lineSpacing = LINE_SPACING
-    const cursorVisible = this.showActivePrompt &&
-      cursorRow >= firstVisibleRow &&
+    const activeRowVisible = cursorRow >= firstVisibleRow &&
       cursorRow < firstVisibleRow + this.visibleLineCount
+    const cursorVisible = this.inputEnabled && activeRowVisible
     this.activeCursorVisible = cursorVisible
+    const fieldAlpha = this.inputEnabled ? 1 : DISABLED_ALPHA
+    this.background?.setAlpha(fieldAlpha)
+    this.commandText.setAlpha(fieldAlpha)
 
     this.commandText.setFontSize(fontSize)
     this.commandText.setLineSpacing(lineSpacing)
-    this.placeholderText.setVisible(this.value.length === 0 && cursorVisible)
+    this.placeholderText.setText(this.inputEnabled ? COMPLETION_HINT : ENABLE_HINT)
+    this.placeholderText.setVisible(this.value.length === 0 && activeRowVisible)
     this.placeholderText.setFontSize(fontSize)
     this.placeholderText.setLineSpacing(lineSpacing)
     this.clearReverseColorTexts()

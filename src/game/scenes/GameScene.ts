@@ -2,8 +2,8 @@ import Phaser from 'phaser'
 import textboxImageUrl from '../../assets/game/ui/textbox.png'
 import type { GameSession } from '../application/GameSession.ts'
 import { createRoom1Session } from '../content/createRoom1Session.ts'
-import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
-import { ROOM_IDS, ROOM_NAMES, WORLD_OBJECT_IDS } from '../content/room1.ts'
+import { ROOM_IDS, ROOM_NAMES } from '../content/room1.ts'
+import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.ts'
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
 import { COMMAND_INPUT_TEXTURE_KEY, PhaserCommandInputView } from '../presentation/PhaserCommandInputView.ts'
@@ -11,7 +11,6 @@ import { COMMAND_INPUT_TEXTURE_KEY, PhaserCommandInputView } from '../presentati
 export class GameScene extends Phaser.Scene {
   private session!: GameSession
   private commandInputView: PhaserCommandInputView | undefined
-  private commandExecutionPending = false
   private readonly roomView = new PhaserRoomView()
   private outcomePanel: PhaserGameOutcomePanel | undefined
 
@@ -27,14 +26,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.session = createRoom1Session()
+    this.session = createRoom1Session({ movementBindings: INPUT_BINDINGS.movement })
     const worldState = this.session.getWorldState()
     this.roomView.mount(this, worldState)
     this.outcomePanel = new PhaserGameOutcomePanel(this)
 
     const commandInputView = new PhaserCommandInputView()
     this.commandInputView = commandInputView
-    this.commandExecutionPending = false
     commandInputView.setPrompt(this.promptForRoom(worldState.currentRoomId))
     commandInputView.mount(this, (rawText) => {
       const result = this.session.submitCommand(rawText)
@@ -49,22 +47,27 @@ export class GameScene extends Phaser.Scene {
         )
       }
 
-      this.commandExecutionPending =
-        result.status === 'success' && result.completion === 'deferred'
-      if (!this.commandExecutionPending) {
-        commandInputView.setPrompt(
-          this.promptForRoom(this.session.getWorldState().currentRoomId),
-        )
-        commandInputView.finishExecution()
-      }
+      commandInputView.setPrompt(
+        this.promptForRoom(this.session.getWorldState().currentRoomId),
+      )
+      commandInputView.setInputEnabled(this.session.inputMode === 'command')
     }, (rawText, cursorIndex) =>
       this.session.getCommandCompletionCandidates(rawText, cursorIndex),
     () => this.session.getWorldState().commandHistory,
     )
+    commandInputView.setKeyGate(this.handleKeyDown)
+
+    const keyboard = this.input.keyboard
+    keyboard?.on('keyup', this.handleKeyUp)
+    this.input.mouse?.disableContextMenu()
+    this.input.on('pointerdown', this.handlePointerDown)
+    this.game.events.on(Phaser.Core.Events.BLUR, this.handleBlur)
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      keyboard?.off('keyup', this.handleKeyUp)
+      this.input.off('pointerdown', this.handlePointerDown)
+      this.game.events.off(Phaser.Core.Events.BLUR, this.handleBlur)
       commandInputView.destroy()
-      this.commandExecutionPending = false
       this.roomView.destroy()
       this.outcomePanel?.destroy()
       this.outcomePanel = undefined
@@ -77,29 +80,58 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     this.session.update(delta)
     const worldState = this.session.getWorldState()
-    if (this.commandExecutionPending && this.isCommandExecutionComplete(worldState)) {
-      this.commandExecutionPending = false
-      this.commandInputView?.setPrompt(this.promptForRoom(worldState.currentRoomId))
-      this.commandInputView?.finishExecution()
-    }
+    this.commandInputView?.setPrompt(this.promptForRoom(worldState.currentRoomId))
     this.roomView.update(worldState)
     this.outcomePanel?.update(worldState)
   }
 
-  private isCommandExecutionComplete(worldState: ReturnType<GameSession['getWorldState']>): boolean {
-    if (worldState.outcome !== 'playing') {
-      return true
+  // Returns whether the command input should process the key event.
+  private readonly handleKeyDown = (event: KeyboardEvent): boolean => {
+    const key = event.key.toLowerCase()
+    const { typeable } = this.session.keyDown(key)
+
+    if (this.session.inputMode === 'command') {
+      return typeable
     }
 
-    const player = worldState.worldObjects.find(
-      (worldObject) => worldObject.id === WORLD_OBJECT_IDS.player,
-    )
-    if (!player) {
-      throw new Error(`World state is missing player "${WORLD_OBJECT_IDS.player}".`)
+    event.preventDefault()
+    if (event.repeat) {
+      return false
     }
 
-    const playerState = getMutableWorldObjectState<{ action: string }>(player)
-    return playerState.action === 'idle'
+    if (INPUT_BINDINGS.toggleMode.includes(key)) {
+      this.session.toggleInputMode()
+      this.commandInputView?.setInputEnabled(true)
+    } else if (INPUT_BINDINGS.attack.keys.includes(key)) {
+      this.session.attack()
+    } else if (INPUT_BINDINGS.pickUp.keys.includes(key)) {
+      this.session.pickUp()
+    }
+
+    return false
+  }
+
+  private readonly handleKeyUp = (event: KeyboardEvent): void => {
+    this.session.keyUp(event.key.toLowerCase())
+  }
+
+  private readonly handlePointerDown = (
+    pointer: Phaser.Input.Pointer,
+    currentlyOver: Phaser.GameObjects.GameObject[],
+  ): void => {
+    if (currentlyOver.length > 0) {
+      return
+    }
+
+    if (INPUT_BINDINGS.pickUp.mouseButtons.includes('right') && pointer.rightButtonDown()) {
+      this.session.pickUp()
+    } else if (INPUT_BINDINGS.attack.mouseButtons.includes('left') && pointer.leftButtonDown()) {
+      this.session.attack()
+    }
+  }
+
+  private readonly handleBlur = (): void => {
+    this.session.releaseAllKeys()
   }
 
   private promptForRoom(roomId: string | null): string {

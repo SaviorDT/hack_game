@@ -15,6 +15,7 @@ export interface CommandInputView {
     historyProvider?: CommandHistoryProvider,
   ): void
   setPrompt(prompt: string): void
-  finishExecution(): void
+  setInputEnabled(enabled: boolean): void
+  setKeyGate(gate: (event: KeyboardEvent) => boolean): void
   destroy(): void
 }

@@ -23,9 +23,15 @@ interface DisplayState {
   discovered?: unknown
   alive?: unknown
   equippedBy?: unknown
+  width?: unknown
+  health?: unknown
+  maxHealth?: unknown
 }
 
 const TEXT_COLOR = '#d6d6d6'
+const HEALTH_BAR_WIDTH = 110
+const HEALTH_BAR_HEIGHT = 12
+const HEALTH_BAR_OFFSET_Y = 100
 
 function displayState(worldObject: WorldObject): DisplayState {
   const state = worldObject.state
@@ -44,11 +50,13 @@ export class PhaserRoomView {
   private roomDivider: Phaser.GameObjects.Graphics | undefined
   private doorFrame: Phaser.GameObjects.Graphics | undefined
   private doorLabel: Phaser.GameObjects.Text | undefined
+  private healthBars: Phaser.GameObjects.Graphics | undefined
 
   mount(scene: Phaser.Scene, state: WorldState): void {
     this.destroy()
 
     this.roomFrame = scene.add.graphics().setDepth(0)
+    this.healthBars = scene.add.graphics().setDepth(4)
     this.roomFrame.lineStyle(4, 0x595959, 1).strokeRect(
       ROOM_LAYOUT.left,
       ROOM_LAYOUT.top,
@@ -124,6 +132,7 @@ export class PhaserRoomView {
     this.doorFrame?.setVisible(state.currentRoomId === ROOM_IDS.first)
     this.doorLabel?.setVisible(state.currentRoomId === ROOM_IDS.first)
 
+    this.healthBars?.clear()
     for (const worldObject of state.worldObjects) {
       const registeredView = this.objectViews.get(worldObject.id)
       if (!registeredView) {
@@ -141,7 +150,8 @@ export class PhaserRoomView {
       const y = typeof objectState.y === 'number' ? objectState.y : 0
 
       sprite.setPosition(x, y)
-      sprite.setVisible(inCurrentRoom && isKnown && (alive || worldObject.id === WORLD_OBJECT_IDS.guard))
+      const visible = inCurrentRoom && isKnown && alive
+      sprite.setVisible(visible)
 
       if (worldObject.id === WORLD_OBJECT_IDS.dagger && equipped) {
         sprite.setDisplaySize(58, 58)
@@ -149,11 +159,8 @@ export class PhaserRoomView {
         sprite.setDisplaySize(72, 72)
       }
 
-      sprite.setAlpha(worldObject.id === WORLD_OBJECT_IDS.guard && !alive ? 0.5 : 1)
-      if (worldObject.id === WORLD_OBJECT_IDS.guard && !alive) {
-        sprite.setAngle(90)
-      } else {
-        sprite.setAngle(0)
+      if (visible && typeof objectState.maxHealth === 'number' && typeof objectState.health === 'number') {
+        this.drawHealthBar(x, y, objectState.health / objectState.maxHealth)
       }
     }
   }
@@ -171,10 +178,22 @@ export class PhaserRoomView {
     this.doorFrame?.destroy()
     this.doorLabel?.destroy()
     this.roomTitle = undefined
+    this.healthBars?.destroy()
+    this.healthBars = undefined
     this.roomFrame = undefined
     this.roomDivider = undefined
     this.doorFrame = undefined
     this.doorLabel = undefined
+  }
+
+  private drawHealthBar(x: number, y: number, fraction: number): void {
+    const left = x - HEALTH_BAR_WIDTH / 2
+    const top = y - HEALTH_BAR_OFFSET_Y
+    this.healthBars
+      ?.fillStyle(0x333333, 1)
+      .fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)
+      .fillStyle(0xd6d6d6, 1)
+      .fillRect(left, top, HEALTH_BAR_WIDTH * Math.max(0, Math.min(1, fraction)), HEALTH_BAR_HEIGHT)
   }
 
   private textureKeyFor(worldObject: WorldObject): string | undefined {

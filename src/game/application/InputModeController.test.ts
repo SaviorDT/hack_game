@@ -146,3 +146,13 @@ describe('entering command mode while moving', () => {
     expect(input.moveVector()).toEqual({ x: 0, y: 1 })
   })
 })
+
+describe('releaseAll', () => {
+  it('forgets every held key, as when the window loses focus', () => {
+    const input = controller()
+    input.keyDown('w')
+    input.releaseAll()
+
+    expect(input.moveVector()).toEqual({ x: 0, y: 0 })
+  })
+})

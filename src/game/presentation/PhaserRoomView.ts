@@ -125,7 +125,7 @@ export class PhaserRoomView {
     this.update(state)
   }
 
-  update(state: WorldState): void {
+  update(state: WorldState, positionOf: (objectId: string) => { x: number; y: number } | undefined = () => undefined): void {
     const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
     this.roomTitle?.setText(currentRoom ? ROOM_NAMES[currentRoom.id] ?? currentRoom.id : 'NO ROOM')
     this.roomDivider?.setVisible(state.currentRoomId === ROOM_IDS.first)
@@ -146,8 +146,9 @@ export class PhaserRoomView {
       const isKnown = worldObject.id === WORLD_OBJECT_IDS.player || objectState.discovered === true
       const alive = objectState.alive !== false
       const equipped = objectState.equippedBy !== null && objectState.equippedBy !== undefined
-      const x = typeof objectState.x === 'number' ? objectState.x : 0
-      const y = typeof objectState.y === 'number' ? objectState.y : 0
+      const rendered = positionOf(worldObject.id)
+      const x = rendered?.x ?? (typeof objectState.x === 'number' ? objectState.x : 0)
+      const y = rendered?.y ?? (typeof objectState.y === 'number' ? objectState.y : 0)
 
       sprite.setPosition(x, y)
       const visible = inCurrentRoom && isKnown && alive

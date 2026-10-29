@@ -81,7 +81,7 @@ export class GameScene extends Phaser.Scene {
     this.session.update(delta)
     const worldState = this.session.getWorldState()
     this.commandInputView?.setPrompt(this.promptForRoom(worldState.currentRoomId))
-    this.roomView.update(worldState)
+    this.roomView.update(worldState, (objectId) => this.session.getRenderPosition(objectId))
     this.outcomePanel?.update(worldState)
   }
 

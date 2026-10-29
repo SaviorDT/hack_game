@@ -4,7 +4,7 @@ import type { SaveRepository } from '../persistence/SaveRepository.ts'
 import type { SaveSnapshot } from '../persistence/SaveSnapshot.ts'
 import type { WorldStateCodec } from '../persistence/WorldStateCodec.ts'
 import type { SimulationClock } from '../simulation/SimulationClock.ts'
-import type { SimulationEngine } from '../simulation/SimulationEngine.ts'
+import type { RenderPosition, SimulationEngine } from '../simulation/SimulationEngine.ts'
 import type { CombatService } from '../domain/CombatService.ts'
 import type { PickUpService } from '../domain/PickUpService.ts'
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
@@ -68,6 +68,10 @@ export class GameSession {
     this.applyMoveIntent()
     const gameDeltaMs = this.dependencies.simulationClock.toGameDelta(realDeltaMs)
     this.dependencies.simulationEngine.advance(this.dependencies.worldState, gameDeltaMs)
+  }
+
+  getRenderPosition(objectId: string): RenderPosition | undefined {
+    return this.dependencies.simulationEngine.renderPosition(this.dependencies.worldState, objectId)
   }
 
   getWorldState(): WorldState {

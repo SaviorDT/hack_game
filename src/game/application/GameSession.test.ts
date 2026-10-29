@@ -202,3 +202,15 @@ describe('commands', () => {
     expect(fastDistance).toBeGreaterThan(slowDistance * 3)
   })
 })
+
+describe('render position', () => {
+  it('blends between ticks so motion stays smooth at sub-tick frame times', () => {
+    const session = newSession()
+    const startX = stateOf(session, 'player').x
+    session.keyDown('d')
+
+    session.update(SIMULATION_TICK_MS * 1.5)
+
+    expect(session.getRenderPosition('player')?.x).toBeCloseTo(startX + 2, 3)
+  })
+})

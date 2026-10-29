@@ -68,7 +68,7 @@ Syntax parsing, allow-list lookup, requirement checking, and execution are separ
 
 ### Simulation time
 
-`RealtimeSimulationClock` converts Phaser's frame delta into game delta and multiplies it by the Time Scale set from the input mode. `TickSimulationEngine` accumulates that delta and runs fixed `SIMULATION_TICK_MS = 1000 / 60` ticks, so object behavior does not depend on the browser's render frame rate. Visual effects and animations read the current Time Scale so they slow with the world. Future commands that pause or change speed should control the clock through the command layer rather than reaching into Phaser's frame loop.
+`RealtimeSimulationClock` converts Phaser's frame delta into game delta and multiplies it by the Time Scale set from the input mode. `TickSimulationEngine` accumulates that delta and runs fixed `SIMULATION_TICK_MS = 1000 / 60` ticks, so object behavior does not depend on the browser's render frame rate. Rendering is decoupled from ticks: the engine keeps each positioned object's position before the latest tick and `GameSession.getRenderPosition` returns a position blended by the fraction of the next tick already accumulated, so motion stays smooth at any frame rate and Time Scale. A single frame feeds the simulation at most 250 ms of real time. Visual effects and animations should draw from the same render positions and read the current Time Scale so they slow with the world. Future commands that pause or change speed should control the clock through the command layer rather than reaching into Phaser's frame loop.
 
 ### Combat and collision
 

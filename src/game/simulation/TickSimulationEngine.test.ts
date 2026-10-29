@@ -75,3 +75,83 @@ describe('RealtimeSimulationClock time scale', () => {
     expect(() => clock.setTimeScale(Number.NaN)).toThrow()
   })
 })
+
+describe('renderPosition', () => {
+  function movingWorld(): { state: WorldState; engine: TickSimulationEngine } {
+    const state: WorldState = {
+      rooms: [],
+      worldObjects: [
+        new BasicWorldObject('mover', 'room1', {}, [
+          { condition: ALWAYS_ACTIVE_BEHAVIOR, processDefinitionId: 'move' },
+        ], { x: 0, y: 100 }),
+        new BasicWorldObject('plain', 'room1', {}, [], {}),
+      ],
+      processInstances: [],
+      currentRoomId: 'room1',
+      commandHistory: [],
+      simulationTick: 0,
+      outcome: 'playing',
+    }
+    const engine = new TickSimulationEngine([
+      {
+        id: 'move',
+        definitionId: 'move',
+        tick: (context) => {
+          ;(context.worldObject.state as { x: number }).x += 10
+        },
+      },
+    ])
+    return { state, engine }
+  }
+
+  it('is the current position before any tick has run', () => {
+    const { state, engine } = movingWorld()
+
+    expect(engine.renderPosition(state, 'mover')).toEqual({ x: 0, y: 100 })
+  })
+
+  it('blends the previous and current tick positions by the leftover tick fraction', () => {
+    const { state, engine } = movingWorld()
+
+    engine.advance(state, SIMULATION_TICK_MS * 1.5)
+
+    expect(engine.renderPosition(state, 'mover')?.x).toBeCloseTo(5)
+    expect(engine.renderPosition(state, 'mover')?.y).toBe(100)
+  })
+
+  it('keeps moving smoothly across frames shorter than a tick', () => {
+    const { state, engine } = movingWorld()
+    const rendered: number[] = []
+
+    for (let frame = 0; frame < 8; frame += 1) {
+      engine.advance(state, SIMULATION_TICK_MS / 4)
+      rendered.push(engine.renderPosition(state, 'mover')?.x ?? Number.NaN)
+    }
+
+    // The first tick has not run during the first three frames, so nothing can move yet.
+    for (let frame = 4; frame < rendered.length; frame += 1) {
+      expect(rendered[frame]).toBeGreaterThan(rendered[frame - 1])
+    }
+    expect(rendered[7]).toBeCloseTo(10)
+  })
+
+  it('has no render position for an object without coordinates', () => {
+    const { state, engine } = movingWorld()
+
+    expect(engine.renderPosition(state, 'plain')).toBeUndefined()
+  })
+
+  it('uses the current position once the game has ended', () => {
+    const { state, engine } = movingWorld()
+    engine.advance(state, SIMULATION_TICK_MS * 1.5)
+    state.outcome = 'game-over'
+
+    expect(engine.renderPosition(state, 'mover')).toEqual({ x: 10, y: 100 })
+  })
+})
+
+describe('RealtimeSimulationClock frame cap', () => {
+  it('limits a single frame to 250 ms of real time', () => {
+    expect(new RealtimeSimulationClock().toGameDelta(10_000)).toBe(250)
+  })
+})

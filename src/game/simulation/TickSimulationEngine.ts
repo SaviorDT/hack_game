@@ -4,7 +4,7 @@ import type { WorldObject } from '../domain/WorldObject.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import type { ProcessDefinition } from '../processes/ProcessDefinition.ts'
 import type { ProcessInstance } from '../processes/ProcessInstance.ts'
-import type { SimulationEngine } from './SimulationEngine.ts'
+import type { RenderPosition, SimulationEngine } from './SimulationEngine.ts'
 
 export interface ProcessTickContext {
   readonly state: WorldState
@@ -38,11 +38,22 @@ function evaluateAlwaysActiveCondition(condition: JsonValue): boolean {
   return (condition as Readonly<Record<string, JsonValue>>).kind === 'always'
 }
 
+function positionOf(worldObject: WorldObject): RenderPosition | undefined {
+  const state = worldObject.state
+  if (typeof state !== 'object' || state === null || Array.isArray(state)) {
+    return undefined
+  }
+
+  const { x, y } = state as Record<string, unknown>
+  return typeof x === 'number' && typeof y === 'number' ? { x, y } : undefined
+}
+
 export class TickSimulationEngine implements SimulationEngine {
   private readonly processByDefinitionId: ReadonlyMap<ProcessDefinitionId, WorldObjectProcess>
   private readonly tickDurationMs: number
   private readonly conditionEvaluator: BehaviorConditionEvaluator
   private accumulatedGameTimeMs = 0
+  private readonly previousPositions = new Map<string, RenderPosition>()
 
   constructor(
     processes: readonly WorldObjectProcess[],
@@ -83,7 +94,29 @@ export class TickSimulationEngine implements SimulationEngine {
     }
   }
 
+  renderPosition(state: WorldState, objectId: string): RenderPosition | undefined {
+    const worldObject = state.worldObjects.find((candidate) => candidate.id === objectId)
+    const current = worldObject ? positionOf(worldObject) : undefined
+    const previous = this.previousPositions.get(objectId)
+    if (!current || !previous || state.outcome !== 'playing') {
+      return current
+    }
+
+    const alpha = this.accumulatedGameTimeMs / this.tickDurationMs
+    return {
+      x: previous.x + (current.x - previous.x) * alpha,
+      y: previous.y + (current.y - previous.y) * alpha,
+    }
+  }
+
   private tick(state: WorldState): void {
+    for (const worldObject of state.worldObjects) {
+      const position = positionOf(worldObject)
+      if (position) {
+        this.previousPositions.set(worldObject.id, position)
+      }
+    }
+
     state.simulationTick += 1
 
     for (const worldObject of state.worldObjects) {

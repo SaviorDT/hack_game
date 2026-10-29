@@ -44,7 +44,7 @@ This document describes the command-driven RTS game architecture and its first p
 
 ### Application session
 
-`GameSession` coordinates the current `WorldState`, command submission, and simulation. A submitted raw string is added to command history and passed to command submission immediately. The simulation advances from the scene update loop through `SimulationClock` and `SimulationEngine`.
+`GameSession` coordinates the current `WorldState`, command submission, input mode, player actions, and simulation. `InputModeController` is the Phaser-independent state machine for Movement and Command Mode; tests (`*.test.ts`, run with `npm test`) sit beside the code they cover. A submitted raw string is added to command history and passed to command submission immediately. The simulation advances from the scene update loop through `SimulationClock` and `SimulationEngine`.
 
 ### Command submission
 
@@ -141,6 +141,7 @@ src/
     createGame.ts
     application/
       GameSession.ts
+      InputModeController.ts
     content/
       createRoom1Session.ts
       room1.ts
@@ -156,7 +157,10 @@ src/
       WorldObjectState.ts
       WorldPath.ts
       WorldPathResolver.ts
+      CharacterState.ts
       CollisionWorld.ts
+      CombatService.ts
+      PickUpService.ts
       WeaponDefinition.ts
       VirtualWorldPathResolver.ts
       WorldState.ts

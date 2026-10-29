@@ -24,7 +24,7 @@ export type BehaviorConditionEvaluator = (
   state: WorldState,
 ) => boolean
 
-const DEFAULT_TICK_DURATION_MS = 100
+export const SIMULATION_TICK_MS = 1000 / 60
 
 function evaluateAlwaysActiveCondition(condition: JsonValue): boolean {
   if (condition === true) {
@@ -46,7 +46,7 @@ export class TickSimulationEngine implements SimulationEngine {
 
   constructor(
     processes: readonly WorldObjectProcess[],
-    tickDurationMs = DEFAULT_TICK_DURATION_MS,
+    tickDurationMs = SIMULATION_TICK_MS,
     conditionEvaluator: BehaviorConditionEvaluator = (condition) =>
       evaluateAlwaysActiveCondition(condition),
   ) {

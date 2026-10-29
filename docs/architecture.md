@@ -11,9 +11,10 @@ This document describes the command-driven RTS game architecture and its first p
 - The game world is a TypeScript domain model. Phaser objects render that model but are not the authoritative world state.
 - Directory and file terminology is a command-facing metaphor. A virtual path resolves to a `Room` or `WorldObject`; the game does not model entities as operating-system files and never invokes the host shell.
 - Only registered virtual command executors are executable. The grammar accepts one command per submitted line; pipes, chained commands, and player-written scripts are outside this foundation.
-- A submitted command runs synchronously and updates world state or object intent. Autonomous world behavior advances separately in fixed simulation ticks, while the input remains available.
+- A submitted command runs synchronously and updates world state or object intent. Autonomous world behavior advances separately in fixed simulation ticks and never pauses; the input mode sets the Time Scale (see ADR 0005).
 - `ProcessDefinition` and `ProcessInstance` are separate concepts. A world object can have zero or more running instances, and behavior rules can select a definition based on conditions.
-- `TickSimulationEngine` accumulates elapsed game time into 100 ms ticks, visits world objects in stable array order, and runs each matching behavior process once per tick.
+- `TickSimulationEngine` accumulates elapsed game time into fixed `1000 / 60` ms ticks, visits world objects in stable array order, and runs each matching behavior process once per tick.
+- Collision, Reach checks, and nearest-target selection are domain-owned AABB logic behind a `CollisionWorld` interface, not Phaser physics (ADR 0007). Interaction does not depend on Discovery (ADR 0006).
 - Persistence is behind a repository interface and targets browser-local storage. A save snapshot includes world state and raw command history. The trigger and cadence for saving are outside this architecture decision.
 
 ## Runtime responsibilities
@@ -22,7 +23,24 @@ This document describes the command-driven RTS game architecture and its first p
 
 `GameScene` extends `Phaser.Scene` and uses a 1920×1080 reference coordinate space. Phaser scales that complete scene proportionally to fit the browser viewport and centers it over a dark background when the viewport has a different aspect ratio. It creates the Room 1 world, session, room and object views, input, feedback, and outcome panels, then forwards Phaser's frame delta to the session. It does not contain command rules or world-object process logic. `createGame` starts with `GameScene`; a future start screen can become the first scene in the scene list.
 
-`PhaserCommandInputView` is mounted at the bottom center of `GameScene`. It accepts printable English ASCII, edits with the supported cursor keys, wraps at a fixed character count, and scrolls to keep the cursor visible. Enter submits the complete input string and clears the field. `PhaserRoomView` projects room and World Object state to Phaser images; `PhaserGameOutcomePanel` presents Game Over and Congratulations states.
+`PhaserCommandInputView` is mounted at the bottom center of `GameScene`. In Command Mode it accepts printable English ASCII, edits with the supported cursor keys, wraps at a fixed character count, and scrolls to keep the cursor visible. Enter submits the complete input string and clears the field. In Movement Mode the field is dimmed, the cursor is hidden, and the hint "Press Enter to type a command" is shown; output and feedback remain visible. `PhaserRoomView` projects room and World Object state to Phaser images; `PhaserGameOutcomePanel` presents Game Over and Congratulations states.
+
+### Input modes
+
+- The game starts in Movement Mode. Enter toggles between Movement Mode and Command Mode.
+- A submitted command switches back to Movement Mode, including empty input, parse failures, and rejected commands. A command result may carry an optional `inputAfter` field (`'movement' | 'command'`, default `'movement'`) to keep input open; no current command uses it.
+- Movement Mode: WASD and the arrow keys move the Player Character continuously, with diagonal speed normalized. K or right mouse button picks up; J or left mouse button attacks. Key and button bindings live in one `InputBindings` object in the presentation layer; the domain receives abstract actions (`move`, `pickUp`, `attack`).
+- Command Mode: the Player Character cannot act, and pick-up and attack are ignored. Simulation time runs at the Time Scale `COMMAND_MODE_TIME_SCALE = 0.25`; Movement Mode runs at 1.
+- Pressing Enter while holding a movement key latches that direction. The Player Character keeps moving until it meets a wall, leaves the room, or the player presses Enter again. Movement keys held at the moment of Enter are suppressed in the Command Input, repeats included, until released, so they are not typed as text.
+- The prompt shows the current room and updates when the room changes.
+
+### Command input behavior
+
+- Tab on an empty input completes `help`. Otherwise it completes registered commands and visible room entries in any token position.
+- A unique match completes the token and adds a space at the end; ambiguous matches extend their common prefix when possible.
+- Hidden objects are unavailable to completion until discovered with `ls` or by interacting with them.
+- Ctrl+Backspace deletes the preceding word and its preceding whitespace.
+- Up/Down navigate submitted command history; Down past the newest entry restores the draft.
 
 ### Application session
 
@@ -38,7 +56,7 @@ The synchronous submission pipeline is:
 4. If the requirements pass, the registered command's `CommandExecutor` updates domain state.
 5. `CommandResult` returns success feedback or a failure reason to the in-game feedback view.
 
-Syntax parsing, allow-list lookup, requirement checking, and execution are separate responsibilities. `ls` marks discoverable objects in the current Room as discovered; the view reveals them from world state. `cd <room>` resolves an Exit and sets the Player Character's action and destination; room paths accept an optional trailing slash, and tab completion displays exits with one. Requirement failures are returned to the UI with their reason. Feedback uses a required variant: object-attached feedback has a target object ID; general feedback has no object target. The game event that creates feedback selects the variant.
+Syntax parsing, allow-list lookup, requirement checking, and execution are separate responsibilities. `ls` marks discoverable objects in the current Room as discovered; the view reveals them from world state. Requirement failures are returned to the UI with their reason. Feedback uses a required variant: object-attached feedback has a target object ID; general feedback has no object target. The game event that creates feedback selects the variant.
 
 ### World and process model
 
@@ -50,13 +68,19 @@ Syntax parsing, allow-list lookup, requirement checking, and execution are separ
 
 ### Simulation time
 
-`RealtimeSimulationClock` converts Phaser's frame delta into game delta. `TickSimulationEngine` accumulates that delta and runs fixed 100 ms ticks, so object behavior does not depend on the browser's render frame rate. Future commands that pause or change speed should control the clock through the command layer rather than reaching into Phaser's frame loop.
+`RealtimeSimulationClock` converts Phaser's frame delta into game delta and multiplies it by the Time Scale set from the input mode. `TickSimulationEngine` accumulates that delta and runs fixed `SIMULATION_TICK_MS = 1000 / 60` ticks, so object behavior does not depend on the browser's render frame rate. Visual effects and animations read the current Time Scale so they slow with the world. Future commands that pause or change speed should control the clock through the command layer rather than reaching into Phaser's frame loop.
+
+### Combat and collision
+
+Every Character has Health, initially 100. A `WeaponDefinition` holds `id`, `damage`, `cooldownMs`, `reach`, and a single-target attack shape that leaves room for area weapons later. Definitions: unarmed (damage 10, cooldown 0.5 s, reach 5 px), Dagger (damage 35, cooldown 0.5 s, reach 10 px), and a separate Guard definition (damage 20, cooldown 1 s, reach 5 px). A Character with no equipped weapon uses the unarmed definition. Cooldowns count simulation time, so they follow the Time Scale.
+
+An attack damages the nearest other Character within the weapon's Reach, measured as the gap between bounding boxes. Pick-up takes the nearest pick-up-able object within `PICKUP_REACH = 10` px and equips it. Picking up or attacking an undiscovered object marks it discovered. `CollisionWorld` provides boundary clamping, edge-gap distance, and nearest-target selection with domain-owned axis-aligned boxes (ADR 0007).
 
 ### First room behavior
 
-Room 1 starts with the Player Character in the upper-left, a hidden Dagger in the lower-left, and a hidden Guard on the right. The room's right-side Exit leads to Room 2. `ls` discovers the dagger and guard. `cd room2/` gives the Player Character a travel goal; its process chooses a direct route if the objects have not been discovered, or collects and equips the dagger before luring the guard if they have.
+Room 1 starts with the Player Character in the upper-left, a hidden Dagger in the lower-left, and a hidden Guard on the right. The room's right-side Exit leads to Room 2. `ls` reveals the Dagger and Guard, but they can be interacted with before that. The player walks with WASD, picks up the Dagger with K or right click, and attacks with J or left click.
 
-The Guard process starts pursuit while the Player Character is in the room's right half and stops moving when the Player Character leaves it. An unarmed player caught by the guard ends the game. With the dagger equipped, the player can retreat, attack the guard from the left side, and then reach the exit. Entering Room 2 sets the Congratulations outcome.
+The Guard process starts pursuit while the Player Character is in the room's right half, stops when the Player Character leaves it, and attacks within its Reach. The Player Character reaching zero Health sets the Game Over outcome. A defeated Guard stops pursuing and is removed from the view. Walking into the Exit area enters Room 2 and sets the Congratulations outcome. Health bars appear above the Player Character and the Guard.
 
 ### Persistence
 
@@ -108,6 +132,9 @@ docs/
     0002-virtual-allowlisted-commands.md
     0003-fit-full-scene-to-viewport.md
     0004-world-objects-act-on-simulation-ticks.md
+    0005-input-mode-sets-time-scale.md
+    0006-interaction-ignores-discovery.md
+    0007-domain-owned-aabb-collision.md
 src/
   main.ts
   game/
@@ -129,6 +156,8 @@ src/
       WorldObjectState.ts
       WorldPath.ts
       WorldPathResolver.ts
+      CollisionWorld.ts
+      WeaponDefinition.ts
       VirtualWorldPathResolver.ts
       WorldState.ts
     processes/
@@ -150,7 +179,6 @@ src/
       CommandSubmissionService.ts
       executors/
         base.ts
-        cd.ts
         ls.ts
     simulation/
       SimulationClock.ts
@@ -172,6 +200,7 @@ src/
       PhaserFeedbackView.ts
       PhaserRoomView.ts
       PhaserGameOutcomePanel.ts
+      InputBindings.ts
       WorldObjectViewRegistry.ts
   assets/
     game/

@@ -32,6 +32,18 @@ _Avoid_: Enemy sprite (when referring to the character)
 A World Object that a Character can equip and use to defeat another Character.
 _Avoid_: Equipment (when referring specifically to an object used in combat)
 
+**Health**:
+The amount of damage a Character can take before being defeated.
+_Avoid_: HP, life (when referring to the glossary term)
+
+**Reach**:
+The greatest gap between a Character and a target at which an attack or pick-up can affect that target.
+_Avoid_: Range, hitbox
+
+**Attack Cooldown**:
+The time a Character must wait after an attack before attacking again.
+_Avoid_: Delay
+
 **Discovery**:
 The player's in-world knowledge that a World Object exists.
 _Avoid_: View visibility (when referring to the player's knowledge)
@@ -61,8 +73,20 @@ An implemented, allow-listed operation that a player submits to affect or inspec
 _Avoid_: Shell command (when referring to execution on the host computer)
 
 **Command Input**:
-A field where the player enters one command; long commands wrap at a fixed character count and are still submitted as one command. Tab on an empty input completes `help`; otherwise it completes registered commands and visible room entries in any token position, except that arguments after `cd` complete room exits with a trailing slash. A unique match completes the token (adding a space at the end); ambiguous matches extend their common prefix when possible. Hidden objects remain unavailable to completion until discovered with `ls`. `cd` accepts a room path with or without a trailing slash. Ctrl+Backspace deletes the preceding word and its preceding whitespace. Up/Down navigate submitted command history; Down past the newest entry restores the draft.
+A field where the player enters one command. Long commands wrap visually but are still submitted as one command.
 _Avoid_: Terminal (when referring to the input field)
+
+**Movement Mode**:
+The input state in which keyboard input moves the Player Character and the Command Input does not accept text. It is the state at game start.
+_Avoid_: Walk mode, game mode
+
+**Command Mode**:
+The input state in which the Command Input accepts text and the Player Character cannot move. Time in the game world runs slower than in Movement Mode.
+_Avoid_: Typing mode, terminal mode
+
+**Time Scale**:
+The speed at which game-world time runs relative to real time, determined by the current input state.
+_Avoid_: Frame rate (when referring to the speed of game-world time)
 
 **Command History**:
 The raw command text the player has submitted.

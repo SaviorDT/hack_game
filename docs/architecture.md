@@ -228,13 +228,14 @@ The Press Start 2P font, distressed textbox frame, monochrome character art, and
 
 `LevelEditorScene` is a separate Phaser scene (key `'level-editor'`) for visually adjusting the starting positions and display sizes of room1's World Objects. It is registered in the scene list alongside `GameScene` and is activated from gameplay with **F2**; pressing **F2** again or **Escape** returns to `GameScene`.
 
-The editor does not touch live `WorldState` or any simulation code. It reads the initial layout from `createInitialWorldState()` and `ROOM_LAYOUT` in `room1.ts`, displays all three World Objects (player, dagger, guard) as draggable sprites, and lets the designer:
+The editor does not touch live `WorldState` or any simulation code. It reads the initial layout from `createInitialWorldState()` and `ROOM_LAYOUT` in `room1.ts`, displays all three World Objects (player, dagger, guard) as draggable sprites, and docks its control dashboard below the room view (`y = 720..1010`) so the entire room (`y = 80..700`) remains completely unobstructed. It lets the designer:
 
 - **Drag** a sprite to reposition it (arrow keys for 1 px nudge, Shift+arrow for 10 px).
 - **Drag the yellow corner handle** or press **+**/**−** to scale a sprite uniformly. Scale buttons in the properties panel (×1.1 / ÷1.1) are also available.
 - **Tab / Shift+Tab** to cycle selection; clicking a sprite or its name in the properties panel selects it.
 - **Ctrl+Z** to undo edits. Undo is implemented through an invertible change model where every operation defines its reverse (e.g., move `(dx, dy)` inverts to `(-dx, -dy)`, scale `factor` inverts to `1 / factor`), restoring the previous transform.
-- **Export to Console** (green button, bottom-right) prints a ready-to-paste `ROOM_LAYOUT` snippet and a table of display sizes to the browser developer console. The designer copies those values back into `room1.ts` by hand.
+- **P** to toggle the visibility of the bottom properties panel.
+- **Export to Console** (green button inside the export section) prints a ready-to-paste `ROOM_LAYOUT` snippet and a table of display sizes to the browser developer console. The designer copies those values back into `room1.ts` by hand.
 
 The editor is intentionally read-only with respect to source files: it exports values to the console and leaves the edit to the developer. No persistence or live hot-reload of `room1.ts` occurs inside the editor.
 

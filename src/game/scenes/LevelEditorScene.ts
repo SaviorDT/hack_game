@@ -31,6 +31,10 @@ const SELECTED_OUTLINE = 0x4fc3f7
 const HANDLE_COLOR = 0xffcc00
 const HANDLE_SIZE = 16
 const GRID_SNAP = 1
+const PANEL_X = 96
+const PANEL_Y = 720
+const PANEL_WIDTH = 1728
+const PANEL_HEIGHT = 290
 
 interface EditorObject extends ScalableMovableObject {
   sprite: Phaser.GameObjects.Image
@@ -155,12 +159,12 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Instructions
     this.instructionText = this.add
-      .text(960, 1056, 'Click to select · Drag to move · Yellow handle to scale · Ctrl+Z to undo · Export to console', {
+      .text(960, 1045, 'Click to select · Drag to move · Yellow handle to scale · Ctrl+Z: Undo · P: Toggle panel', {
         fontFamily: FONT_FAMILY,
-        fontSize: 16,
+        fontSize: 14,
         color: DIM_COLOR,
       })
-      .setOrigin(0.5, 1)
+      .setOrigin(0.5, 0.5)
       .setDepth(50)
 
     // Coordinates display
@@ -181,7 +185,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Back-to-game key hint
     this.add
-      .text(1820, 28, 'F2 / ESC: Back to game', {
+      .text(1820, 28, 'P: Toggle panel · F2 / ESC: Back to game', {
         fontFamily: FONT_FAMILY,
         fontSize: 16,
         color: DIM_COLOR,
@@ -203,6 +207,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this.doorLabel?.destroy()
       this.instructionText?.destroy()
       this.panelContainer?.destroy(true)
+      this.exportButton?.destroy(true)
       for (const obj of this.editorObjects) {
         obj.sprite.destroy()
         obj.outline.destroy()
@@ -295,97 +300,164 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   private buildPropertyPanel(): void {
-    const panelX = 24
-    const panelY = 80
-    const panelWidth = 340
-    const panelHeight = 520
-
     const bg = this.add
-      .rectangle(panelWidth / 2, panelHeight / 2, panelWidth, panelHeight, PANEL_BG, 0.92)
+      .rectangle(PANEL_WIDTH / 2, PANEL_HEIGHT / 2, PANEL_WIDTH, PANEL_HEIGHT, PANEL_BG, 0.92)
       .setStrokeStyle(2, 0x444444, 1)
 
-    const title = this.add
-      .text(panelWidth / 2, 20, 'PROPERTIES', {
+    const items: Phaser.GameObjects.GameObject[] = [bg]
+
+    // Vertical dividers between 4 sections
+    const dividerGraphics = this.add.graphics()
+    dividerGraphics.lineStyle(2, 0x333333, 1)
+    dividerGraphics.lineBetween(380, 20, 380, PANEL_HEIGHT - 20)
+    dividerGraphics.lineBetween(920, 20, 920, PANEL_HEIGHT - 20)
+    dividerGraphics.lineBetween(1340, 20, 1340, PANEL_HEIGHT - 20)
+    items.push(dividerGraphics)
+
+    // ─── Section 1: Object Selector ───
+    const section1Title = this.add
+      .text(190, 24, 'SELECT OBJECT', {
         fontFamily: FONT_FAMILY,
-        fontSize: 18,
+        fontSize: 16,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
+    items.push(section1Title)
 
-    const items: Phaser.GameObjects.GameObject[] = [bg, title]
-
-    // Object list buttons
-    let buttonY = 60
+    let buttonY = 68
     for (const editorObject of this.editorObjects) {
       const btn = this.add
-        .text(panelWidth / 2, buttonY, editorObject.id.toUpperCase(), {
+        .text(190, buttonY, editorObject.id.toUpperCase(), {
           fontFamily: FONT_FAMILY,
-          fontSize: 16,
+          fontSize: 15,
           color: TEXT_COLOR,
           backgroundColor: '#2a2a2a',
-          padding: { x: 12, y: 6 },
+          padding: { x: 20, y: 8 },
         })
         .setOrigin(0.5, 0)
         .setInteractive({ useHandCursor: true })
-      btn.on('pointerdown', () => this.selectObject(editorObject.id))
+      btn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        pointer.event?.stopPropagation?.()
+        this.selectObject(editorObject.id)
+      })
       items.push(btn)
       this.panelFields.set(`btn_${editorObject.id}`, btn)
-      buttonY += 40
+      buttonY += 56
     }
 
-    // Separator
-    const sep = this.add.rectangle(panelWidth / 2, buttonY + 10, panelWidth - 40, 2, 0x444444, 1)
-    items.push(sep)
+    // ─── Section 2: Properties Readout ───
+    const section2Title = this.add
+      .text(650, 24, 'PROPERTIES', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 16,
+        color: ACCENT_COLOR,
+      })
+      .setOrigin(0.5, 0)
+    items.push(section2Title)
 
-    // Property fields
-    const fieldStartY = buttonY + 30
-    const fieldLabels = ['x', 'y', 'width', 'height', 'scaleX', 'scaleY']
-    for (let i = 0; i < fieldLabels.length; i++) {
-      const fieldLabel = fieldLabels[i]
-      const fY = fieldStartY + i * 36
+    const leftFields = ['x', 'y', 'width']
+    const rightFields = ['scaleX', 'scaleY', 'height']
 
-      const labelText = this.add
-        .text(20, fY, `${fieldLabel}:`, {
+    for (let i = 0; i < leftFields.length; i++) {
+      const field = leftFields[i]
+      const fY = 75 + i * 56
+
+      const label = this.add
+        .text(420, fY, `${field}:`, {
           fontFamily: FONT_FAMILY,
           fontSize: 14,
           color: DIM_COLOR,
         })
         .setOrigin(0, 0)
-      items.push(labelText)
 
-      const valueText = this.add
-        .text(panelWidth - 20, fY, '--', {
+      const val = this.add
+        .text(610, fY, '--', {
           fontFamily: FONT_FAMILY,
           fontSize: 14,
           color: TEXT_COLOR,
         })
         .setOrigin(1, 0)
-      items.push(valueText)
-      this.panelFields.set(`val_${fieldLabel}`, valueText)
+
+      items.push(label, val)
+      this.panelFields.set(`val_${field}`, val)
     }
 
-    // Nudge buttons section
-    const nudgeY = fieldStartY + fieldLabels.length * 36 + 20
-    const nudgeTitle = this.add
-      .text(panelWidth / 2, nudgeY, 'NUDGE  (Arrow Keys)', {
+    for (let i = 0; i < rightFields.length; i++) {
+      const field = rightFields[i]
+      const fY = 75 + i * 56
+
+      const label = this.add
+        .text(670, fY, `${field}:`, {
+          fontFamily: FONT_FAMILY,
+          fontSize: 14,
+          color: DIM_COLOR,
+        })
+        .setOrigin(0, 0)
+
+      const val = this.add
+        .text(880, fY, '--', {
+          fontFamily: FONT_FAMILY,
+          fontSize: 14,
+          color: TEXT_COLOR,
+        })
+        .setOrigin(1, 0)
+
+      items.push(label, val)
+      this.panelFields.set(`val_${field}`, val)
+    }
+
+    // ─── Section 3: Scale & Nudge ───
+    const section3Title = this.add
+      .text(1130, 24, 'SCALE & NUDGE', {
         fontFamily: FONT_FAMILY,
-        fontSize: 12,
-        color: DIM_COLOR,
+        fontSize: 16,
+        color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
-    items.push(nudgeTitle)
+    items.push(section3Title)
 
-    // Scale buttons
-    const scaleY = nudgeY + 30
-    const scalePlusBtn = this.createPanelButton(panelWidth / 2 - 50, scaleY, 'SCALE +', () =>
+    const scalePlusBtn = this.createPanelButton(1040, 72, 'SCALE +', () =>
       this.scaleSelected(1.1),
     )
-    const scaleMinusBtn = this.createPanelButton(panelWidth / 2 + 50, scaleY, 'SCALE -', () =>
+    const scaleMinusBtn = this.createPanelButton(1220, 72, 'SCALE -', () =>
       this.scaleSelected(1 / 1.1),
     )
     items.push(scalePlusBtn, scaleMinusBtn)
 
-    this.panelContainer = this.add.container(panelX, panelY, items).setDepth(40)
+    const hints = [
+      'Nudge: Arrow keys (Shift: 10px)',
+      'Scale: +/- keys or corner handle',
+      'Undo: Ctrl+Z',
+    ]
+    for (let i = 0; i < hints.length; i++) {
+      const hint = this.add
+        .text(1130, 138 + i * 36, hints[i], {
+          fontFamily: FONT_FAMILY,
+          fontSize: 13,
+          color: DIM_COLOR,
+        })
+        .setOrigin(0.5, 0)
+      items.push(hint)
+    }
+
+    // ─── Section 4: Export ───
+    const section4Title = this.add
+      .text(1534, 24, 'EXPORT', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 16,
+        color: ACCENT_COLOR,
+      })
+      .setOrigin(0.5, 0)
+    const exportDesc = this.add
+      .text(1534, 75, 'Print code to console:', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 13,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0.5, 0)
+    items.push(section4Title, exportDesc)
+
+    this.panelContainer = this.add.container(PANEL_X, PANEL_Y, items).setDepth(40)
   }
 
   private createPanelButton(
@@ -397,30 +469,30 @@ export class LevelEditorScene extends Phaser.Scene {
     const btn = this.add
       .text(x, y, text, {
         fontFamily: FONT_FAMILY,
-        fontSize: 13,
+        fontSize: 14,
         color: TEXT_COLOR,
         backgroundColor: '#333333',
-        padding: { x: 8, y: 5 },
+        padding: { x: 14, y: 8 },
       })
       .setOrigin(0.5, 0)
       .setInteractive({ useHandCursor: true })
     btn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event.stopPropagation()
+      pointer.event?.stopPropagation?.()
       onClick()
     })
     return btn
   }
 
   private buildExportButton(): void {
-    const btnX = 1740
-    const btnY = 1020
+    const btnX = PANEL_X + 1534
+    const btnY = PANEL_Y + 140
     const bg = this.add
       .rectangle(0, 0, 280, 48, 0x2e7d32, 1)
       .setStrokeStyle(2, 0x66bb6a, 1)
     const label = this.add
       .text(0, 0, 'EXPORT TO CONSOLE', {
         fontFamily: FONT_FAMILY,
-        fontSize: 16,
+        fontSize: 15,
         color: '#ffffff',
       })
       .setOrigin(0.5, 0.5)
@@ -430,7 +502,10 @@ export class LevelEditorScene extends Phaser.Scene {
       .setDepth(50)
       .setSize(280, 48)
       .setInteractive({ useHandCursor: true })
-    this.exportButton.on('pointerdown', () => this.exportLayout())
+    this.exportButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.exportLayout()
+    })
   }
 
   private selectObject(id: string): void {
@@ -552,12 +627,13 @@ export class LevelEditorScene extends Phaser.Scene {
     const worldX = pointer.worldX
     const worldY = pointer.worldY
 
-    // Check if clicking inside the panel area
+    // Check if clicking inside the bottom control panel
     if (
-      worldX >= 24 &&
-      worldX <= 364 &&
-      worldY >= 80 &&
-      worldY <= 600
+      this.panelContainer?.visible &&
+      worldX >= PANEL_X &&
+      worldX <= PANEL_X + PANEL_WIDTH &&
+      worldY >= PANEL_Y &&
+      worldY <= PANEL_Y + PANEL_HEIGHT
     ) {
       return
     }
@@ -730,9 +806,20 @@ export class LevelEditorScene extends Phaser.Scene {
         event.preventDefault()
         this.cycleSelection(event.shiftKey ? -1 : 1)
         return
+      case 'p':
+      case 'P':
+        this.togglePanel()
+        return
       default:
         return
     }
+  }
+
+  private togglePanel(): void {
+    if (!this.panelContainer || !this.exportButton) return
+    const isVisible = !this.panelContainer.visible
+    this.panelContainer.setVisible(isVisible)
+    this.exportButton.setVisible(isVisible)
   }
 
   private undo(): void {

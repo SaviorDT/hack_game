@@ -4,7 +4,7 @@ import playerImageUrl from '../../assets/game/characters/player/idle.png'
 import daggerImageUrl from '../../assets/game/items/weapons/dagger.png'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import type { WorldState } from '../domain/WorldState.ts'
-import { WORLD_OBJECT_IDS, ROOM_IDS, ROOM_LAYOUT, ROOM_NAMES } from '../content/room1.ts'
+import { WORLD_OBJECT_IDS, ROOM_IDS, ROOM_LAYOUT, ROOM_NAMES } from '../content/room1Constants.ts'
 import { WorldObjectViewRegistry } from './WorldObjectViewRegistry.ts'
 
 export const PLAYER_TEXTURE_KEY = 'player-idle'
@@ -24,6 +24,9 @@ interface DisplayState {
   alive?: unknown
   equippedBy?: unknown
   width?: unknown
+  height?: unknown
+  displayWidth?: unknown
+  displayHeight?: unknown
   health?: unknown
   maxHealth?: unknown
 }
@@ -112,11 +115,11 @@ export class PhaserRoomView {
       }
 
       const sprite = scene.add.image(0, 0, textureKey).setDepth(3)
-      if (worldObject.id === WORLD_OBJECT_IDS.dagger) {
-        sprite.setDisplaySize(72, 72)
-      } else {
-        sprite.setDisplaySize(176, 176)
-      }
+      const objState = displayState(worldObject)
+      const isWeapon = worldObject.metadata.role === 'weapon' || worldObject.id === WORLD_OBJECT_IDS.dagger
+      const dw = typeof objState.displayWidth === 'number' ? objState.displayWidth : (isWeapon ? 72 : 176)
+      const dh = typeof objState.displayHeight === 'number' ? objState.displayHeight : (isWeapon ? 72 : 176)
+      sprite.setDisplaySize(dw, dh)
 
       this.objectViews.bind(worldObject.id, sprite)
       this.spriteById.set(worldObject.id, sprite)
@@ -154,10 +157,14 @@ export class PhaserRoomView {
       const visible = inCurrentRoom && isKnown && alive
       sprite.setVisible(visible)
 
-      if (worldObject.id === WORLD_OBJECT_IDS.dagger && equipped) {
-        sprite.setDisplaySize(58, 58)
-      } else if (worldObject.id === WORLD_OBJECT_IDS.dagger) {
-        sprite.setDisplaySize(72, 72)
+      const isWeapon = worldObject.metadata.role === 'weapon' || worldObject.id === WORLD_OBJECT_IDS.dagger
+      const dw = typeof objectState.displayWidth === 'number' ? objectState.displayWidth : (isWeapon ? 72 : 176)
+      const dh = typeof objectState.displayHeight === 'number' ? objectState.displayHeight : (isWeapon ? 72 : 176)
+
+      if (isWeapon && equipped) {
+        sprite.setDisplaySize(Math.round(dw * 0.8), Math.round(dh * 0.8))
+      } else if (isWeapon) {
+        sprite.setDisplaySize(dw, dh)
       }
 
       if (visible && typeof objectState.maxHealth === 'number' && typeof objectState.health === 'number') {

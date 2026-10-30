@@ -9,7 +9,8 @@ import { RealtimeSimulationClock } from '../simulation/RealtimeSimulationClock.t
 import { TickSimulationEngine } from '../simulation/TickSimulationEngine.ts'
 import { ROOM1_PROCESSES } from '../simulation/room1/Room1Processes.ts'
 import { createRoom1CommandSubmissionService } from './room1Commands.ts'
-import { createInitialWorldState, WORLD_OBJECT_IDS } from './room1.ts'
+import { createInitialWorldState } from './room1WorldState.ts'
+import { WORLD_OBJECT_IDS } from './room1Constants.ts'
 
 export interface Room1SessionOptions {
   readonly movementBindings: MovementBindings

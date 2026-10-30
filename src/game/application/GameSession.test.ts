@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createRoom1Session } from '../content/createRoom1Session.ts'
-import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/room1.ts'
+import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
 import type { CharacterState } from '../domain/CharacterState.ts'
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
 import { SIMULATION_TICK_MS } from '../simulation/TickSimulationEngine.ts'

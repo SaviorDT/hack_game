@@ -1,4 +1,4 @@
-import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS, PROCESS_IDS } from '../../content/room1.ts'
+import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS, PROCESS_IDS } from '../../content/room1Constants.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { AabbCollisionWorld } from '../../domain/CollisionWorld.ts'
 import { CombatService } from '../../domain/CombatService.ts'

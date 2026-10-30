@@ -7,8 +7,10 @@ import {
   ROOM_IDS,
   CHARACTER_SIZE,
   DAGGER_SIZE,
-  createInitialWorldState,
-} from '../content/room1.ts'
+} from '../content/room1Constants.ts'
+import { createInitialWorldState } from '../content/room1WorldState.ts'
+import { ROOM1_OBJECTS, type RoomObjectConfig } from '../content/room1.ts'
+import { generateRoom1Source } from '../content/room1Serializer.ts'
 import {
   WORLD_OBJECT_TEXTURE_URLS,
   PLAYER_TEXTURE_KEY,
@@ -622,16 +624,16 @@ export class LevelEditorScene extends Phaser.Scene {
       items.push(hint)
     }
 
-    // ─── Section 5: Export ───
+    // ─── Section 5: Save ───
     const section5Title = this.add
-      .text(1574, 24, 'EXPORT', {
+      .text(1574, 24, 'SAVE', {
         fontFamily: FONT_FAMILY,
         fontSize: 14,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
     const exportDesc = this.add
-      .text(1574, 75, 'Print code to console:', {
+      .text(1574, 75, 'Overwrite room1.ts directly:', {
         fontFamily: FONT_FAMILY,
         fontSize: 13,
         color: DIM_COLOR,
@@ -673,7 +675,7 @@ export class LevelEditorScene extends Phaser.Scene {
       .rectangle(0, 0, 260, 48, 0x2e7d32, 1)
       .setStrokeStyle(2, 0x66bb6a, 1)
     const label = this.add
-      .text(0, 0, 'EXPORT TO CONSOLE', {
+      .text(0, 0, 'SAVE TO ROOM1.TS', {
         fontFamily: FONT_FAMILY,
         fontSize: 15,
         color: '#ffffff',
@@ -687,7 +689,7 @@ export class LevelEditorScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
     this.exportButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       pointer.event?.stopPropagation?.()
-      this.exportLayout()
+      this.saveLayout()
     })
   }
 
@@ -1132,69 +1134,76 @@ export class LevelEditorScene extends Phaser.Scene {
     this.selectObject(this.editorObjects[nextIndex].id)
   }
 
-  private exportLayout(): void {
-    const output: Record<string, unknown> = {}
-    for (const obj of this.editorObjects) {
-      output[obj.id] = {
-        x: Math.round(obj.x),
-        y: Math.round(obj.y),
-        displayWidth: Math.round(obj.displayWidth),
-        displayHeight: Math.round(obj.displayHeight),
-        scaleX: obj.scaleX.toFixed(2),
-        scaleY: obj.scaleY.toFixed(2),
-        ...(obj.maxHealth !== undefined ? { maxHealth: obj.maxHealth } : {}),
-        ...(obj.speed !== undefined ? { speed: obj.speed } : {}),
+  public async saveLayout(): Promise<boolean> {
+    const objects: RoomObjectConfig[] = this.editorObjects.map((obj) => ({
+      id: obj.id,
+      role: obj.role,
+      x: Math.round(obj.x),
+      y: Math.round(obj.y),
+      displayWidth: Math.round(obj.displayWidth),
+      displayHeight: Math.round(obj.displayHeight),
+      ...(obj.speed !== undefined ? { speed: obj.speed } : {}),
+      ...(obj.maxHealth !== undefined ? { maxHealth: obj.maxHealth } : {}),
+    }))
+
+    const source = generateRoom1Source(objects)
+
+    // Update in-memory ROOM1_OBJECTS array immediately so subsequent transitions read updated objects
+    ROOM1_OBJECTS.length = 0
+    ROOM1_OBJECTS.push(...objects)
+
+    const bg = this.exportButton?.getAt(0) as Phaser.GameObjects.Rectangle | undefined
+    const label = this.exportButton?.getAt(1) as Phaser.GameObjects.Text | undefined
+
+    try {
+      const response = await fetch('/api/save-room1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: source }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`)
       }
-    }
 
-    // Generate code snippet for room1.ts
-    const lines: string[] = [
-      '// ─── Exported from Level Editor ───',
-      '// Paste into room1.ts ROOM_LAYOUT to update start positions,',
-      '// and update CHARACTER_SIZE / DAGGER_SIZE if sizes changed.',
-      '',
-    ]
-
-    for (const obj of this.editorObjects) {
-      const startKey = this.startKeyFor(obj.id)
-      if (startKey) {
-        lines.push(`  ${startKey}: { x: ${Math.round(obj.x)}, y: ${Math.round(obj.y)} },`)
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.error ?? 'Unknown error writing file')
       }
-    }
 
-    lines.push('')
-    lines.push('// Display sizes (as used in PhaserRoomView):')
-
-    for (const obj of this.editorObjects) {
-      lines.push(
-        `//   ${obj.id}: setDisplaySize(${Math.round(obj.displayWidth)}, ${Math.round(obj.displayHeight)})` +
-        `  [scale: ${obj.scaleX.toFixed(2)}x${obj.scaleY.toFixed(2)}]`,
+      console.log(
+        '%c Overwrote room1.ts directly ',
+        'background: #2e7d32; color: #fff; font-size: 14px; padding: 4px 8px; border-radius: 4px',
       )
-    }
+      console.log(source)
 
-    lines.push('')
-    lines.push('// Character attributes (speed, maxHealth):')
-
-    for (const obj of this.editorObjects) {
-      if (obj.maxHealth !== undefined || obj.speed !== undefined) {
-        lines.push(
-          `//   ${obj.id}: speed=${obj.speed}, maxHealth=${obj.maxHealth}`,
-        )
+      if (bg && label) {
+        bg.setFillStyle(0x66bb6a, 1)
+        label.setText('SAVED TO ROOM1.TS!')
+        this.time.delayedCall(1500, () => {
+          bg.setFillStyle(0x2e7d32, 1)
+          label.setText('SAVE TO ROOM1.TS')
+        })
       }
+      return true
+    } catch (err) {
+      console.error('Failed to overwrite room1.ts directly:', err)
+      console.log('Generated room1.ts source fallback:\n' + source)
+
+      if (bg && label) {
+        bg.setFillStyle(0xb71c1c, 1)
+        label.setText('SAVE FAILED (CONSOLE)')
+        this.time.delayedCall(2000, () => {
+          bg.setFillStyle(0x2e7d32, 1)
+          label.setText('SAVE TO ROOM1.TS')
+        })
+      }
+      return false
     }
+  }
 
-    console.log(
-      '%c Level Editor Export ',
-      'background: #2e7d32; color: #fff; font-size: 14px; padding: 4px 8px; border-radius: 4px',
-    )
-    console.log(lines.join('\n'))
-    console.log('Raw data:', output)
-
-    // Flash the export button to confirm
-    const bg = this.exportButton.getAt(0) as Phaser.GameObjects.Rectangle
-    const originalColor = 0x2e7d32
-    bg.setFillStyle(0x66bb6a, 1)
-    this.time.delayedCall(200, () => bg.setFillStyle(originalColor, 1))
+  public exportLayout(): Promise<boolean> {
+    return this.saveLayout()
   }
 
   public spawnWorldObject(
@@ -1431,21 +1440,6 @@ export class LevelEditorScene extends Phaser.Scene {
       counter++
     }
     return `${prefix}-${counter}`
-  }
-
-  private startKeyFor(id: string): string {
-    switch (id) {
-      case WORLD_OBJECT_IDS.player:
-        return 'playerStart'
-      case WORLD_OBJECT_IDS.dagger:
-        return 'daggerStart'
-      case WORLD_OBJECT_IDS.guard:
-        return 'guardStart'
-      default: {
-        const camel = id.replace(/-([a-z0-9])/g, (_, char: string) => char.toUpperCase())
-        return `${camel}Start`
-      }
-    }
   }
 
   private textureKeyForRole(role: 'player' | 'guard' | 'weapon'): string {

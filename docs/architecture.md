@@ -145,6 +145,9 @@ src/
     content/
       createRoom1Session.ts
       room1.ts
+      room1Constants.ts
+      room1Serializer.ts
+      room1WorldState.ts
       room1Commands.ts
     scenes/
       GameScene.ts
@@ -228,7 +231,9 @@ The Press Start 2P font, distressed textbox frame, monochrome character art, and
 
 `LevelEditorScene` is a separate Phaser scene (key `'level-editor'`) for visually adjusting the starting positions and display sizes of room1's World Objects. It is registered in the scene list alongside `GameScene` and is activated from gameplay with **F2**; pressing **F2** again or **Escape** returns to `GameScene`.
 
-The editor does not touch live `WorldState` or any simulation code. It reads the initial layout from `createInitialWorldState()` and `ROOM_LAYOUT` in `room1.ts`, displays all three World Objects (player, dagger, guard) as draggable sprites, and docks its control dashboard below the room view (`y = 720..1010`) so the entire room (`y = 80..700`) remains completely unobstructed. It lets the designer:
+`room1.ts` contains only the editable level data exported from the level editor (`ROOM1_OBJECTS`), specifying each object's ID, role, starting coordinates, display size, and optional character attributes (speed, maxHealth). All simulation setup, process bindings, and room topology live in `room1WorldState.ts` and `room1Constants.ts`.
+
+The editor displays all World Objects as draggable sprites and docks its control dashboard below the room view (`y = 720..1010`) so the entire room (`y = 80..700`) remains completely unobstructed. It lets the designer:
 
 - **Drag** a sprite to reposition it (arrow keys for 1 px nudge, Shift+arrow for 10 px).
 - **Drag the yellow corner handle** or press **+**/**−** to scale a sprite uniformly. Scale buttons in the properties panel (×1.1 / ÷1.1) are also available.
@@ -237,17 +242,17 @@ The editor does not touch live `WorldState` or any simulation code. It reads the
 - **Edit Character Stats**: selecting any player or guard reveals editable `max_health` and `speed` controls with step adjustment (`+` / `−` by 10, Shift for 50) and direct value prompts. Changes participate in the `Ctrl+Z` invertible undo stack.
 - **Ctrl+Z** to undo edits. Undo is implemented through an invertible change model where every operation defines its reverse (e.g., move `(dx, dy)` inverts to `(-dx, -dy)`, scale `factor` inverts to `1 / factor`, property `delta` inverts to `-delta`, `spawn` inverts to `despawn`), restoring the previous transform, stat, or object existence.
 - **P** to toggle the visibility of the bottom properties panel.
-- **Export to Console** (green button inside the export section) prints a ready-to-paste `ROOM_LAYOUT` snippet (with start keys such as `guard2Start`, `dagger2Start`), display sizes, and character attributes (speed and maxHealth) to the browser developer console. The designer copies those values back into `room1.ts` by hand.
-
-The editor is intentionally read-only with respect to source files: it exports values to the console and leaves the edit to the developer. No persistence or live hot-reload of `room1.ts` occurs inside the editor.
+- **Save to room1.ts** (green button inside the save section) serializes the current object configurations and directly overwrites `src/game/content/room1.ts` on disk via the dev server `/api/save-room1` endpoint, while immediately updating in-memory `ROOM1_OBJECTS` for seamless live transitions back to the game.
 
 ### Class relationships (editor additions)
 
 ```mermaid
 classDiagram
   PhaserScene <|-- LevelEditorScene
-  LevelEditorScene ..> room1 : reads ROOM_LAYOUT\ncreateInitialWorldState
+  LevelEditorScene ..> room1 : reads & overwrites ROOM1_OBJECTS
   LevelEditorScene --> EditorHistory : manages undo stack\nand applies inverted changes
+  LevelEditorScene ..> room1Serializer : serializes RoomObjectConfig[]
+  room1WorldState ..> room1 : constructs WorldState from ROOM1_OBJECTS
 ```
 
 ## Framework references

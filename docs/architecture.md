@@ -225,7 +225,7 @@ The Press Start 2P font, distressed textbox frame, monochrome character art, and
 
 ## Level editor
 
-`LevelEditorScene` is a separate Phaser scene (key `'level-editor'`) for visually adjusting the starting positions and display sizes of room1's World Objects. It is registered in the scene list alongside `GameScene` and is activated from gameplay with **F2**; pressing **Escape** returns to `GameScene`.
+`LevelEditorScene` is a separate Phaser scene (key `'level-editor'`) for visually adjusting the starting positions and display sizes of room1's World Objects. It is registered in the scene list alongside `GameScene` and is activated from gameplay with **F2**; pressing **F2** again or **Escape** returns to `GameScene`.
 
 The editor does not touch live `WorldState` or any simulation code. It reads the initial layout from `createInitialWorldState()` and `ROOM_LAYOUT` in `room1.ts`, displays all three World Objects (player, dagger, guard) as draggable sprites, and lets the designer:
 

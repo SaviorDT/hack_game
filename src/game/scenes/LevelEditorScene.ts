@@ -182,7 +182,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Back-to-game key hint
     this.add
-      .text(1820, 28, 'ESC: Back to game', {
+      .text(1820, 28, 'F2 / ESC: Back to game', {
         fontFamily: FONT_FAMILY,
         fontSize: 16,
         color: DIM_COLOR,
@@ -589,7 +589,8 @@ export class LevelEditorScene extends Phaser.Scene {
   private onKeyDown(event: KeyboardEvent): void {
     const selected = this.getSelected()
 
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' || event.key === 'F2') {
+      event.preventDefault()
       this.scene.start('game')
       return
     }

@@ -46,6 +46,8 @@ describe('room1Serializer', () => {
         y: 380.2,
         displayWidth: 194.1,
         displayHeight: 194.1,
+        scaleX: 1.1,
+        scaleY: 1.1,
         speed: 130,
         maxHealth: 150,
       },
@@ -57,6 +59,8 @@ describe('room1Serializer', () => {
     expect(source).toContain("y: 380")
     expect(source).toContain("displayWidth: 194")
     expect(source).toContain("displayHeight: 194")
+    expect(source).toContain("scaleX: 1.1")
+    expect(source).toContain("scaleY: 1.1")
     expect(source).toContain("speed: 130")
     expect(source).toContain("maxHealth: 150")
   })

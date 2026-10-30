@@ -14,6 +14,12 @@ export function generateRoom1Source(objects: RoomObjectConfig[]): string {
       `    displayWidth: ${Math.round(obj.displayWidth)},`,
       `    displayHeight: ${Math.round(obj.displayHeight)},`,
     ]
+    if (obj.scaleX !== undefined) {
+      lines.push(`    scaleX: ${obj.scaleX},`)
+    }
+    if (obj.scaleY !== undefined) {
+      lines.push(`    scaleY: ${obj.scaleY},`)
+    }
     if (obj.speed !== undefined) {
       if (typeof obj.speed === 'number') {
         lines.push(`    speed: ${obj.speed},`)
@@ -48,6 +54,8 @@ export interface RoomObjectConfig {
   y: number
   displayWidth: number
   displayHeight: number
+  scaleX?: number
+  scaleY?: number
   speed?: number | PlayerSpeedConfig
   maxHealth?: number
 }

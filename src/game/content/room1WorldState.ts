@@ -9,6 +9,7 @@ import {
   PROCESS_IDS,
   ROOM_LAYOUT,
   CHARACTER_SIZE,
+  CHARACTER_BASE_SIZE,
   DAGGER_SIZE,
   MAX_HEALTH,
 } from './room1Constants.ts'
@@ -28,9 +29,41 @@ function createRoomWorldObject(
   return new BasicWorldObject(id, ROOM_IDS.first, metadata, behaviorRules, state)
 }
 
+export function resolveScale(
+  obj: RoomObjectConfig,
+  baseDisplayWidth: number,
+  baseDisplayHeight: number,
+): { scaleX: number; scaleY: number } {
+  const scaleX =
+    obj.scaleX ?? (typeof obj.displayWidth === 'number' ? obj.displayWidth / baseDisplayWidth : 1)
+  const scaleY =
+    obj.scaleY ?? (typeof obj.displayHeight === 'number' ? obj.displayHeight / baseDisplayHeight : 1)
+  return { scaleX, scaleY }
+}
+
+export function computeCollisionSize(
+  role: 'player' | 'guard' | 'weapon',
+  scaleX: number,
+  scaleY: number,
+): { width: number; height: number } {
+  if (role === 'weapon') {
+    return {
+      width: Math.max(12, Math.round(DAGGER_SIZE.width * scaleX)),
+      height: Math.max(12, Math.round(DAGGER_SIZE.height * scaleY)),
+    }
+  }
+
+  return {
+    width: Math.max(16, Math.round(CHARACTER_SIZE.width * scaleX)),
+    height: Math.max(16, Math.round(CHARACTER_SIZE.height * scaleY)),
+  }
+}
+
 export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJECTS): WorldState {
   const worldObjects: WorldObject[] = objects.map((obj) => {
     if (obj.role === 'player') {
+      const { scaleX, scaleY } = resolveScale(obj, CHARACTER_BASE_SIZE.width, CHARACTER_BASE_SIZE.height)
+      const { width, height } = computeCollisionSize('player', scaleX, scaleY)
       return createRoomWorldObject(
         obj.id,
         { name: 'player', role: 'player', discoverable: false },
@@ -38,10 +71,12 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
         {
           x: obj.x,
           y: obj.y,
-          width: CHARACTER_SIZE.width,
-          height: CHARACTER_SIZE.height,
+          width,
+          height,
           displayWidth: obj.displayWidth,
           displayHeight: obj.displayHeight,
+          scaleX,
+          scaleY,
           speed: typeof obj.speed === 'object' && obj.speed !== null
             ? {
                 acceleration: obj.speed.acceleration,
@@ -80,6 +115,8 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
     }
 
     if (obj.role === 'weapon') {
+      const { scaleX, scaleY } = resolveScale(obj, DAGGER_SIZE.width, DAGGER_SIZE.height)
+      const { width, height } = computeCollisionSize('weapon', scaleX, scaleY)
       return createRoomWorldObject(
         obj.id,
         { name: obj.id, role: 'weapon', weaponId: 'dagger', discoverable: true },
@@ -87,10 +124,12 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
         {
           x: obj.x,
           y: obj.y,
-          width: DAGGER_SIZE.width,
-          height: DAGGER_SIZE.height,
+          width,
+          height,
           displayWidth: obj.displayWidth,
           displayHeight: obj.displayHeight,
+          scaleX,
+          scaleY,
           discovered: false,
           equippedBy: null,
         },
@@ -98,6 +137,8 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
     }
 
     // Default to guard
+    const { scaleX, scaleY } = resolveScale(obj, CHARACTER_BASE_SIZE.width, CHARACTER_BASE_SIZE.height)
+    const { width, height } = computeCollisionSize('guard', scaleX, scaleY)
     return createRoomWorldObject(
       obj.id,
       { name: obj.id, role: 'guard', discoverable: true },
@@ -105,10 +146,12 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
       {
         x: obj.x,
         y: obj.y,
-        width: CHARACTER_SIZE.width,
-        height: CHARACTER_SIZE.height,
+        width,
+        height,
         displayWidth: obj.displayWidth,
         displayHeight: obj.displayHeight,
+        scaleX,
+        scaleY,
         speed: obj.speed ?? 210,
         health: obj.maxHealth ?? MAX_HEALTH,
         maxHealth: obj.maxHealth ?? MAX_HEALTH,

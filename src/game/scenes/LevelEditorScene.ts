@@ -5,7 +5,7 @@ import {
   WORLD_OBJECT_IDS,
   ROOM_NAMES,
   ROOM_IDS,
-  CHARACTER_SIZE,
+  CHARACTER_BASE_SIZE,
   DAGGER_SIZE,
 } from '../content/room1Constants.ts'
 import { createInitialWorldState } from '../content/room1WorldState.ts'
@@ -45,6 +45,8 @@ export interface SpawnObjectConfig {
   y?: number
   displayWidth?: number
   displayHeight?: number
+  scaleX?: number
+  scaleY?: number
   speed?: number | PlayerSpeedConfig
   maxHealth?: number
 }
@@ -292,10 +294,25 @@ export class LevelEditorScene extends Phaser.Scene {
     const acceleration = speedConfig?.acceleration
     const frictionAcceleration = speedConfig?.frictionAcceleration
     const turnaroundAcceleration = speedConfig?.turnaroundAcceleration
-    const baseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_SIZE.width
-    const baseHeight = isWeapon ? DAGGER_SIZE.height : CHARACTER_SIZE.height
-    const displayWidth = isWeapon ? 72 : 176
-    const displayHeight = isWeapon ? 72 : 176
+    const defaultBaseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_BASE_SIZE.width
+    const defaultBaseHeight = isWeapon ? DAGGER_SIZE.height : CHARACTER_BASE_SIZE.height
+
+    const displayWidth = typeof state.displayWidth === 'number'
+      ? state.displayWidth
+      : defaultBaseWidth
+    const displayHeight = typeof state.displayHeight === 'number'
+      ? state.displayHeight
+      : defaultBaseHeight
+
+    const scaleX = typeof state.scaleX === 'number'
+      ? state.scaleX
+      : displayWidth / defaultBaseWidth
+    const scaleY = typeof state.scaleY === 'number'
+      ? state.scaleY
+      : displayHeight / defaultBaseHeight
+
+    const baseWidth = scaleX !== 0 ? displayWidth / scaleX : defaultBaseWidth
+    const baseHeight = scaleY !== 0 ? displayHeight / scaleY : defaultBaseHeight
 
     const sprite = this.add.image(x, y, textureKey).setDepth(3)
     sprite.setDisplaySize(displayWidth, displayHeight)
@@ -345,8 +362,8 @@ export class LevelEditorScene extends Phaser.Scene {
       displayHeight,
       baseWidth,
       baseHeight,
-      scaleX: displayWidth / baseWidth,
-      scaleY: displayHeight / baseHeight,
+      scaleX,
+      scaleY,
       maxHealth,
       speed,
       maxSpeed,
@@ -1246,6 +1263,8 @@ export class LevelEditorScene extends Phaser.Scene {
           y: reversed.snapshot.y,
           displayWidth: reversed.snapshot.displayWidth,
           displayHeight: reversed.snapshot.displayHeight,
+          scaleX: reversed.snapshot.scaleX,
+          scaleY: reversed.snapshot.scaleY,
           speed: reversed.snapshot.speed,
           maxHealth: reversed.snapshot.maxHealth,
         },
@@ -1298,6 +1317,8 @@ export class LevelEditorScene extends Phaser.Scene {
         y: Math.round(obj.y),
         displayWidth: Math.round(obj.displayWidth),
         displayHeight: Math.round(obj.displayHeight),
+        scaleX: Number(obj.scaleX.toFixed(2)),
+        scaleY: Number(obj.scaleY.toFixed(2)),
         ...(speed !== undefined ? { speed } : {}),
         ...(obj.maxHealth !== undefined ? { maxHealth: obj.maxHealth } : {}),
       }
@@ -1377,8 +1398,18 @@ export class LevelEditorScene extends Phaser.Scene {
       if (config.y !== undefined) existing.y = config.y
       if (config.displayWidth !== undefined) existing.displayWidth = config.displayWidth
       if (config.displayHeight !== undefined) existing.displayHeight = config.displayHeight
-      existing.scaleX = existing.displayWidth / existing.baseWidth
-      existing.scaleY = existing.displayHeight / existing.baseHeight
+      if (config.scaleX !== undefined) {
+        existing.scaleX = config.scaleX
+        existing.baseWidth = existing.scaleX !== 0 ? existing.displayWidth / existing.scaleX : existing.baseWidth
+      } else if (config.displayWidth !== undefined) {
+        existing.scaleX = existing.displayWidth / existing.baseWidth
+      }
+      if (config.scaleY !== undefined) {
+        existing.scaleY = config.scaleY
+        existing.baseHeight = existing.scaleY !== 0 ? existing.displayHeight / existing.scaleY : existing.baseHeight
+      } else if (config.displayHeight !== undefined) {
+        existing.scaleY = existing.displayHeight / existing.baseHeight
+      }
       if (config.maxHealth !== undefined) existing.maxHealth = config.maxHealth
       if (config.speed !== undefined) existing.speed = config.speed
       this.updateObjectVisuals(existing)
@@ -1389,10 +1420,17 @@ export class LevelEditorScene extends Phaser.Scene {
     const textureKey = this.textureKeyForRole(role)
     const isWeapon = role === 'weapon'
     const isCharacter = role === 'player' || role === 'guard'
-    const baseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_SIZE.width
-    const baseHeight = isWeapon ? DAGGER_SIZE.height : CHARACTER_SIZE.height
-    const displayWidth = config.displayWidth ?? (isWeapon ? 72 : 176)
-    const displayHeight = config.displayHeight ?? (isWeapon ? 72 : 176)
+    const defaultBaseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_BASE_SIZE.width
+    const defaultBaseHeight = isWeapon ? DAGGER_SIZE.height : CHARACTER_BASE_SIZE.height
+
+    const displayWidth = config.displayWidth ?? defaultBaseWidth
+    const displayHeight = config.displayHeight ?? defaultBaseHeight
+
+    const scaleX = config.scaleX ?? (displayWidth / defaultBaseWidth)
+    const scaleY = config.scaleY ?? (displayHeight / defaultBaseHeight)
+
+    const baseWidth = scaleX !== 0 ? displayWidth / scaleX : defaultBaseWidth
+    const baseHeight = scaleY !== 0 ? displayHeight / scaleY : defaultBaseHeight
     const maxHealth =
       config.maxHealth !== undefined
         ? config.maxHealth
@@ -1466,8 +1504,8 @@ export class LevelEditorScene extends Phaser.Scene {
       displayHeight,
       baseWidth,
       baseHeight,
-      scaleX: displayWidth / baseWidth,
-      scaleY: displayHeight / baseHeight,
+      scaleX,
+      scaleY,
       maxHealth,
       speed,
       maxSpeed,

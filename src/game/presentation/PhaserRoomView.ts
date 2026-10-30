@@ -168,7 +168,9 @@ export class PhaserRoomView {
       }
 
       if (visible && typeof objectState.maxHealth === 'number' && typeof objectState.health === 'number') {
-        this.drawHealthBar(x, y, objectState.health / objectState.maxHealth)
+        const barWidth = typeof objectState.width === 'number' ? objectState.width : HEALTH_BAR_WIDTH
+        const offsetY = typeof objectState.height === 'number' ? objectState.height / 2 + 20 : HEALTH_BAR_OFFSET_Y
+        this.drawHealthBar(x, y, objectState.health / objectState.maxHealth, barWidth, offsetY)
       }
     }
   }
@@ -194,14 +196,20 @@ export class PhaserRoomView {
     this.doorLabel = undefined
   }
 
-  private drawHealthBar(x: number, y: number, fraction: number): void {
-    const left = x - HEALTH_BAR_WIDTH / 2
-    const top = y - HEALTH_BAR_OFFSET_Y
+  private drawHealthBar(
+    x: number,
+    y: number,
+    fraction: number,
+    width: number = HEALTH_BAR_WIDTH,
+    offsetY: number = HEALTH_BAR_OFFSET_Y,
+  ): void {
+    const left = x - width / 2
+    const top = y - offsetY
     this.healthBars
       ?.fillStyle(0x333333, 1)
-      .fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)
+      .fillRect(left, top, width, HEALTH_BAR_HEIGHT)
       .fillStyle(0xd6d6d6, 1)
-      .fillRect(left, top, HEALTH_BAR_WIDTH * Math.max(0, Math.min(1, fraction)), HEALTH_BAR_HEIGHT)
+      .fillRect(left, top, width * Math.max(0, Math.min(1, fraction)), HEALTH_BAR_HEIGHT)
   }
 
   private textureKeyFor(worldObject: WorldObject): string | undefined {

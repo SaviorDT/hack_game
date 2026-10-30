@@ -74,7 +74,7 @@ Syntax parsing, allow-list lookup, requirement checking, and execution are separ
 
 Every Character has Health, initially 100. A `WeaponDefinition` holds `id`, `damage`, `cooldownMs`, `reach`, and a single-target attack shape that leaves room for area weapons later. Definitions: unarmed (damage 10, cooldown 0.5 s, reach 5 px), Dagger (damage 35, cooldown 0.5 s, reach 10 px), and a separate Guard definition (damage 20, cooldown 1 s, reach 5 px). A Character with no equipped weapon uses the unarmed definition. Cooldowns count simulation time, so they follow the Time Scale.
 
-An attack damages the nearest other Character within the weapon's Reach, measured as the gap between bounding boxes. Pick-up takes the nearest pick-up-able object within `PICKUP_REACH = 10` px and equips it. Picking up or attacking an undiscovered object marks it discovered. `CollisionWorld` provides boundary clamping, edge-gap distance, and nearest-target selection with domain-owned axis-aligned boxes (ADR 0007).
+An attack damages the nearest other Character within the weapon's Reach, measured as the gap between bounding boxes. Pick-up takes the nearest pick-up-able object within `PICKUP_REACH = 10` px and equips it. Picking up or attacking an undiscovered object marks it discovered. `CollisionWorld` provides boundary clamping, edge-gap distance, and nearest-target selection with domain-owned axis-aligned boxes (ADR 0007). Internal physics collision AABBs scale proportionally with each World Object's `scaleX` and `scaleY` factors (using `CHARACTER_SIZE` 110×160 and `DAGGER_SIZE` 72×72 as base collision sizes, with minimum dimension clamping), ensuring physical hitboxes, boundary limits, and health bars accurately match scaled character visuals.
 
 ### First room behavior
 
@@ -231,7 +231,7 @@ The Press Start 2P font, distressed textbox frame, monochrome character art, and
 
 `LevelEditorScene` is a separate Phaser scene (key `'level-editor'`) for visually adjusting the starting positions and display sizes of room1's World Objects. It is registered in the scene list alongside `GameScene` and is activated from gameplay with **F2**; pressing **F2** again or **Escape** returns to `GameScene`.
 
-`room1.ts` contains only the editable level data exported from the level editor (`ROOM1_OBJECTS`), specifying each object's ID, role, starting coordinates, display size, and optional character attributes (speed, maxHealth). All simulation setup, process bindings, and room topology live in `room1WorldState.ts` and `room1Constants.ts`.
+`room1.ts` contains only the editable level data exported from the level editor (`ROOM1_OBJECTS`), specifying each object's ID, role, starting coordinates, display size, scale factors (`scaleX`, `scaleY`), and optional character attributes (speed, maxHealth). Objects use standard visual base dimensions (`CHARACTER_BASE_SIZE` 176×176 for characters, `DAGGER_SIZE` 72×72 for weapons) so default scales start at 1.00 and custom scales persist accurately. All simulation setup, process bindings, and room topology live in `room1WorldState.ts` and `room1Constants.ts`.
 
 The editor displays all World Objects as draggable sprites and docks its control dashboard below the room view (`y = 720..1010`) so the entire room (`y = 80..700`) remains completely unobstructed. It lets the designer:
 

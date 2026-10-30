@@ -149,6 +149,7 @@ src/
     scenes/
       GameScene.ts
       LevelEditorScene.ts
+      levelEditorHistory.ts
     domain/
       BasicWorldObject.ts
       ids.ts
@@ -232,6 +233,7 @@ The editor does not touch live `WorldState` or any simulation code. It reads the
 - **Drag** a sprite to reposition it (arrow keys for 1 px nudge, Shift+arrow for 10 px).
 - **Drag the yellow corner handle** or press **+**/**−** to scale a sprite uniformly. Scale buttons in the properties panel (×1.1 / ÷1.1) are also available.
 - **Tab / Shift+Tab** to cycle selection; clicking a sprite or its name in the properties panel selects it.
+- **Ctrl+Z** to undo edits. Undo is implemented through an invertible change model where every operation defines its reverse (e.g., move `(dx, dy)` inverts to `(-dx, -dy)`, scale `factor` inverts to `1 / factor`), restoring the previous transform.
 - **Export to Console** (green button, bottom-right) prints a ready-to-paste `ROOM_LAYOUT` snippet and a table of display sizes to the browser developer console. The designer copies those values back into `room1.ts` by hand.
 
 The editor is intentionally read-only with respect to source files: it exports values to the console and leaves the edit to the developer. No persistence or live hot-reload of `room1.ts` occurs inside the editor.
@@ -242,6 +244,7 @@ The editor is intentionally read-only with respect to source files: it exports v
 classDiagram
   PhaserScene <|-- LevelEditorScene
   LevelEditorScene ..> room1 : reads ROOM_LAYOUT\ncreateInitialWorldState
+  LevelEditorScene --> EditorHistory : manages undo stack\nand applies inverted changes
 ```
 
 ## Framework references

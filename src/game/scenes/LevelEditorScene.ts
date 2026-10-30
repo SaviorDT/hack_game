@@ -17,6 +17,10 @@ import {
 } from '../presentation/PhaserRoomView.ts'
 import { COMMAND_INPUT_TEXTURE_KEY } from '../presentation/PhaserCommandInputView.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
+import {
+  EditorHistory,
+  type ScalableMovableObject,
+} from './levelEditorHistory.ts'
 
 const FONT_FAMILY = '"Press Start 2P", monospace'
 const TEXT_COLOR = '#d6d6d6'
@@ -28,20 +32,11 @@ const HANDLE_COLOR = 0xffcc00
 const HANDLE_SIZE = 16
 const GRID_SNAP = 1
 
-interface EditorObject {
-  id: string
+interface EditorObject extends ScalableMovableObject {
   sprite: Phaser.GameObjects.Image
   outline: Phaser.GameObjects.Rectangle
   scaleHandle: Phaser.GameObjects.Rectangle
   label: Phaser.GameObjects.Text
-  x: number
-  y: number
-  displayWidth: number
-  displayHeight: number
-  baseWidth: number
-  baseHeight: number
-  scaleX: number
-  scaleY: number
 }
 
 export class LevelEditorScene extends Phaser.Scene {
@@ -57,12 +52,15 @@ export class LevelEditorScene extends Phaser.Scene {
   private coordsText!: Phaser.GameObjects.Text
   private isDraggingObject = false
   private isDraggingScaleHandle = false
+  private history = new EditorHistory()
   private dragStartX = 0
   private dragStartY = 0
   private dragObjStartX = 0
   private dragObjStartY = 0
   private scaleStartWidth = 0
   private scaleStartHeight = 0
+  private scaleStartScaleX = 0
+  private scaleStartScaleY = 0
   private scaleStartPointerX = 0
   private scaleStartPointerY = 0
   private exportButton!: Phaser.GameObjects.Container
@@ -87,6 +85,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.editorObjects = []
     this.selectedId = null
     this.panelFields.clear()
+    this.history.clear()
 
     // Title
     this.headerText = this.add
@@ -156,7 +155,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Instructions
     this.instructionText = this.add
-      .text(960, 1056, 'Click to select · Drag to move · Yellow handle to scale · Export to console', {
+      .text(960, 1056, 'Click to select · Drag to move · Yellow handle to scale · Ctrl+Z to undo · Export to console', {
         fontFamily: FONT_FAMILY,
         fontSize: 16,
         color: DIM_COLOR,
@@ -488,10 +487,61 @@ export class LevelEditorScene extends Phaser.Scene {
     const selected = this.getSelected()
     if (!selected) return
 
+    const prevScaleX = selected.scaleX
+    const prevScaleY = selected.scaleY
+    const prevDisplayWidth = selected.displayWidth
+    const prevDisplayHeight = selected.displayHeight
+
     selected.scaleX *= factor
     selected.scaleY *= factor
-    selected.displayWidth = Math.round(selected.baseWidth * selected.scaleX)
-    selected.displayHeight = Math.round(selected.baseHeight * selected.scaleY)
+    selected.displayWidth = Math.max(16, Math.round(selected.baseWidth * selected.scaleX))
+    selected.displayHeight = Math.max(16, Math.round(selected.baseHeight * selected.scaleY))
+
+    this.history.push({
+      type: 'scale',
+      objectId: selected.id,
+      factor,
+      prevScaleX,
+      prevScaleY,
+      prevDisplayWidth,
+      prevDisplayHeight,
+      nextScaleX: selected.scaleX,
+      nextScaleY: selected.scaleY,
+      nextDisplayWidth: selected.displayWidth,
+      nextDisplayHeight: selected.displayHeight,
+    })
+
+    this.updateObjectVisuals(selected)
+    this.updatePropertyPanel()
+  }
+
+  private nudgeSelected(dx: number, dy: number): void {
+    const selected = this.getSelected()
+    if (!selected) return
+
+    const prevX = selected.x
+    const prevY = selected.y
+    const nextX = snap(selected.x + dx)
+    const nextY = snap(selected.y + dy)
+    const actualDx = nextX - prevX
+    const actualDy = nextY - prevY
+
+    if (actualDx === 0 && actualDy === 0) return
+
+    selected.x = nextX
+    selected.y = nextY
+
+    this.history.push({
+      type: 'move',
+      objectId: selected.id,
+      dx: actualDx,
+      dy: actualDy,
+      prevX,
+      prevY,
+      nextX,
+      nextY,
+    })
+
     this.updateObjectVisuals(selected)
     this.updatePropertyPanel()
   }
@@ -524,6 +574,8 @@ export class LevelEditorScene extends Phaser.Scene {
         this.isDraggingScaleHandle = true
         this.scaleStartWidth = selected.displayWidth
         this.scaleStartHeight = selected.displayHeight
+        this.scaleStartScaleX = selected.scaleX
+        this.scaleStartScaleY = selected.scaleY
         this.scaleStartPointerX = worldX
         this.scaleStartPointerY = worldY
         return
@@ -582,8 +634,52 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   private onPointerUp(): void {
-    this.isDraggingObject = false
-    this.isDraggingScaleHandle = false
+    if (this.isDraggingObject) {
+      const selected = this.getSelected()
+      if (selected) {
+        const dx = selected.x - this.dragObjStartX
+        const dy = selected.y - this.dragObjStartY
+        if (dx !== 0 || dy !== 0) {
+          this.history.push({
+            type: 'move',
+            objectId: selected.id,
+            dx,
+            dy,
+            prevX: this.dragObjStartX,
+            prevY: this.dragObjStartY,
+            nextX: selected.x,
+            nextY: selected.y,
+          })
+        }
+      }
+      this.isDraggingObject = false
+    }
+
+    if (this.isDraggingScaleHandle) {
+      const selected = this.getSelected()
+      if (
+        selected &&
+        (selected.displayWidth !== this.scaleStartWidth ||
+          selected.displayHeight !== this.scaleStartHeight)
+      ) {
+        const factor =
+          this.scaleStartWidth !== 0 ? selected.displayWidth / this.scaleStartWidth : 1
+        this.history.push({
+          type: 'scale',
+          objectId: selected.id,
+          factor,
+          prevScaleX: this.scaleStartScaleX,
+          prevScaleY: this.scaleStartScaleY,
+          prevDisplayWidth: this.scaleStartWidth,
+          prevDisplayHeight: this.scaleStartHeight,
+          nextScaleX: selected.scaleX,
+          nextScaleY: selected.scaleY,
+          nextDisplayWidth: selected.displayWidth,
+          nextDisplayHeight: selected.displayHeight,
+        })
+      }
+      this.isDraggingScaleHandle = false
+    }
   }
 
   private onKeyDown(event: KeyboardEvent): void {
@@ -595,6 +691,12 @@ export class LevelEditorScene extends Phaser.Scene {
       return
     }
 
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
+      event.preventDefault()
+      this.undo()
+      return
+    }
+
     if (!selected) return
 
     const step = event.shiftKey ? 10 : 1
@@ -602,20 +704,20 @@ export class LevelEditorScene extends Phaser.Scene {
     switch (event.key) {
       case 'ArrowLeft':
         event.preventDefault()
-        selected.x = snap(selected.x - step)
-        break
+        this.nudgeSelected(-step, 0)
+        return
       case 'ArrowRight':
         event.preventDefault()
-        selected.x = snap(selected.x + step)
-        break
+        this.nudgeSelected(step, 0)
+        return
       case 'ArrowUp':
         event.preventDefault()
-        selected.y = snap(selected.y - step)
-        break
+        this.nudgeSelected(0, -step)
+        return
       case 'ArrowDown':
         event.preventDefault()
-        selected.y = snap(selected.y + step)
-        break
+        this.nudgeSelected(0, step)
+        return
       case '+':
       case '=':
         this.scaleSelected(1.05)
@@ -631,8 +733,17 @@ export class LevelEditorScene extends Phaser.Scene {
       default:
         return
     }
+  }
 
-    this.updateObjectVisuals(selected)
+  private undo(): void {
+    const reversed = this.history.undo((id) => this.editorObjects.find((o) => o.id === id))
+    if (!reversed) return
+
+    this.selectObject(reversed.objectId)
+    const obj = this.getSelected()
+    if (obj) {
+      this.updateObjectVisuals(obj)
+    }
     this.updatePropertyPanel()
   }
 

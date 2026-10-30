@@ -42,7 +42,31 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
           height: CHARACTER_SIZE.height,
           displayWidth: obj.displayWidth,
           displayHeight: obj.displayHeight,
-          speed: obj.speed ?? 240,
+          speed: typeof obj.speed === 'object' && obj.speed !== null
+            ? {
+                acceleration: obj.speed.acceleration,
+                frictionAcceleration: obj.speed.frictionAcceleration ?? 1200,
+                turnaroundAcceleration: obj.speed.turnaroundAcceleration,
+                maxSpeed: obj.speed.maxSpeed,
+              }
+            : obj.speed !== undefined
+              ? obj.speed
+              : {
+                  acceleration: 800,
+                  frictionAcceleration: 1200,
+                  turnaroundAcceleration: 1600,
+                  maxSpeed: 240,
+                },
+          maxSpeed: typeof obj.speed === 'object' && obj.speed !== null
+            ? obj.speed.maxSpeed
+            : (typeof obj.speed === 'number' ? obj.speed : 240),
+          acceleration: typeof obj.speed === 'object' && obj.speed !== null ? obj.speed.acceleration : 800,
+          frictionAcceleration: typeof obj.speed === 'object' && obj.speed !== null
+            ? (obj.speed.frictionAcceleration ?? 1200)
+            : 1200,
+          turnaroundAcceleration: typeof obj.speed === 'object' && obj.speed !== null ? obj.speed.turnaroundAcceleration : 1600,
+          vx: 0,
+          vy: 0,
           health: obj.maxHealth ?? MAX_HEALTH,
           maxHealth: obj.maxHealth ?? MAX_HEALTH,
           alive: true,

@@ -60,5 +60,33 @@ describe('room1Serializer', () => {
     expect(source).toContain("speed: 130")
     expect(source).toContain("maxHealth: 150")
   })
+
+  it('serializes structured player speed with acceleration, friction acceleration, turnaround acceleration and max speed', () => {
+    const objects: RoomObjectConfig[] = [
+      {
+        id: 'player',
+        role: 'player',
+        x: 250,
+        y: 205,
+        displayWidth: 176,
+        displayHeight: 176,
+        speed: {
+          acceleration: 800,
+          frictionAcceleration: 1200,
+          turnaroundAcceleration: 1600,
+          maxSpeed: 240,
+        },
+        maxHealth: 100,
+      },
+    ]
+
+    const source = generateRoom1Source(objects)
+    expect(source).toContain('export interface PlayerSpeedConfig')
+    expect(source).toContain('acceleration: 800')
+    expect(source).toContain('frictionAcceleration: 1200')
+    expect(source).not.toContain('fractionAcceleration')
+    expect(source).toContain('turnaroundAcceleration: 1600')
+    expect(source).toContain('maxSpeed: 240')
+  })
 })
 

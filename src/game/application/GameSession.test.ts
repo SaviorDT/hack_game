@@ -27,6 +27,14 @@ function stateOf(session: GameSession, id: string): CharacterState {
   return getMutableWorldObjectState<CharacterState>(worldObject)
 }
 
+function playerMaxSpeed(session: GameSession): number {
+  const player = stateOf(session, 'player')
+  if (typeof player.speed === 'object' && player.speed !== null) {
+    return (player.speed as { maxSpeed: number }).maxSpeed
+  }
+  return typeof player.speed === 'number' ? player.speed : 240
+}
+
 function runFor(session: GameSession, ms: number): void {
   const frames = Math.round(ms / SIMULATION_TICK_MS)
   for (let frame = 0; frame < frames; frame += 1) {
@@ -35,14 +43,19 @@ function runFor(session: GameSession, ms: number): void {
 }
 
 describe('player movement', () => {
-  it('moves at the player speed while a movement key is held', () => {
+  it('accelerates up to max speed while a movement key is held', () => {
     const session = newSession()
-    const startX = stateOf(session, 'player').x
+    const maxSpeed = playerMaxSpeed(session)
     session.keyDown('d')
 
     runFor(session, 1000)
 
-    expect(stateOf(session, 'player').x - startX).toBeCloseTo(240, 0)
+    const player = stateOf(session, 'player')
+    expect(player.vx).toBe(maxSpeed)
+    const midX = player.x
+
+    runFor(session, 200)
+    expect(stateOf(session, 'player').x - midX).toBeCloseTo(maxSpeed * 0.2, 0)
   })
 
   it('does not leave the room', () => {
@@ -57,16 +70,49 @@ describe('player movement', () => {
     expect(player.y - player.height / 2).toBeGreaterThanOrEqual(ROOM_LAYOUT.top)
   })
 
-  it('keeps moving at a quarter speed in command mode after Enter while holding a key', () => {
+  it('keeps moving at a slowed time scale in command mode after Enter while holding a key', () => {
     const session = newSession()
-    const startX = stateOf(session, 'player').x
+    const maxSpeed = playerMaxSpeed(session)
     session.keyDown('d')
+    runFor(session, 1000)
+    const startX = stateOf(session, 'player').x
     session.toggleInputMode()
     session.keyUp('d')
 
     runFor(session, 1000)
 
-    expect(stateOf(session, 'player').x - startX).toBeCloseTo(60, 0)
+    expect(stateOf(session, 'player').x - startX).toBeCloseTo(maxSpeed * 0.25, 0)
+  })
+
+  it('decelerates to a stop via friction acceleration when movement keys are released', () => {
+    const session = newSession()
+    const maxSpeed = playerMaxSpeed(session)
+    session.keyDown('d')
+    runFor(session, 1000)
+    expect(stateOf(session, 'player').vx).toBe(maxSpeed)
+
+    session.keyUp('d')
+    runFor(session, 100)
+    expect((stateOf(session, 'player').vx as number)).toBeLessThan(maxSpeed)
+
+    runFor(session, 1000)
+    expect(stateOf(session, 'player').vx).toBe(0)
+  })
+
+  it('reverses direction with turnaround acceleration', () => {
+    const session = newSession()
+    const maxSpeed = playerMaxSpeed(session)
+    session.keyDown('d')
+    runFor(session, 1000)
+    expect(stateOf(session, 'player').vx).toBe(maxSpeed)
+
+    session.keyUp('d')
+    session.keyDown('a')
+
+    runFor(session, 80)
+    expect((stateOf(session, 'player').vx as number)).toBeLessThan(maxSpeed)
+    runFor(session, 1500)
+    expect((stateOf(session, 'player').vx as number)).toBeLessThan(0)
   })
 
   it('stops after returning to movement mode', () => {
@@ -206,11 +252,15 @@ describe('commands', () => {
 describe('render position', () => {
   it('blends between ticks so motion stays smooth at sub-tick frame times', () => {
     const session = newSession()
-    const startX = stateOf(session, 'player').x
+    const player = stateOf(session, 'player')
+    const startX = player.x
     session.keyDown('d')
 
     session.update(SIMULATION_TICK_MS * 1.5)
 
-    expect(session.getRenderPosition('player')?.x).toBeCloseTo(startX + 2, 3)
+    const renderPos = session.getRenderPosition('player')?.x
+    expect(renderPos).toBeDefined()
+    expect(renderPos!).toBeGreaterThan(startX)
+    expect(renderPos!).toBeLessThan(player.x)
   })
 })

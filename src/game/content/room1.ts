@@ -1,3 +1,11 @@
+export interface PlayerSpeedConfig {
+  acceleration: number
+  frictionAcceleration: number
+  turnaroundAcceleration: number
+  maxSpeed: number
+  [key: string]: number
+}
+
 export interface RoomObjectConfig {
   id: string
   role: 'player' | 'guard' | 'weapon'
@@ -5,7 +13,7 @@ export interface RoomObjectConfig {
   y: number
   displayWidth: number
   displayHeight: number
-  speed?: number
+  speed?: number | PlayerSpeedConfig
   maxHealth?: number
 }
 
@@ -13,11 +21,16 @@ export const ROOM1_OBJECTS: RoomObjectConfig[] = [
   {
     id: "player",
     role: "player",
-    x: 1141,
-    y: 326,
-    displayWidth: 123,
-    displayHeight: 123,
-    speed: 240,
+    x: 250,
+    y: 205,
+    displayWidth: 176,
+    displayHeight: 176,
+    speed: {
+      acceleration: 5000,
+      frictionAcceleration: 3000,
+      turnaroundAcceleration: 1600,
+      maxSpeed: 1000,
+    },
     maxHealth: 100,
   },
   {
@@ -36,16 +49,6 @@ export const ROOM1_OBJECTS: RoomObjectConfig[] = [
     displayWidth: 176,
     displayHeight: 176,
     speed: 210,
-    maxHealth: 100,
-  },
-  {
-    id: "guard-2",
-    role: "guard",
-    x: 1233,
-    y: 525,
-    displayWidth: 176,
-    displayHeight: 176,
-    speed: 120,
     maxHealth: 100,
   },
 ]

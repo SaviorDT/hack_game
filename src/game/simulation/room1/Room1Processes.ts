@@ -1,15 +1,18 @@
 import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS, PROCESS_IDS } from '../../content/room1Constants.ts'
+import type { PlayerSpeedConfig } from '../../content/room1.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { AabbCollisionWorld } from '../../domain/CollisionWorld.ts'
 import { CombatService } from '../../domain/CombatService.ts'
 import { weaponFor } from '../../domain/WeaponDefinition.ts'
-import { getMutableWorldObjectState } from '../../domain/WorldObjectState.ts'
+import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { ProcessTickContext, WorldObjectProcess } from '../TickSimulationEngine.ts'
 
 interface PlayerState extends CharacterState {
-  speed: number
+  speed: number | PlayerSpeedConfig
   moveX: number
   moveY: number
+  vx: number
+  vy: number
 }
 
 interface DaggerState extends Record<string, string | number | boolean | null> {
@@ -40,13 +43,13 @@ const ROOM_BOUNDS = {
 const collision = new AabbCollisionWorld()
 const combat = new CombatService(collision)
 
-function stateOf<T extends Record<string, string | number | boolean | null>>(
+function stateOf<T extends MutableWorldObjectState>(
   context: ProcessTickContext,
 ): T {
   return getMutableWorldObjectState<T>(context.worldObject)
 }
 
-function objectState<T extends Record<string, string | number | boolean | null>>(
+function objectState<T extends MutableWorldObjectState>(
   context: ProcessTickContext,
   id: string,
 ): T | undefined {
@@ -95,10 +98,81 @@ export class PlayerMovementProcess implements WorldObjectProcess {
       return
     }
 
-    const distance = (player.speed * context.tickDurationMs) / 1000
-    player.x += player.moveX * distance
-    player.y += player.moveY * distance
-    Object.assign(player, collision.clampToBounds(boxOf(player), ROOM_BOUNDS))
+    const dt = context.tickDurationMs / 1000
+
+    if (typeof player.speed === 'object' && player.speed !== null) {
+      const speedConfig = player.speed as PlayerSpeedConfig
+      const maxSpeed = speedConfig.maxSpeed
+      const accel = speedConfig.acceleration
+      const friction = speedConfig.frictionAcceleration ?? accel
+      const turnaround = speedConfig.turnaroundAcceleration ?? (accel * 2)
+
+      let vx = (player.vx as number) ?? 0
+      let vy = (player.vy as number) ?? 0
+
+      // X axis
+      const inputX = player.moveX
+      if (inputX !== 0) {
+        const targetVx = inputX * maxSpeed
+        const isOpposing = (inputX > 0 && vx < 0) || (inputX < 0 && vx > 0)
+        const currentAccel = isOpposing ? turnaround : accel
+        if (inputX > 0) {
+          vx = Math.min(targetVx, vx + currentAccel * dt)
+        } else {
+          vx = Math.max(targetVx, vx - currentAccel * dt)
+        }
+      } else {
+        if (vx > 0) {
+          vx = Math.max(0, vx - friction * dt)
+        } else if (vx < 0) {
+          vx = Math.min(0, vx + friction * dt)
+        }
+      }
+
+      // Y axis
+      const inputY = player.moveY
+      if (inputY !== 0) {
+        const targetVy = inputY * maxSpeed
+        const isOpposing = (inputY > 0 && vy < 0) || (inputY < 0 && vy > 0)
+        const currentAccel = isOpposing ? turnaround : accel
+        if (inputY > 0) {
+          vy = Math.min(targetVy, vy + currentAccel * dt)
+        } else {
+          vy = Math.max(targetVy, vy - currentAccel * dt)
+        }
+      } else {
+        if (vy > 0) {
+          vy = Math.max(0, vy - friction * dt)
+        } else if (vy < 0) {
+          vy = Math.min(0, vy + friction * dt)
+        }
+      }
+
+      const nextBox = {
+        x: player.x + vx * dt,
+        y: player.y + vy * dt,
+        width: player.width,
+        height: player.height,
+      }
+      const clamped = collision.clampToBounds(nextBox, ROOM_BOUNDS)
+      if (clamped.x !== nextBox.x) {
+        vx = 0
+      }
+      if (clamped.y !== nextBox.y) {
+        vy = 0
+      }
+
+      player.x = clamped.x
+      player.y = clamped.y
+      player.vx = vx
+      player.vy = vy
+    } else {
+      const speed = typeof player.speed === 'number' ? player.speed : 240
+      const distance = (speed * context.tickDurationMs) / 1000
+      player.x += player.moveX * distance
+      player.y += player.moveY * distance
+      Object.assign(player, collision.clampToBounds(boxOf(player), ROOM_BOUNDS))
+    }
 
     const exit = context.state.rooms
       .find((room) => room.id === ROOM_IDS.first)
@@ -168,6 +242,8 @@ export class GuardResponseProcess implements WorldObjectProcess {
     if (!player.alive) {
       player.moveX = 0
       player.moveY = 0
+      player.vx = 0
+      player.vy = 0
       context.state.outcome = 'game-over'
     }
   }

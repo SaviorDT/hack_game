@@ -1,4 +1,6 @@
-export interface CharacterState extends Record<string, string | number | boolean | null> {
+import type { MutableWorldObjectState } from './WorldObjectState.ts'
+
+export interface CharacterState extends MutableWorldObjectState {
   x: number
   y: number
   width: number

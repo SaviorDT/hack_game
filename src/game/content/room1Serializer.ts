@@ -15,7 +15,17 @@ export function generateRoom1Source(objects: RoomObjectConfig[]): string {
       `    displayHeight: ${Math.round(obj.displayHeight)},`,
     ]
     if (obj.speed !== undefined) {
-      lines.push(`    speed: ${obj.speed},`)
+      if (typeof obj.speed === 'number') {
+        lines.push(`    speed: ${obj.speed},`)
+      } else {
+        const speed = obj.speed
+        lines.push('    speed: {')
+        lines.push(`      acceleration: ${speed.acceleration},`)
+        lines.push(`      frictionAcceleration: ${speed.frictionAcceleration},`)
+        lines.push(`      turnaroundAcceleration: ${speed.turnaroundAcceleration},`)
+        lines.push(`      maxSpeed: ${speed.maxSpeed},`)
+        lines.push('    },')
+      }
     }
     if (obj.maxHealth !== undefined) {
       lines.push(`    maxHealth: ${obj.maxHealth},`)
@@ -23,14 +33,22 @@ export function generateRoom1Source(objects: RoomObjectConfig[]): string {
     return `  {\n${lines.join('\n')}\n  },`
   })
 
-  return `export interface RoomObjectConfig {
+  return `export interface PlayerSpeedConfig {
+  acceleration: number
+  frictionAcceleration: number
+  turnaroundAcceleration: number
+  maxSpeed: number
+  [key: string]: number
+}
+
+export interface RoomObjectConfig {
   id: string
   role: 'player' | 'guard' | 'weapon'
   x: number
   y: number
   displayWidth: number
   displayHeight: number
-  speed?: number
+  speed?: number | PlayerSpeedConfig
   maxHealth?: number
 }
 
@@ -39,4 +57,3 @@ ${serializedObjects.join('\n')}
 ]
 `
 }
-

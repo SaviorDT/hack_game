@@ -361,6 +361,56 @@ describe('levelEditorHistory', () => {
       expect(obj.maxHealth).toBe(100)
     })
 
+    it('undoes acceleration, turnaround, and friction acceleration property changes', () => {
+      const history = new EditorHistory()
+      const speedConfig = {
+        acceleration: 800,
+        frictionAcceleration: 1200,
+        turnaroundAcceleration: 1600,
+        maxSpeed: 240,
+        [Symbol.iterator]: undefined as any,
+      }
+      const obj = createTestObject({
+        speed: speedConfig,
+        acceleration: 800,
+        frictionAcceleration: 1200,
+        turnaroundAcceleration: 1600,
+        maxSpeed: 240,
+      })
+
+      const accelChange: PropertyChange = {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'acceleration',
+        delta: 200,
+        prevValue: 800,
+        nextValue: 1000,
+      }
+      applyChange(obj, accelChange)
+      expect(obj.acceleration).toBe(1000)
+      expect(obj.speed && typeof obj.speed === 'object' ? obj.speed.acceleration : 0).toBe(1000)
+      history.push(accelChange)
+
+      const turnChange: PropertyChange = {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'turnaroundAcceleration',
+        delta: -400,
+        prevValue: 1600,
+        nextValue: 1200,
+      }
+      applyChange(obj, turnChange)
+      expect(obj.turnaroundAcceleration).toBe(1200)
+      history.push(turnChange)
+
+      history.undo((id) => (id === obj.id ? obj : undefined))
+      expect(obj.turnaroundAcceleration).toBe(1600)
+
+      history.undo((id) => (id === obj.id ? obj : undefined))
+      expect(obj.acceleration).toBe(800)
+      expect(obj.speed && typeof obj.speed === 'object' ? obj.speed.acceleration : 0).toBe(800)
+    })
+
     it('undoes multiple changes across multiple objects in LIFO order', () => {
       const history = new EditorHistory()
       const player = createTestObject({ id: 'player', x: 50, y: 50 })

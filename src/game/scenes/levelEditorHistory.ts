@@ -1,3 +1,5 @@
+import type { PlayerSpeedConfig } from '../content/room1.ts'
+
 export interface ScalableMovableObject {
   id: string
   x: number
@@ -9,7 +11,11 @@ export interface ScalableMovableObject {
   scaleX: number
   scaleY: number
   maxHealth?: number
-  speed?: number
+  speed?: number | PlayerSpeedConfig
+  maxSpeed?: number
+  acceleration?: number
+  frictionAcceleration?: number
+  turnaroundAcceleration?: number
 }
 
 export interface MoveChange {
@@ -37,10 +43,18 @@ export interface ScaleChange {
   readonly nextDisplayHeight?: number
 }
 
+export type CharacterProperty =
+  | 'maxHealth'
+  | 'speed'
+  | 'maxSpeed'
+  | 'acceleration'
+  | 'frictionAcceleration'
+  | 'turnaroundAcceleration'
+
 export interface PropertyChange {
   readonly type: 'property'
   readonly objectId: string
-  readonly property: 'maxHealth' | 'speed'
+  readonly property: CharacterProperty
   readonly delta: number
   readonly prevValue: number
   readonly nextValue: number
@@ -174,6 +188,12 @@ export function applyChange(target: ScalableMovableObject, change: EditorChange)
     }
     case 'property': {
       target[change.property] = change.nextValue
+      if (typeof target.speed === 'object' && target.speed !== null) {
+        if (change.property === 'maxSpeed') target.speed.maxSpeed = change.nextValue
+        if (change.property === 'acceleration') target.speed.acceleration = change.nextValue
+        if (change.property === 'frictionAcceleration') target.speed.frictionAcceleration = change.nextValue
+        if (change.property === 'turnaroundAcceleration') target.speed.turnaroundAcceleration = change.nextValue
+      }
       break
     }
   }

@@ -8,6 +8,8 @@ export interface ScalableMovableObject {
   baseHeight: number
   scaleX: number
   scaleY: number
+  maxHealth?: number
+  speed?: number
 }
 
 export interface MoveChange {
@@ -35,12 +37,22 @@ export interface ScaleChange {
   readonly nextDisplayHeight?: number
 }
 
-export type EditorChange = MoveChange | ScaleChange
+export interface PropertyChange {
+  readonly type: 'property'
+  readonly objectId: string
+  readonly property: 'maxHealth' | 'speed'
+  readonly delta: number
+  readonly prevValue: number
+  readonly nextValue: number
+}
+
+export type EditorChange = MoveChange | ScaleChange | PropertyChange
 
 /**
  * Defines the reverse of any editor change.
  * e.g., move(+dx, +dy) -> move(-dx, -dy)
  *       scale(*factor)  -> scale(*(1 / factor))
+ *       property(+delta)-> property(-delta)
  */
 export function invertChange(change: EditorChange): EditorChange {
   switch (change.type) {
@@ -68,6 +80,15 @@ export function invertChange(change: EditorChange): EditorChange {
         nextScaleY: change.prevScaleY,
         nextDisplayWidth: change.prevDisplayWidth,
         nextDisplayHeight: change.prevDisplayHeight,
+      }
+    case 'property':
+      return {
+        type: 'property',
+        objectId: change.objectId,
+        property: change.property,
+        delta: -change.delta,
+        prevValue: change.nextValue,
+        nextValue: change.prevValue,
       }
   }
 }
@@ -110,6 +131,10 @@ export function applyChange(target: ScalableMovableObject, change: EditorChange)
         target.displayWidth = Math.max(16, Math.round(target.baseWidth * target.scaleX))
         target.displayHeight = Math.max(16, Math.round(target.baseHeight * target.scaleY))
       }
+      break
+    }
+    case 'property': {
+      target[change.property] = change.nextValue
       break
     }
   }

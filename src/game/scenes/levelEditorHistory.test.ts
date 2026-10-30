@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   type EditorChange,
   type MoveChange,
+  type PropertyChange,
   type ScalableMovableObject,
   type ScaleChange,
   EditorHistory,
@@ -109,9 +110,54 @@ describe('levelEditorHistory', () => {
 
       expect(invertChange(invertChange(scale))).toEqual(scale)
     })
+
+    it('defines the reverse of a property change by negating delta and swapping prev/next values', () => {
+      const propChange: PropertyChange = {
+        type: 'property',
+        objectId: 'player',
+        property: 'maxHealth',
+        delta: 10,
+        prevValue: 100,
+        nextValue: 110,
+      }
+
+      const reverse = invertChange(propChange)
+
+      expect(reverse).toEqual({
+        type: 'property',
+        objectId: 'player',
+        property: 'maxHealth',
+        delta: -10,
+        prevValue: 110,
+        nextValue: 100,
+      })
+      expect(invertChange(reverse)).toEqual(propChange)
+    })
   })
 
   describe('applyChange', () => {
+    it('applies property change to target object', () => {
+      const obj = createTestObject({ maxHealth: 100, speed: 240 })
+      applyChange(obj, {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'maxHealth',
+        delta: 20,
+        prevValue: 100,
+        nextValue: 120,
+      })
+      expect(obj.maxHealth).toBe(120)
+
+      applyChange(obj, {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'speed',
+        delta: -30,
+        prevValue: 240,
+        nextValue: 210,
+      })
+      expect(obj.speed).toBe(210)
+    })
     it('applies move change by delta when exact positions are omitted', () => {
       const obj = createTestObject({ x: 50, y: 50 })
       applyChange(obj, { type: 'move', objectId: 'test-obj', dx: 10, dy: -20 })
@@ -232,6 +278,46 @@ describe('levelEditorHistory', () => {
 
       expect(obj.displayWidth).toBe(176)
       expect(obj.scaleX).toBe(1)
+    })
+
+    it('undoes a property change (maxHealth and speed) by applying its reverse', () => {
+      const history = new EditorHistory()
+      const obj = createTestObject({ maxHealth: 100, speed: 240 })
+
+      const healthChange: PropertyChange = {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'maxHealth',
+        delta: 20,
+        prevValue: 100,
+        nextValue: 120,
+      }
+      applyChange(obj, healthChange)
+      expect(obj.maxHealth).toBe(120)
+      history.push(healthChange)
+
+      const speedChange: PropertyChange = {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'speed',
+        delta: -40,
+        prevValue: 240,
+        nextValue: 200,
+      }
+      applyChange(obj, speedChange)
+      expect(obj.speed).toBe(200)
+      history.push(speedChange)
+
+      // Undo speed change
+      const reversedSpeed = history.undo((id) => (id === obj.id ? obj : undefined))
+      expect(reversedSpeed?.type).toBe('property')
+      expect(obj.speed).toBe(240)
+      expect(obj.maxHealth).toBe(120)
+
+      // Undo health change
+      const reversedHealth = history.undo((id) => (id === obj.id ? obj : undefined))
+      expect(reversedHealth?.type).toBe('property')
+      expect(obj.maxHealth).toBe(100)
     })
 
     it('undoes multiple changes across multiple objects in LIFO order', () => {

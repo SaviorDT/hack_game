@@ -52,6 +52,8 @@ export class LevelEditorScene extends Phaser.Scene {
   private doorLabel: Phaser.GameObjects.Text | undefined
   private panelContainer: Phaser.GameObjects.Container | undefined
   private panelFields: Map<string, Phaser.GameObjects.Text> = new Map()
+  private statsElements: Phaser.GameObjects.Text[] = []
+  private naStatsText: Phaser.GameObjects.Text | undefined
   private headerText: Phaser.GameObjects.Text | undefined
   private coordsText!: Phaser.GameObjects.Text
   private isDraggingObject = false
@@ -89,6 +91,8 @@ export class LevelEditorScene extends Phaser.Scene {
     this.editorObjects = []
     this.selectedId = null
     this.panelFields.clear()
+    this.statsElements = []
+    this.naStatsText = undefined
     this.history.clear()
 
     // Title
@@ -216,6 +220,8 @@ export class LevelEditorScene extends Phaser.Scene {
       }
       this.editorObjects = []
       this.panelFields.clear()
+      this.statsElements = []
+      this.naStatsText = undefined
     })
   }
 
@@ -240,6 +246,9 @@ export class LevelEditorScene extends Phaser.Scene {
     if (!textureKey) return
 
     const isWeapon = worldObject.metadata.role === 'weapon'
+    const isCharacter = worldObject.metadata.role === 'player' || worldObject.metadata.role === 'guard'
+    const maxHealth = isCharacter && typeof state.maxHealth === 'number' ? state.maxHealth : (isCharacter ? 100 : undefined)
+    const speed = isCharacter && typeof state.speed === 'number' ? state.speed : undefined
     const baseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_SIZE.width
     const baseHeight = isWeapon ? DAGGER_SIZE.height : CHARACTER_SIZE.height
     const displayWidth = isWeapon ? 72 : 176
@@ -294,6 +303,8 @@ export class LevelEditorScene extends Phaser.Scene {
       baseHeight,
       scaleX: displayWidth / baseWidth,
       scaleY: displayHeight / baseHeight,
+      maxHealth,
+      speed,
     }
 
     this.editorObjects.push(editorObject)
@@ -306,19 +317,20 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const items: Phaser.GameObjects.GameObject[] = [bg]
 
-    // Vertical dividers between 4 sections
+    // Vertical dividers between 5 sections
     const dividerGraphics = this.add.graphics()
     dividerGraphics.lineStyle(2, 0x333333, 1)
-    dividerGraphics.lineBetween(380, 20, 380, PANEL_HEIGHT - 20)
-    dividerGraphics.lineBetween(920, 20, 920, PANEL_HEIGHT - 20)
-    dividerGraphics.lineBetween(1340, 20, 1340, PANEL_HEIGHT - 20)
+    dividerGraphics.lineBetween(280, 20, 280, PANEL_HEIGHT - 20)
+    dividerGraphics.lineBetween(680, 20, 680, PANEL_HEIGHT - 20)
+    dividerGraphics.lineBetween(1100, 20, 1100, PANEL_HEIGHT - 20)
+    dividerGraphics.lineBetween(1420, 20, 1420, PANEL_HEIGHT - 20)
     items.push(dividerGraphics)
 
     // ─── Section 1: Object Selector ───
     const section1Title = this.add
-      .text(190, 24, 'SELECT OBJECT', {
+      .text(140, 24, 'SELECT OBJECT', {
         fontFamily: FONT_FAMILY,
-        fontSize: 16,
+        fontSize: 14,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
@@ -327,12 +339,12 @@ export class LevelEditorScene extends Phaser.Scene {
     let buttonY = 68
     for (const editorObject of this.editorObjects) {
       const btn = this.add
-        .text(190, buttonY, editorObject.id.toUpperCase(), {
+        .text(140, buttonY, editorObject.id.toUpperCase(), {
           fontFamily: FONT_FAMILY,
-          fontSize: 15,
+          fontSize: 14,
           color: TEXT_COLOR,
           backgroundColor: '#2a2a2a',
-          padding: { x: 20, y: 8 },
+          padding: { x: 18, y: 8 },
         })
         .setOrigin(0.5, 0)
         .setInteractive({ useHandCursor: true })
@@ -345,11 +357,11 @@ export class LevelEditorScene extends Phaser.Scene {
       buttonY += 56
     }
 
-    // ─── Section 2: Properties Readout ───
+    // ─── Section 2: Transform Readout ───
     const section2Title = this.add
-      .text(650, 24, 'PROPERTIES', {
+      .text(480, 24, 'TRANSFORM', {
         fontFamily: FONT_FAMILY,
-        fontSize: 16,
+        fontSize: 14,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
@@ -363,7 +375,7 @@ export class LevelEditorScene extends Phaser.Scene {
       const fY = 75 + i * 56
 
       const label = this.add
-        .text(420, fY, `${field}:`, {
+        .text(310, fY, `${field}:`, {
           fontFamily: FONT_FAMILY,
           fontSize: 14,
           color: DIM_COLOR,
@@ -371,7 +383,7 @@ export class LevelEditorScene extends Phaser.Scene {
         .setOrigin(0, 0)
 
       const val = this.add
-        .text(610, fY, '--', {
+        .text(460, fY, '--', {
           fontFamily: FONT_FAMILY,
           fontSize: 14,
           color: TEXT_COLOR,
@@ -387,7 +399,7 @@ export class LevelEditorScene extends Phaser.Scene {
       const fY = 75 + i * 56
 
       const label = this.add
-        .text(670, fY, `${field}:`, {
+        .text(490, fY, `${field}:`, {
           fontFamily: FONT_FAMILY,
           fontSize: 14,
           color: DIM_COLOR,
@@ -395,7 +407,7 @@ export class LevelEditorScene extends Phaser.Scene {
         .setOrigin(0, 0)
 
       const val = this.add
-        .text(880, fY, '--', {
+        .text(650, fY, '--', {
           fontFamily: FONT_FAMILY,
           fontSize: 14,
           color: TEXT_COLOR,
@@ -406,32 +418,142 @@ export class LevelEditorScene extends Phaser.Scene {
       this.panelFields.set(`val_${field}`, val)
     }
 
-    // ─── Section 3: Scale & Nudge ───
+    // ─── Section 3: Character Stats (Editable for player & guard) ───
     const section3Title = this.add
-      .text(1130, 24, 'SCALE & NUDGE', {
+      .text(890, 24, 'CHARACTER STATS', {
         fontFamily: FONT_FAMILY,
-        fontSize: 16,
+        fontSize: 14,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
     items.push(section3Title)
 
-    const scalePlusBtn = this.createPanelButton(1040, 72, 'SCALE +', () =>
+    this.naStatsText = this.add
+      .text(890, 115, '(Weapon — no stats)', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 13,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0.5, 0)
+      .setVisible(false)
+    items.push(this.naStatsText)
+
+    this.statsElements = []
+
+    // max_health row
+    const healthLabel = this.add
+      .text(705, 72, 'max_health:', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 14,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0, 0)
+
+    const healthVal = this.add
+      .text(910, 72, '--', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 14,
+        color: ACCENT_COLOR,
+        backgroundColor: '#2a2a2a',
+        padding: { x: 8, y: 3 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+    healthVal.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.promptProperty('maxHealth')
+    })
+
+    const healthMinusBtn = this.createPanelButton(945, 69, '−', (pointer) => {
+      this.adjustProperty('maxHealth', pointer.event?.shiftKey ? -50 : -10)
+    })
+    const healthPlusBtn = this.createPanelButton(995, 69, '+', (pointer) => {
+      this.adjustProperty('maxHealth', pointer.event?.shiftKey ? 50 : 10)
+    })
+
+    this.panelFields.set('val_maxHealth', healthVal)
+    this.statsElements.push(healthLabel, healthVal, healthMinusBtn, healthPlusBtn)
+    items.push(healthLabel, healthVal, healthMinusBtn, healthPlusBtn)
+
+    // speed row
+    const speedLabel = this.add
+      .text(705, 128, 'speed:', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 14,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0, 0)
+
+    const speedVal = this.add
+      .text(910, 128, '--', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 14,
+        color: ACCENT_COLOR,
+        backgroundColor: '#2a2a2a',
+        padding: { x: 8, y: 3 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+    speedVal.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.promptProperty('speed')
+    })
+
+    const speedMinusBtn = this.createPanelButton(945, 125, '−', (pointer) => {
+      this.adjustProperty('speed', pointer.event?.shiftKey ? -50 : -10)
+    })
+    const speedPlusBtn = this.createPanelButton(995, 125, '+', (pointer) => {
+      this.adjustProperty('speed', pointer.event?.shiftKey ? 50 : 10)
+    })
+
+    this.panelFields.set('val_speed', speedVal)
+    this.statsElements.push(speedLabel, speedVal, speedMinusBtn, speedPlusBtn)
+    items.push(speedLabel, speedVal, speedMinusBtn, speedPlusBtn)
+
+    // Stats hints
+    const statHint1 = this.add
+      .text(890, 180, 'Click +/- (10) · Shift (50)', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 12,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0.5, 0)
+    const statHint2 = this.add
+      .text(890, 208, 'Click number to set exact', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 12,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0.5, 0)
+    this.statsElements.push(statHint1, statHint2)
+    items.push(statHint1, statHint2)
+
+    // ─── Section 4: Scale & Nudge ───
+    const section4Title = this.add
+      .text(1260, 24, 'SCALE & NUDGE', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 14,
+        color: ACCENT_COLOR,
+      })
+      .setOrigin(0.5, 0)
+    items.push(section4Title)
+
+    const scalePlusBtn = this.createPanelButton(1200, 72, 'SCALE +', () =>
       this.scaleSelected(1.1),
     )
-    const scaleMinusBtn = this.createPanelButton(1220, 72, 'SCALE -', () =>
+    const scaleMinusBtn = this.createPanelButton(1320, 72, 'SCALE -', () =>
       this.scaleSelected(1 / 1.1),
     )
     items.push(scalePlusBtn, scaleMinusBtn)
 
     const hints = [
-      'Nudge: Arrow keys (Shift: 10px)',
-      'Scale: +/- keys or corner handle',
+      'Nudge: Arrow keys',
+      'Shift: 10px step',
       'Undo: Ctrl+Z',
     ]
     for (let i = 0; i < hints.length; i++) {
       const hint = this.add
-        .text(1130, 138 + i * 36, hints[i], {
+        .text(1260, 138 + i * 34, hints[i], {
           fontFamily: FONT_FAMILY,
           fontSize: 13,
           color: DIM_COLOR,
@@ -440,22 +562,22 @@ export class LevelEditorScene extends Phaser.Scene {
       items.push(hint)
     }
 
-    // ─── Section 4: Export ───
-    const section4Title = this.add
-      .text(1534, 24, 'EXPORT', {
+    // ─── Section 5: Export ───
+    const section5Title = this.add
+      .text(1574, 24, 'EXPORT', {
         fontFamily: FONT_FAMILY,
-        fontSize: 16,
+        fontSize: 14,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
     const exportDesc = this.add
-      .text(1534, 75, 'Print code to console:', {
+      .text(1574, 75, 'Print code to console:', {
         fontFamily: FONT_FAMILY,
         fontSize: 13,
         color: DIM_COLOR,
       })
       .setOrigin(0.5, 0)
-    items.push(section4Title, exportDesc)
+    items.push(section5Title, exportDesc)
 
     this.panelContainer = this.add.container(PANEL_X, PANEL_Y, items).setDepth(40)
   }
@@ -464,7 +586,7 @@ export class LevelEditorScene extends Phaser.Scene {
     x: number,
     y: number,
     text: string,
-    onClick: () => void,
+    onClick: (pointer: Phaser.Input.Pointer) => void,
   ): Phaser.GameObjects.Text {
     const btn = this.add
       .text(x, y, text, {
@@ -472,22 +594,22 @@ export class LevelEditorScene extends Phaser.Scene {
         fontSize: 14,
         color: TEXT_COLOR,
         backgroundColor: '#333333',
-        padding: { x: 14, y: 8 },
+        padding: { x: 12, y: 7 },
       })
       .setOrigin(0.5, 0)
       .setInteractive({ useHandCursor: true })
     btn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       pointer.event?.stopPropagation?.()
-      onClick()
+      onClick(pointer)
     })
     return btn
   }
 
   private buildExportButton(): void {
-    const btnX = PANEL_X + 1534
+    const btnX = PANEL_X + 1574
     const btnY = PANEL_Y + 140
     const bg = this.add
-      .rectangle(0, 0, 280, 48, 0x2e7d32, 1)
+      .rectangle(0, 0, 260, 48, 0x2e7d32, 1)
       .setStrokeStyle(2, 0x66bb6a, 1)
     const label = this.add
       .text(0, 0, 'EXPORT TO CONSOLE', {
@@ -500,7 +622,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.exportButton = this.add
       .container(btnX, btnY, [bg, label])
       .setDepth(50)
-      .setSize(280, 48)
+      .setSize(260, 48)
       .setInteractive({ useHandCursor: true })
     this.exportButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       pointer.event?.stopPropagation?.()
@@ -540,6 +662,70 @@ export class LevelEditorScene extends Phaser.Scene {
     setField('height', Math.round(selected.displayHeight).toString())
     setField('scaleX', selected.scaleX.toFixed(2))
     setField('scaleY', selected.scaleY.toFixed(2))
+
+    const isCharacter = selected.maxHealth !== undefined && selected.speed !== undefined
+    if (isCharacter) {
+      setField('maxHealth', selected.maxHealth!.toString())
+      setField('speed', selected.speed!.toString())
+      this.statsElements.forEach((el) => el.setVisible(true))
+      this.naStatsText?.setVisible(false)
+    } else {
+      setField('maxHealth', '--')
+      setField('speed', '--')
+      this.statsElements.forEach((el) => el.setVisible(false))
+      this.naStatsText?.setVisible(true)
+    }
+  }
+
+  private adjustProperty(property: 'maxHealth' | 'speed', delta: number): void {
+    const selected = this.getSelected()
+    if (!selected || selected[property] === undefined) return
+
+    const prevValue = selected[property]!
+    const min = property === 'maxHealth' ? 1 : 10
+    const nextValue = Math.max(min, prevValue + delta)
+    if (nextValue === prevValue) return
+
+    selected[property] = nextValue
+    this.history.push({
+      type: 'property',
+      objectId: selected.id,
+      property,
+      delta: nextValue - prevValue,
+      prevValue,
+      nextValue,
+    })
+
+    this.updatePropertyPanel()
+  }
+
+  private promptProperty(property: 'maxHealth' | 'speed'): void {
+    const selected = this.getSelected()
+    if (!selected || selected[property] === undefined) return
+
+    const prevValue = selected[property]!
+    const label = property === 'maxHealth' ? 'max_health' : 'speed'
+    const input = window.prompt(`Enter new ${label} for ${selected.id}:`, prevValue.toString())
+    if (input === null) return
+
+    const parsed = parseInt(input.trim(), 10)
+    const min = property === 'maxHealth' ? 1 : 10
+    if (isNaN(parsed) || parsed < min) return
+
+    const nextValue = parsed
+    if (nextValue === prevValue) return
+
+    selected[property] = nextValue
+    this.history.push({
+      type: 'property',
+      objectId: selected.id,
+      property,
+      delta: nextValue - prevValue,
+      prevValue,
+      nextValue,
+    })
+
+    this.updatePropertyPanel()
   }
 
   private getSelected(): EditorObject | undefined {
@@ -842,7 +1028,7 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   private exportLayout(): void {
-    const output: Record<string, { x: number; y: number; displayWidth: number; displayHeight: number; scaleX: string; scaleY: string }> = {}
+    const output: Record<string, unknown> = {}
     for (const obj of this.editorObjects) {
       output[obj.id] = {
         x: Math.round(obj.x),
@@ -851,6 +1037,8 @@ export class LevelEditorScene extends Phaser.Scene {
         displayHeight: Math.round(obj.displayHeight),
         scaleX: obj.scaleX.toFixed(2),
         scaleY: obj.scaleY.toFixed(2),
+        ...(obj.maxHealth !== undefined ? { maxHealth: obj.maxHealth } : {}),
+        ...(obj.speed !== undefined ? { speed: obj.speed } : {}),
       }
     }
 
@@ -877,6 +1065,17 @@ export class LevelEditorScene extends Phaser.Scene {
         `//   ${obj.id}: setDisplaySize(${Math.round(obj.displayWidth)}, ${Math.round(obj.displayHeight)})` +
         `  [scale: ${obj.scaleX.toFixed(2)}x${obj.scaleY.toFixed(2)}]`,
       )
+    }
+
+    lines.push('')
+    lines.push('// Character attributes (speed, maxHealth):')
+
+    for (const obj of this.editorObjects) {
+      if (obj.maxHealth !== undefined || obj.speed !== undefined) {
+        lines.push(
+          `//   ${obj.id}: speed=${obj.speed}, maxHealth=${obj.maxHealth}`,
+        )
+      }
     }
 
     console.log(

@@ -133,9 +133,50 @@ describe('levelEditorHistory', () => {
       })
       expect(invertChange(reverse)).toEqual(propChange)
     })
+
+    it('defines the reverse of a spawn change as despawn change and vice versa', () => {
+      const snapshot = createTestObject({ id: 'guard-2' })
+      const spawnChange = {
+        type: 'spawn' as const,
+        objectId: 'guard-2',
+        role: 'guard' as const,
+        snapshot,
+      }
+
+      const reverse = invertChange(spawnChange)
+      expect(reverse).toEqual({
+        type: 'despawn',
+        objectId: 'guard-2',
+        role: 'guard',
+        snapshot,
+      })
+      expect(invertChange(reverse)).toEqual(spawnChange)
+    })
   })
 
   describe('applyChange', () => {
+    it('handles spawn and despawn without throwing or mutating target', () => {
+      const obj = createTestObject({ id: 'guard-2', x: 100 })
+      expect(() => {
+        applyChange(obj, {
+          type: 'spawn',
+          objectId: 'guard-2',
+          role: 'guard',
+          snapshot: obj,
+        })
+      }).not.toThrow()
+      expect(obj.x).toBe(100)
+
+      expect(() => {
+        applyChange(obj, {
+          type: 'despawn',
+          objectId: 'guard-2',
+          role: 'guard',
+          snapshot: obj,
+        })
+      }).not.toThrow()
+      expect(obj.x).toBe(100)
+    })
     it('applies property change to target object', () => {
       const obj = createTestObject({ maxHealth: 100, speed: 240 })
       applyChange(obj, {
@@ -389,6 +430,44 @@ describe('levelEditorHistory', () => {
       expect(u2?.type === 'move' && u2.dx === -2).toBe(true)
       const u3 = history.undo(() => obj)
       expect(u3).toBeUndefined()
+    })
+
+    it('returns DespawnChange when undoing a SpawnChange', () => {
+      const history = new EditorHistory()
+      const snapshot = createTestObject({ id: 'guard-2' })
+      history.push({
+        type: 'spawn',
+        objectId: 'guard-2',
+        role: 'guard',
+        snapshot,
+      })
+
+      const reversed = history.undo(() => snapshot)
+      expect(reversed).toEqual({
+        type: 'despawn',
+        objectId: 'guard-2',
+        role: 'guard',
+        snapshot,
+      })
+    })
+
+    it('returns SpawnChange when undoing a DespawnChange', () => {
+      const history = new EditorHistory()
+      const snapshot = createTestObject({ id: 'guard-2' })
+      history.push({
+        type: 'despawn',
+        objectId: 'guard-2',
+        role: 'guard',
+        snapshot,
+      })
+
+      const reversed = history.undo(() => undefined)
+      expect(reversed).toEqual({
+        type: 'spawn',
+        objectId: 'guard-2',
+        role: 'guard',
+        snapshot,
+      })
     })
   })
 })

@@ -36,7 +36,18 @@ const PANEL_Y = 720
 const PANEL_WIDTH = 1728
 const PANEL_HEIGHT = 290
 
-interface EditorObject extends ScalableMovableObject {
+export interface SpawnObjectConfig {
+  id?: string
+  x?: number
+  y?: number
+  displayWidth?: number
+  displayHeight?: number
+  speed?: number
+  maxHealth?: number
+}
+
+export interface EditorObject extends ScalableMovableObject {
+  role: 'player' | 'guard' | 'weapon'
   sprite: Phaser.GameObjects.Image
   outline: Phaser.GameObjects.Rectangle
   scaleHandle: Phaser.GameObjects.Rectangle
@@ -52,6 +63,9 @@ export class LevelEditorScene extends Phaser.Scene {
   private doorLabel: Phaser.GameObjects.Text | undefined
   private panelContainer: Phaser.GameObjects.Container | undefined
   private panelFields: Map<string, Phaser.GameObjects.Text> = new Map()
+  private objectListButtons: Phaser.GameObjects.Text[] = []
+  private objectListTitle: Phaser.GameObjects.Text | undefined
+  private deleteButton: Phaser.GameObjects.Text | undefined
   private statsElements: Phaser.GameObjects.Text[] = []
   private naStatsText: Phaser.GameObjects.Text | undefined
   private headerText: Phaser.GameObjects.Text | undefined
@@ -93,6 +107,9 @@ export class LevelEditorScene extends Phaser.Scene {
     this.panelFields.clear()
     this.statsElements = []
     this.naStatsText = undefined
+    this.objectListButtons = []
+    this.objectListTitle = undefined
+    this.deleteButton = undefined
     this.history.clear()
 
     // Title
@@ -163,7 +180,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Instructions
     this.instructionText = this.add
-      .text(960, 1045, 'Click to select · Drag to move · Yellow handle to scale · Ctrl+Z: Undo · P: Toggle panel', {
+      .text(960, 1045, 'Click to select · Drag to move · Yellow handle to scale · Ctrl+Z: Undo · Del: Remove · P: Panel', {
         fontFamily: FONT_FAMILY,
         fontSize: 14,
         color: DIM_COLOR,
@@ -222,6 +239,9 @@ export class LevelEditorScene extends Phaser.Scene {
       this.panelFields.clear()
       this.statsElements = []
       this.naStatsText = undefined
+      this.objectListButtons = []
+      this.objectListTitle = undefined
+      this.deleteButton = undefined
     })
   }
 
@@ -245,8 +265,15 @@ export class LevelEditorScene extends Phaser.Scene {
     const textureKey = this.textureKeyFor(worldObject)
     if (!textureKey) return
 
-    const isWeapon = worldObject.metadata.role === 'weapon'
-    const isCharacter = worldObject.metadata.role === 'player' || worldObject.metadata.role === 'guard'
+    const role: 'player' | 'guard' | 'weapon' =
+      worldObject.metadata.role === 'weapon'
+        ? 'weapon'
+        : worldObject.metadata.role === 'guard'
+          ? 'guard'
+          : 'player'
+
+    const isWeapon = role === 'weapon'
+    const isCharacter = role === 'player' || role === 'guard'
     const maxHealth = isCharacter && typeof state.maxHealth === 'number' ? state.maxHealth : (isCharacter ? 100 : undefined)
     const speed = isCharacter && typeof state.speed === 'number' ? state.speed : undefined
     const baseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_SIZE.width
@@ -291,6 +318,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const editorObject: EditorObject = {
       id: worldObject.id,
+      role,
       sprite,
       outline,
       scaleHandle,
@@ -326,36 +354,68 @@ export class LevelEditorScene extends Phaser.Scene {
     dividerGraphics.lineBetween(1420, 20, 1420, PANEL_HEIGHT - 20)
     items.push(dividerGraphics)
 
-    // ─── Section 1: Object Selector ───
-    const section1Title = this.add
-      .text(140, 24, 'SELECT OBJECT', {
+    // ─── Section 1: Object Selector & Spawning ───
+    this.objectListTitle = this.add
+      .text(140, 16, 'OBJECTS', {
         fontFamily: FONT_FAMILY,
         fontSize: 14,
         color: ACCENT_COLOR,
       })
       .setOrigin(0.5, 0)
-    items.push(section1Title)
+    items.push(this.objectListTitle)
 
-    let buttonY = 68
-    for (const editorObject of this.editorObjects) {
-      const btn = this.add
-        .text(140, buttonY, editorObject.id.toUpperCase(), {
-          fontFamily: FONT_FAMILY,
-          fontSize: 14,
-          color: TEXT_COLOR,
-          backgroundColor: '#2a2a2a',
-          padding: { x: 18, y: 8 },
-        })
-        .setOrigin(0.5, 0)
-        .setInteractive({ useHandCursor: true })
-      btn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        pointer.event?.stopPropagation?.()
-        this.selectObject(editorObject.id)
+    // Spawn buttons
+    const spawnGuardBtn = this.add
+      .text(75, 42, '+ GUARD', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 11,
+        color: '#ffffff',
+        backgroundColor: '#1b5e20',
+        padding: { x: 8, y: 4 },
       })
-      items.push(btn)
-      this.panelFields.set(`btn_${editorObject.id}`, btn)
-      buttonY += 56
-    }
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+    spawnGuardBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.spawnWorldObject('guard')
+    })
+    items.push(spawnGuardBtn)
+
+    const spawnDaggerBtn = this.add
+      .text(205, 42, '+ DAGGER', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 11,
+        color: '#ffffff',
+        backgroundColor: '#0d47a1',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+    spawnDaggerBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.spawnWorldObject('weapon')
+    })
+    items.push(spawnDaggerBtn)
+
+    // Remove selected object button
+    this.deleteButton = this.add
+      .text(140, 252, 'REMOVE SELECTED', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 11,
+        color: '#ffcdd2',
+        backgroundColor: '#b71c1c',
+        padding: { x: 10, y: 4 },
+      })
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+      .setVisible(false)
+    this.deleteButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      if (this.selectedId) {
+        this.despawnWorldObject(this.selectedId)
+      }
+    })
+    items.push(this.deleteButton)
 
     // ─── Section 2: Transform Readout ───
     const section2Title = this.add
@@ -580,6 +640,7 @@ export class LevelEditorScene extends Phaser.Scene {
     items.push(section5Title, exportDesc)
 
     this.panelContainer = this.add.container(PANEL_X, PANEL_Y, items).setDepth(40)
+    this.refreshObjectList()
   }
 
   private createPanelButton(
@@ -644,16 +705,24 @@ export class LevelEditorScene extends Phaser.Scene {
         btn.setColor(isSelected ? ACCENT_COLOR : TEXT_COLOR)
       }
     }
+    this.updateDeleteButtonVisibility()
     this.updatePropertyPanel()
   }
 
   private updatePropertyPanel(): void {
     const selected = this.getSelected()
-    if (!selected) return
-
     const setField = (key: string, value: string) => {
       const text = this.panelFields.get(`val_${key}`)
       if (text) text.setText(value)
+    }
+
+    if (!selected) {
+      for (const field of ['x', 'y', 'width', 'height', 'scaleX', 'scaleY', 'maxHealth', 'speed']) {
+        setField(field, '--')
+      }
+      this.statsElements.forEach((el) => el.setVisible(false))
+      this.naStatsText?.setVisible(false)
+      return
     }
 
     setField('x', Math.round(selected.x).toString())
@@ -945,8 +1014,6 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   private onKeyDown(event: KeyboardEvent): void {
-    const selected = this.getSelected()
-
     if (event.key === 'Escape' || event.key === 'F2') {
       event.preventDefault()
       this.scene.start('game')
@@ -959,6 +1026,22 @@ export class LevelEditorScene extends Phaser.Scene {
       return
     }
 
+    if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+      if (event.key === 'p' || event.key === 'P') {
+        event.preventDefault()
+        this.togglePanel()
+        return
+      }
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        if (this.selectedId && this.selectedId !== WORLD_OBJECT_IDS.player) {
+          event.preventDefault()
+          this.despawnWorldObject(this.selectedId)
+          return
+        }
+      }
+    }
+
+    const selected = this.getSelected()
     if (!selected) return
 
     const step = event.shiftKey ? 10 : 1
@@ -992,10 +1075,6 @@ export class LevelEditorScene extends Phaser.Scene {
         event.preventDefault()
         this.cycleSelection(event.shiftKey ? -1 : 1)
         return
-      case 'p':
-      case 'P':
-        this.togglePanel()
-        return
       default:
         return
     }
@@ -1012,6 +1091,29 @@ export class LevelEditorScene extends Phaser.Scene {
     const reversed = this.history.undo((id) => this.editorObjects.find((o) => o.id === id))
     if (!reversed) return
 
+    if (reversed.type === 'despawn') {
+      this.despawnWorldObject(reversed.objectId, false)
+      return
+    }
+
+    if (reversed.type === 'spawn') {
+      this.spawnWorldObject(
+        reversed.role,
+        {
+          id: reversed.objectId,
+          x: reversed.snapshot.x,
+          y: reversed.snapshot.y,
+          displayWidth: reversed.snapshot.displayWidth,
+          displayHeight: reversed.snapshot.displayHeight,
+          speed: reversed.snapshot.speed,
+          maxHealth: reversed.snapshot.maxHealth,
+        },
+        false,
+      )
+      this.selectObject(reversed.objectId)
+      return
+    }
+
     this.selectObject(reversed.objectId)
     const obj = this.getSelected()
     if (obj) {
@@ -1021,9 +1123,12 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   private cycleSelection(direction: number): void {
+    if (this.editorObjects.length === 0) return
     const currentIndex = this.editorObjects.findIndex((obj) => obj.id === this.selectedId)
     const nextIndex =
-      (currentIndex + direction + this.editorObjects.length) % this.editorObjects.length
+      currentIndex === -1
+        ? 0
+        : (currentIndex + direction + this.editorObjects.length) % this.editorObjects.length
     this.selectObject(this.editorObjects[nextIndex].id)
   }
 
@@ -1092,7 +1197,243 @@ export class LevelEditorScene extends Phaser.Scene {
     this.time.delayedCall(200, () => bg.setFillStyle(originalColor, 1))
   }
 
-  private startKeyFor(id: string): string | undefined {
+  public spawnWorldObject(
+    role: 'guard' | 'weapon' | 'player' = 'guard',
+    config: SpawnObjectConfig = {},
+    recordHistory = true,
+  ): EditorObject {
+    const id = config.id ?? this.generateNextId(role)
+
+    const existingIndex = this.editorObjects.findIndex((o) => o.id === id)
+    if (existingIndex !== -1) {
+      const existing = this.editorObjects[existingIndex]
+      if (config.x !== undefined) existing.x = config.x
+      if (config.y !== undefined) existing.y = config.y
+      if (config.displayWidth !== undefined) existing.displayWidth = config.displayWidth
+      if (config.displayHeight !== undefined) existing.displayHeight = config.displayHeight
+      existing.scaleX = existing.displayWidth / existing.baseWidth
+      existing.scaleY = existing.displayHeight / existing.baseHeight
+      if (config.maxHealth !== undefined) existing.maxHealth = config.maxHealth
+      if (config.speed !== undefined) existing.speed = config.speed
+      this.updateObjectVisuals(existing)
+      this.selectObject(id)
+      return existing
+    }
+
+    const textureKey = this.textureKeyForRole(role)
+    const isWeapon = role === 'weapon'
+    const isCharacter = role === 'player' || role === 'guard'
+    const baseWidth = isWeapon ? DAGGER_SIZE.width : CHARACTER_SIZE.width
+    const baseHeight = isWeapon ? DAGGER_SIZE.height : CHARACTER_SIZE.height
+    const displayWidth = config.displayWidth ?? (isWeapon ? 72 : 176)
+    const displayHeight = config.displayHeight ?? (isWeapon ? 72 : 176)
+    const maxHealth =
+      config.maxHealth !== undefined
+        ? config.maxHealth
+        : isCharacter
+          ? 100
+          : undefined
+    const speed =
+      config.speed !== undefined
+        ? config.speed
+        : isCharacter
+          ? (role === 'guard' ? 120 : 200)
+          : undefined
+
+    const defaultX = 960 + (this.editorObjects.length % 5) * 40 - 80
+    const defaultY = 380 + (this.editorObjects.length % 5) * 30 - 60
+    const x = config.x !== undefined ? config.x : defaultX
+    const y = config.y !== undefined ? config.y : defaultY
+
+    const sprite = this.add.image(x, y, textureKey).setDepth(3)
+    sprite.setDisplaySize(displayWidth, displayHeight)
+    sprite.setAlpha(0.9)
+
+    // Selection outline
+    const outline = this.add
+      .rectangle(x, y, displayWidth + 8, displayHeight + 8)
+      .setStrokeStyle(3, SELECTED_OUTLINE, 1)
+      .setFillStyle(SELECTED_OUTLINE, 0.08)
+      .setDepth(2)
+      .setVisible(false)
+
+    // Scale handle (bottom-right corner)
+    const scaleHandle = this.add
+      .rectangle(
+        x + displayWidth / 2,
+        y + displayHeight / 2,
+        HANDLE_SIZE,
+        HANDLE_SIZE,
+        HANDLE_COLOR,
+        1,
+      )
+      .setDepth(5)
+      .setVisible(false)
+
+    // Object label
+    const label = this.add
+      .text(x, y - displayHeight / 2 - 20, id, {
+        fontFamily: FONT_FAMILY,
+        fontSize: 14,
+        color: TEXT_COLOR,
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(4)
+
+    const editorObject: EditorObject = {
+      id,
+      role,
+      sprite,
+      outline,
+      scaleHandle,
+      label,
+      x,
+      y,
+      displayWidth,
+      displayHeight,
+      baseWidth,
+      baseHeight,
+      scaleX: displayWidth / baseWidth,
+      scaleY: displayHeight / baseHeight,
+      maxHealth,
+      speed,
+    }
+
+    this.editorObjects.push(editorObject)
+
+    if (recordHistory) {
+      this.history.push({
+        type: 'spawn',
+        objectId: id,
+        role,
+        snapshot: this.createSnapshot(editorObject),
+      })
+    }
+
+    this.refreshObjectList()
+    this.selectObject(id)
+    return editorObject
+  }
+
+  public despawnWorldObject(id: string, recordHistory = true): boolean {
+    if (id === WORLD_OBJECT_IDS.player) {
+      return false
+    }
+
+    const index = this.editorObjects.findIndex((obj) => obj.id === id)
+    if (index === -1) return false
+
+    const obj = this.editorObjects[index]
+    if (recordHistory) {
+      this.history.push({
+        type: 'despawn',
+        objectId: obj.id,
+        role: obj.role,
+        snapshot: this.createSnapshot(obj),
+      })
+    }
+
+    obj.sprite.destroy()
+    obj.outline.destroy()
+    obj.scaleHandle.destroy()
+    obj.label.destroy()
+
+    this.editorObjects.splice(index, 1)
+
+    if (this.selectedId === id) {
+      const nextObj = this.editorObjects[Math.max(0, index - 1)]
+      if (nextObj) {
+        this.selectObject(nextObj.id)
+      } else {
+        this.selectedId = null
+        this.updatePropertyPanel()
+      }
+    }
+
+    this.refreshObjectList()
+    return true
+  }
+
+  private refreshObjectList(): void {
+    if (!this.panelContainer) return
+
+    for (const btn of this.objectListButtons) {
+      this.panelContainer.remove(btn)
+      btn.destroy()
+    }
+    this.objectListButtons = []
+
+    const count = this.editorObjects.length
+    const twoColumns = count > 5
+    const startY = 74
+    const rowHeight = twoColumns ? 26 : 28
+
+    for (let i = 0; i < count; i++) {
+      const obj = this.editorObjects[i]
+      const col = twoColumns ? i % 2 : 0
+      const row = twoColumns ? Math.floor(i / 2) : i
+      const x = twoColumns ? (col === 0 ? 75 : 205) : 140
+      const y = startY + row * rowHeight
+
+      const displayLabel = obj.id.length > 10 ? obj.id.substring(0, 9) + '…' : obj.id.toUpperCase()
+      const isSelected = obj.id === this.selectedId
+
+      const btn = this.add
+        .text(x, y, displayLabel, {
+          fontFamily: FONT_FAMILY,
+          fontSize: twoColumns ? 10 : 12,
+          color: isSelected ? ACCENT_COLOR : TEXT_COLOR,
+          backgroundColor: '#2a2a2a',
+          padding: { x: twoColumns ? 6 : 10, y: 3 },
+        })
+        .setOrigin(0.5, 0)
+        .setInteractive({ useHandCursor: true })
+
+      btn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        pointer.event?.stopPropagation?.()
+        this.selectObject(obj.id)
+      })
+
+      this.panelContainer.add(btn)
+      this.objectListButtons.push(btn)
+      this.panelFields.set(`btn_${obj.id}`, btn)
+    }
+
+    this.updateDeleteButtonVisibility()
+  }
+
+  private updateDeleteButtonVisibility(): void {
+    if (!this.deleteButton) return
+    const canDelete = this.selectedId !== null && this.selectedId !== WORLD_OBJECT_IDS.player
+    this.deleteButton.setVisible(canDelete)
+  }
+
+  private createSnapshot(obj: EditorObject): ScalableMovableObject {
+    return {
+      id: obj.id,
+      x: obj.x,
+      y: obj.y,
+      displayWidth: obj.displayWidth,
+      displayHeight: obj.displayHeight,
+      baseWidth: obj.baseWidth,
+      baseHeight: obj.baseHeight,
+      scaleX: obj.scaleX,
+      scaleY: obj.scaleY,
+      speed: obj.speed,
+      maxHealth: obj.maxHealth,
+    }
+  }
+
+  private generateNextId(role: 'guard' | 'weapon' | 'player'): string {
+    const prefix = role === 'weapon' ? 'dagger' : role
+    let counter = 2
+    while (this.editorObjects.some((o) => o.id === `${prefix}-${counter}`)) {
+      counter++
+    }
+    return `${prefix}-${counter}`
+  }
+
+  private startKeyFor(id: string): string {
     switch (id) {
       case WORLD_OBJECT_IDS.player:
         return 'playerStart'
@@ -1100,22 +1441,34 @@ export class LevelEditorScene extends Phaser.Scene {
         return 'daggerStart'
       case WORLD_OBJECT_IDS.guard:
         return 'guardStart'
-      default:
-        return undefined
+      default: {
+        const camel = id.replace(/-([a-z0-9])/g, (_, char: string) => char.toUpperCase())
+        return `${camel}Start`
+      }
     }
   }
 
-  private textureKeyFor(worldObject: WorldObject): string | undefined {
-    switch (worldObject.metadata.role) {
+  private textureKeyForRole(role: 'player' | 'guard' | 'weapon'): string {
+    switch (role) {
       case 'player':
         return PLAYER_TEXTURE_KEY
       case 'guard':
         return GUARD_TEXTURE_KEY
       case 'weapon':
         return DAGGER_TEXTURE_KEY
-      default:
-        return undefined
     }
+  }
+
+  private textureKeyFor(worldObject: WorldObject): string | undefined {
+    const role =
+      worldObject.metadata.role === 'weapon'
+        ? 'weapon'
+        : worldObject.metadata.role === 'guard'
+          ? 'guard'
+          : worldObject.metadata.role === 'player'
+            ? 'player'
+            : undefined
+    return role ? this.textureKeyForRole(role) : undefined
   }
 }
 

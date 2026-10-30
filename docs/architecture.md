@@ -232,11 +232,12 @@ The editor does not touch live `WorldState` or any simulation code. It reads the
 
 - **Drag** a sprite to reposition it (arrow keys for 1 px nudge, Shift+arrow for 10 px).
 - **Drag the yellow corner handle** or press **+**/**−** to scale a sprite uniformly. Scale buttons in the properties panel (×1.1 / ÷1.1) are also available.
+- **Spawn and despawn World Objects**: Spawns additional World Objects via UI buttons (`+ GUARD`, `+ DAGGER`) or programmatic API (`spawnWorldObject(role, config)`). Non-player objects can be despawned using the `REMOVE SELECTED` button or **Delete** / **Backspace** keys. Spawned objects are dynamically added to the object selector, support independent positioning, scaling, stat editing, and full undo/redo with **Ctrl+Z** (spawn inverts to despawn and vice-versa).
 - **Tab / Shift+Tab** to cycle selection; clicking a sprite or its name in the properties panel selects it.
-- **Edit Character Stats**: selecting the player or guard reveals editable `max_health` and `speed` controls with step adjustment (`+` / `−` by 10, Shift for 50) and direct value prompts. Changes participate in the `Ctrl+Z` invertible undo stack.
-- **Ctrl+Z** to undo edits. Undo is implemented through an invertible change model where every operation defines its reverse (e.g., move `(dx, dy)` inverts to `(-dx, -dy)`, scale `factor` inverts to `1 / factor`, property `delta` inverts to `-delta`), restoring the previous transform or stat.
+- **Edit Character Stats**: selecting any player or guard reveals editable `max_health` and `speed` controls with step adjustment (`+` / `−` by 10, Shift for 50) and direct value prompts. Changes participate in the `Ctrl+Z` invertible undo stack.
+- **Ctrl+Z** to undo edits. Undo is implemented through an invertible change model where every operation defines its reverse (e.g., move `(dx, dy)` inverts to `(-dx, -dy)`, scale `factor` inverts to `1 / factor`, property `delta` inverts to `-delta`, `spawn` inverts to `despawn`), restoring the previous transform, stat, or object existence.
 - **P** to toggle the visibility of the bottom properties panel.
-- **Export to Console** (green button inside the export section) prints a ready-to-paste `ROOM_LAYOUT` snippet, display sizes, and character attributes (speed and maxHealth) to the browser developer console. The designer copies those values back into `room1.ts` by hand.
+- **Export to Console** (green button inside the export section) prints a ready-to-paste `ROOM_LAYOUT` snippet (with start keys such as `guard2Start`, `dagger2Start`), display sizes, and character attributes (speed and maxHealth) to the browser developer console. The designer copies those values back into `room1.ts` by hand.
 
 The editor is intentionally read-only with respect to source files: it exports values to the console and leaves the edit to the developer. No persistence or live hot-reload of `room1.ts` occurs inside the editor.
 

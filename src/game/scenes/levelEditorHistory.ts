@@ -46,13 +46,34 @@ export interface PropertyChange {
   readonly nextValue: number
 }
 
-export type EditorChange = MoveChange | ScaleChange | PropertyChange
+export interface SpawnChange {
+  readonly type: 'spawn'
+  readonly objectId: string
+  readonly role: 'player' | 'guard' | 'weapon'
+  readonly snapshot: ScalableMovableObject
+}
+
+export interface DespawnChange {
+  readonly type: 'despawn'
+  readonly objectId: string
+  readonly role: 'player' | 'guard' | 'weapon'
+  readonly snapshot: ScalableMovableObject
+}
+
+export type EditorChange =
+  | MoveChange
+  | ScaleChange
+  | PropertyChange
+  | SpawnChange
+  | DespawnChange
 
 /**
  * Defines the reverse of any editor change.
  * e.g., move(+dx, +dy) -> move(-dx, -dy)
  *       scale(*factor)  -> scale(*(1 / factor))
  *       property(+delta)-> property(-delta)
+ *       spawn           -> despawn
+ *       despawn         -> spawn
  */
 export function invertChange(change: EditorChange): EditorChange {
   switch (change.type) {
@@ -90,6 +111,20 @@ export function invertChange(change: EditorChange): EditorChange {
         prevValue: change.nextValue,
         nextValue: change.prevValue,
       }
+    case 'spawn':
+      return {
+        type: 'despawn',
+        objectId: change.objectId,
+        role: change.role,
+        snapshot: change.snapshot,
+      }
+    case 'despawn':
+      return {
+        type: 'spawn',
+        objectId: change.objectId,
+        role: change.role,
+        snapshot: change.snapshot,
+      }
   }
 }
 
@@ -97,6 +132,10 @@ export function invertChange(change: EditorChange): EditorChange {
  * Applies a change (either original or reversed) to the target object.
  */
 export function applyChange(target: ScalableMovableObject, change: EditorChange): void {
+  if (change.type === 'spawn' || change.type === 'despawn') {
+    return
+  }
+
   if (target.id !== change.objectId) {
     throw new Error(
       `Target object id "${target.id}" does not match change object id "${change.objectId}"`,

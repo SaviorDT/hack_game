@@ -187,7 +187,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Instructions
     this.instructionText = this.add
-      .text(960, 1045, 'Click to select · Drag to move · Yellow handle to scale · Ctrl+Z: Undo · Del: Remove · P: Panel', {
+      .text(960, 1045, 'Click to select · Drag to move · F3: Speed Editor · Ctrl+Z: Undo · Del: Remove · P: Panel', {
         fontFamily: FONT_FAMILY,
         fontSize: 14,
         color: DIM_COLOR,
@@ -213,7 +213,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Back-to-game key hint
     this.add
-      .text(1820, 28, 'P: Toggle panel · F2 / ESC: Back to game', {
+      .text(1820, 28, 'P: Panel · F3: Speed Editor · F2 / ESC: Back to game', {
         fontFamily: FONT_FAMILY,
         fontSize: 16,
         color: DIM_COLOR,
@@ -434,6 +434,23 @@ export class LevelEditorScene extends Phaser.Scene {
     })
     items.push(spawnDaggerBtn)
 
+    // Launch Speed Editor button
+    const speedEditorBtn = this.add
+      .text(140, 214, 'SPEED EDITOR (F3)', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 11,
+        color: '#ffffff',
+        backgroundColor: '#00695c',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+    speedEditorBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.openSpeedEditor()
+    })
+    items.push(speedEditorBtn)
+
     // Remove selected object button
     this.deleteButton = this.add
       .text(140, 252, 'REMOVE SELECTED', {
@@ -583,10 +600,51 @@ export class LevelEditorScene extends Phaser.Scene {
 
     createStatRow('max_health', 'maxHealth', 'maxHealth', 50, this.statsElements)
     createStatRow('speed', 'speed', 'speed', 86, this.guardStatsElements)
-    createStatRow('max_speed', 'maxSpeed', 'maxSpeed', 86, this.playerStatsElements)
-    createStatRow('accel', 'acceleration', 'acceleration', 122, this.playerStatsElements)
-    createStatRow('friction', 'frictionAcceleration', 'frictionAcceleration', 158, this.playerStatsElements)
-    createStatRow('turnaround', 'turnaroundAcceleration', 'turnaroundAcceleration', 194, this.playerStatsElements)
+
+    // Player speed summary & Speed Editor launcher (speed adjust panel moved to SpeedEditor)
+    const playerSpeedLabel = this.add
+      .text(705, 90, 'speed:', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 13,
+        color: DIM_COLOR,
+      })
+      .setOrigin(0, 0)
+
+    const playerSpeedVal = this.add
+      .text(1075, 90, '--', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 12,
+        color: ACCENT_COLOR,
+      })
+      .setOrigin(1, 0)
+    this.panelFields.set('val_player_speed_summary', playerSpeedVal)
+
+    const openSpeedEditorBtn = this.add
+      .text(890, 134, 'OPEN SPEED EDITOR (F3)', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 12,
+        color: '#ffffff',
+        backgroundColor: '#00695c',
+        padding: { x: 14, y: 8 },
+      })
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+    openSpeedEditorBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.openSpeedEditor()
+    })
+
+    const playerSpeedHint = this.add
+      .text(890, 184, 'Test & tune physics while\nmoving in Speed Editor', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 11,
+        color: DIM_COLOR,
+        align: 'center',
+      })
+      .setOrigin(0.5, 0)
+
+    this.playerStatsElements.push(playerSpeedLabel, playerSpeedVal, openSpeedEditorBtn, playerSpeedHint)
+    items.push(playerSpeedLabel, playerSpeedVal, openSpeedEditorBtn, playerSpeedHint)
 
     // Stats hints
     const statHint1 = this.add
@@ -744,10 +802,7 @@ export class LevelEditorScene extends Phaser.Scene {
         'scaleY',
         'maxHealth',
         'speed',
-        'maxSpeed',
-        'acceleration',
-        'frictionAcceleration',
-        'turnaroundAcceleration',
+        'player_speed_summary',
       ]) {
         setField(field, '--')
       }
@@ -783,26 +838,13 @@ export class LevelEditorScene extends Phaser.Scene {
             ? selected.speed.maxSpeed
             : typeof selected.speed === 'number'
               ? selected.speed
-              : 240)
+              : 300)
         const accel =
           selected.acceleration ??
           (typeof selected.speed === 'object' && selected.speed !== null
             ? selected.speed.acceleration
-            : 800)
-        const friction =
-          selected.frictionAcceleration ??
-          (typeof selected.speed === 'object' && selected.speed !== null
-            ? selected.speed.frictionAcceleration
-            : 1200)
-        const turn =
-          selected.turnaroundAcceleration ??
-          (typeof selected.speed === 'object' && selected.speed !== null
-            ? selected.speed.turnaroundAcceleration
-            : 1600)
-        setField('maxSpeed', maxSpd.toString())
-        setField('acceleration', accel.toString())
-        setField('frictionAcceleration', friction.toString())
-        setField('turnaroundAcceleration', turn.toString())
+            : 2500)
+        setField('player_speed_summary', `max:${maxSpd} acc:${accel}`)
       } else {
         this.guardStatsElements.forEach((el) => el.setVisible(true))
         this.playerStatsElements.forEach((el) => el.setVisible(false))
@@ -812,10 +854,7 @@ export class LevelEditorScene extends Phaser.Scene {
     } else {
       setField('maxHealth', '--')
       setField('speed', '--')
-      setField('maxSpeed', '--')
-      setField('acceleration', '--')
-      setField('frictionAcceleration', '--')
-      setField('turnaroundAcceleration', '--')
+      setField('player_speed_summary', '--')
       this.statsElements.forEach((el) => el.setVisible(false))
       this.guardStatsElements.forEach((el) => el.setVisible(false))
       this.playerStatsElements.forEach((el) => el.setVisible(false))
@@ -1178,6 +1217,12 @@ export class LevelEditorScene extends Phaser.Scene {
       return
     }
 
+    if (event.key === 'F3') {
+      event.preventDefault()
+      this.openSpeedEditor()
+      return
+    }
+
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
       event.preventDefault()
       this.undo()
@@ -1292,14 +1337,32 @@ export class LevelEditorScene extends Phaser.Scene {
     this.selectObject(this.editorObjects[nextIndex].id)
   }
 
-  public async saveLayout(): Promise<boolean> {
+  public syncToRoom1Objects(): RoomObjectConfig[] {
     const objects: RoomObjectConfig[] = this.editorObjects.map((obj) => {
       let speed: number | PlayerSpeedConfig | undefined = undefined
       if (obj.role === 'player') {
-        const maxSpeed = obj.maxSpeed ?? (typeof obj.speed === 'object' && obj.speed !== null ? obj.speed.maxSpeed : (typeof obj.speed === 'number' ? obj.speed : 240))
-        const acceleration = obj.acceleration ?? (typeof obj.speed === 'object' && obj.speed !== null ? obj.speed.acceleration : 800)
-        const frictionAcceleration = obj.frictionAcceleration ?? (typeof obj.speed === 'object' && obj.speed !== null ? obj.speed.frictionAcceleration : 1200)
-        const turnaroundAcceleration = obj.turnaroundAcceleration ?? (typeof obj.speed === 'object' && obj.speed !== null ? obj.speed.turnaroundAcceleration : 1600)
+        const maxSpeed =
+          obj.maxSpeed ??
+          (typeof obj.speed === 'object' && obj.speed !== null
+            ? obj.speed.maxSpeed
+            : typeof obj.speed === 'number'
+              ? obj.speed
+              : 300)
+        const acceleration =
+          obj.acceleration ??
+          (typeof obj.speed === 'object' && obj.speed !== null
+            ? obj.speed.acceleration
+            : 2500)
+        const frictionAcceleration =
+          obj.frictionAcceleration ??
+          (typeof obj.speed === 'object' && obj.speed !== null
+            ? obj.speed.frictionAcceleration
+            : 3000)
+        const turnaroundAcceleration =
+          obj.turnaroundAcceleration ??
+          (typeof obj.speed === 'object' && obj.speed !== null
+            ? obj.speed.turnaroundAcceleration
+            : 1600)
         speed = {
           acceleration,
           frictionAcceleration,
@@ -1324,11 +1387,19 @@ export class LevelEditorScene extends Phaser.Scene {
       }
     })
 
-    const source = generateRoom1Source(objects)
-
-    // Update in-memory ROOM1_OBJECTS array immediately so subsequent transitions read updated objects
     ROOM1_OBJECTS.length = 0
     ROOM1_OBJECTS.push(...objects)
+    return objects
+  }
+
+  public openSpeedEditor(): void {
+    this.syncToRoom1Objects()
+    this.scene.start('speed-editor')
+  }
+
+  public async saveLayout(): Promise<boolean> {
+    const objects = this.syncToRoom1Objects()
+    const source = generateRoom1Source(objects)
 
     const bg = this.exportButton?.getAt(0) as Phaser.GameObjects.Rectangle | undefined
     const label = this.exportButton?.getAt(1) as Phaser.GameObjects.Text | undefined

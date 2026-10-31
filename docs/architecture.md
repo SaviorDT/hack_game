@@ -153,6 +153,8 @@ src/
       GameScene.ts
       LevelEditorScene.ts
       levelEditorHistory.ts
+      SpeedEditorScene.ts
+      speedEditorSession.ts
     domain/
       BasicWorldObject.ts
       ids.ts
@@ -239,7 +241,7 @@ The editor displays all World Objects as draggable sprites and docks its control
 - **Drag the yellow corner handle** or press **+**/**−** to scale a sprite uniformly. Scale buttons in the properties panel (×1.1 / ÷1.1) are also available.
 - **Spawn and despawn World Objects**: Spawns additional World Objects via UI buttons (`+ GUARD`, `+ DAGGER`) or programmatic API (`spawnWorldObject(role, config)`). Non-player objects can be despawned using the `REMOVE SELECTED` button or **Delete** / **Backspace** keys. Spawned objects are dynamically added to the object selector, support independent positioning, scaling, stat editing, and full undo/redo with **Ctrl+Z** (spawn inverts to despawn and vice-versa).
 - **Tab / Shift+Tab** to cycle selection; clicking a sprite or its name in the properties panel selects it.
-- **Edit Character Stats**: selecting any player or guard reveals editable stats. For player characters, controls include `max_health`, `max_speed`, `accel` (acceleration), `friction` (friction acceleration), and `turnaround` (turnaround acceleration); guards expose `max_health` and `speed`. Controls feature step adjustment (`+` / `−` by 10, Shift for 50) and direct value prompts, and participate in the `Ctrl+Z` invertible undo stack.
+- **Edit Character Stats**: selecting guard exposes editable `max_health` and `speed`; selecting player character exposes `max_health` and an action button to open the Speed Editor (`OPEN SPEED EDITOR (F3)`). Player speed parameter tuning (`maxSpeed`, `acceleration`, `frictionAcceleration`, `turnaroundAcceleration`) has been moved to `SpeedEditorScene` for live physics testing while moving.
 - **Ctrl+Z** to undo edits. Undo is implemented through an invertible change model where every operation defines its reverse (e.g., move `(dx, dy)` inverts to `(-dx, -dy)`, scale `factor` inverts to `1 / factor`, property `delta` inverts to `-delta`, `spawn` inverts to `despawn`), restoring the previous transform, stat, or object existence.
 - **P** to toggle the visibility of the bottom properties panel.
 - **Save to room1.ts** (green button inside the save section) serializes the current object configurations and directly overwrites `src/game/content/room1.ts` on disk via the dev server `/api/save-room1` endpoint, while immediately updating in-memory `ROOM1_OBJECTS` for seamless live transitions back to the game.
@@ -249,11 +251,35 @@ The editor displays all World Objects as draggable sprites and docks its control
 ```mermaid
 classDiagram
   PhaserScene <|-- LevelEditorScene
+  PhaserScene <|-- SpeedEditorScene
   LevelEditorScene ..> room1 : reads & overwrites ROOM1_OBJECTS
   LevelEditorScene --> EditorHistory : manages undo stack\nand applies inverted changes
   LevelEditorScene ..> room1Serializer : serializes RoomObjectConfig[]
+  LevelEditorScene ..> SpeedEditorScene : opens via F3 or UI button
+  SpeedEditorScene ..> room1 : reads & overwrites ROOM1_OBJECTS
+  SpeedEditorScene ..> speedEditorSession : wraps GameSession & TickSimulationEngine
+  speedEditorSession --> PlayerMovementProcess : reuses main game movement logic
   room1WorldState ..> room1 : constructs WorldState from ROOM1_OBJECTS
 ```
+
+## Speed editor
+
+`SpeedEditorScene` is a separate Phaser scene (key `'speed-editor'`) designed specifically for tuning player character movement physics. It directly reuses the main game movement code (`GameSession`, `InputModeController`, `TickSimulationEngine`, and `PlayerMovementProcess`), allowing the game designer to walk, run, brake, and turn around using WASD or arrow keys inside the room while simultaneously adjusting physics parameters:
+
+- **`maxSpeed`**: Movement velocity cap in pixels per second (`300`).
+- **`acceleration`**: Rate of speeding up toward target direction in px/s² (`2500`).
+- **`frictionAcceleration`**: Braking deceleration when input ceases in px/s² (`3000`).
+- **`turnaroundAcceleration`**: Snappy reversal acceleration when input opposes current velocity in px/s² (`1600`).
+
+### Features and runtime behavior
+
+- **Move while adjusting**: Keyboard movement is processed continuously by `GameSession.update` via `PlayerMovementProcess`. Pointer interactions with panel controls do not disrupt held movement keys, enabling instantaneous feedback on physics adjustments while running or braking.
+- **Parameter tuning controls**: Each parameter features step buttons (`+` / `−` with step sizes tailored for speed and acceleration, shift-click for 5x multiplier) and direct value prompt on click. Minimum values are clamped to prevent invalid states.
+- **Live telemetry**: Displays real-time speed (`px/s`), velocity components (`vx`, `vy`), input direction vectors (`moveX`, `moveY`), and a dynamic visual speedometer gauge bar.
+- **Reset position**: Pressing **R** or clicking `RESET POS (R)` snaps the player character back to starting coordinates and zeroes velocity, facilitating repeated acceleration trials from a standstill.
+- **Reset defaults**: Restores default physics (`maxSpeed: 300, acceleration: 2500, frictionAcceleration: 3000, turnaroundAcceleration: 1600`).
+- **Save to room1.ts**: Writes updated player speed directly to `src/game/content/room1.ts` via the `/api/save-room1` endpoint and immediately synchronizes in-memory `ROOM1_OBJECTS`.
+- **Level editor integration**: Accessed directly from `LevelEditorScene` via the `OPEN SPEED EDITOR (F3)` button or pressing **F3**. Pressing **Escape** or clicking `< LEVEL EDITOR` returns to the Level Editor; pressing **F2** returns directly to gameplay.
 
 ## Framework references
 

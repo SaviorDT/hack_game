@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { GameScene } from './scenes/GameScene.ts'
 import { LevelEditorScene } from './scenes/LevelEditorScene.ts'
+import { SpeedEditorScene } from './scenes/SpeedEditorScene.ts'
 
 const SCENE_WIDTH = 1920
 const SCENE_HEIGHT = 1080
@@ -17,6 +18,6 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [GameScene, LevelEditorScene],
+    scene: [GameScene, LevelEditorScene, SpeedEditorScene],
   })
 }

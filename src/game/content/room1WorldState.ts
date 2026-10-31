@@ -66,7 +66,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
       const { width, height } = computeCollisionSize('player', scaleX, scaleY)
       return createRoomWorldObject(
         obj.id,
-        { name: 'player', role: 'player', discoverable: false },
+        { name: 'hacker', role: 'player', discoverable: false },
         [alwaysActiveRule(PROCESS_IDS.player)],
         {
           x: obj.x,

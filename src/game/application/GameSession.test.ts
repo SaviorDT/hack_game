@@ -261,6 +261,27 @@ describe('commands', () => {
     expect(slowDistance).toBeCloseTo(210 * 0.25, 0)
     expect(fastDistance).toBeGreaterThan(slowDistance * 3)
   })
+
+  it('reveals undiscovered objects in room when ls is executed', () => {
+    const session = newSession()
+    const dagger = stateOf(session, 'dagger')
+    const guard = stateOf(session, 'guard')
+    const guard2 = stateOf(session, 'guard-2')
+    const guard3 = stateOf(session, 'guard-3')
+
+    expect(dagger.discovered).toBe(false)
+    expect(guard.discovered).toBe(false)
+    expect(guard2.discovered).toBe(false)
+    expect(guard3.discovered).toBe(false)
+
+    const result = session.submitCommand('ls')
+    expect(result.status).toBe('success')
+
+    expect(dagger.discovered).toBe(true)
+    expect(guard.discovered).toBe(true)
+    expect(guard2.discovered).toBe(true)
+    expect(guard3.discovered).toBe(true)
+  })
 })
 
 describe('render position', () => {

@@ -23,7 +23,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 `GameScene` (1920×1080 reference space) mounts Room 1 domain state, session, room/object views, input, feedback, and outcome panels, forwarding Phaser's frame delta to `GameSession`. `createGame` boots with `GameScene`.
 
-`PhaserCommandInputView` sits bottom-center. In Command Mode, it accepts printable ASCII, cursor editing, auto-wrapping, and history navigation; Enter submits. In Movement Mode, it is dimmed with a typing prompt hint. `PhaserRoomView` projects world objects to Phaser sprites; `PhaserGameOutcomePanel` displays Game Over / Congratulations states.
+`PhaserCommandInputView` sits bottom-center. In Command Mode, it accepts printable ASCII, cursor editing, auto-wrapping, and history navigation; Enter submits. In Movement Mode, it is dimmed with a typing prompt hint. `PhaserRoomView` projects world objects to Phaser sprites and overhead labels (`?` for undiscovered objects, object name once revealed, and `hacker` for the player character; equipped items remain visible with label scale shrunk to `ITEM_LABEL_WIDTH_RATIO` [0.75] of item sprite width to avoid overlapping the character); `PhaserGameOutcomePanel` displays Game Over / Congratulations states.
 
 ### Input Modes
 
@@ -40,7 +40,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 ### Command Input Behavior
 
 - **Tab Completion**: Tab on empty input completes `help`; otherwise completes registered commands and discovered room entries. Unique matches append a trailing space; ambiguous matches complete the common prefix.
-- **Discovery Gate**: Hidden objects require discovery (`ls` or direct interaction) before autocomplete inclusion.
+- **Discovery Gate**: Undiscovered objects require discovery (`ls` or direct interaction) before autocomplete inclusion.
 - **History & Editing**: `Ctrl+Backspace` deletes previous word; `Up`/`Down` navigates command history (down past newest restores draft).
 
 ### Application Session & Command Pipeline
@@ -80,8 +80,9 @@ Attacks damage nearest character within Reach (bounding-box gap). Items (includi
 
 ### First Room Behavior
 
-Room 1 initializes with Player Character (upper-left), hidden Dagger (lower-left), and hidden Guard (right). Exiting right leads to Room 2:
-- `ls` discovers hidden objects; interaction works prior to discovery.
+Room 1 initializes with Player Character (upper-left, named `hacker`), Dagger (lower-left), and Guard (right). All World Object sprites are shown by default. Exiting right leads to Room 2:
+- Undiscovered world objects display a `?` overhead label at the top of their sprite; the player character displays `hacker` and is never `?`.
+- `ls` discovers objects in the room and reveals their `?` labels to their respective names; interaction also works prior to discovery and marks interacted objects discovered.
 - The player walks with WASD, automatically picks up the Dagger (and any items) on contact/reach, and attacks with J or left click.
 - Guard pursues player when player enters room's right half; attacks within Reach.
 - Player reaching 0 Health triggers `game-over`. Defeating guard stops pursuit. Reaching exit triggers `congratulations`.

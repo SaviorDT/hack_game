@@ -10,6 +10,7 @@ import { WorldObjectViewRegistry } from './WorldObjectViewRegistry.ts'
 export const PLAYER_TEXTURE_KEY = 'player-idle'
 export const GUARD_TEXTURE_KEY = 'guard-idle'
 export const DAGGER_TEXTURE_KEY = 'dagger'
+export const ITEM_LABEL_WIDTH_RATIO = 0.75
 
 export const WORLD_OBJECT_TEXTURE_URLS = {
   [PLAYER_TEXTURE_KEY]: playerImageUrl,
@@ -48,6 +49,7 @@ function displayState(worldObject: WorldObject): DisplayState {
 export class PhaserRoomView {
   private readonly objectViews = new WorldObjectViewRegistry()
   private readonly spriteById = new Map<string, Phaser.GameObjects.Image>()
+  private readonly labelById = new Map<string, Phaser.GameObjects.Text>()
   private roomTitle: Phaser.GameObjects.Text | undefined
   private roomFrame: Phaser.GameObjects.Graphics | undefined
   private roomDivider: Phaser.GameObjects.Graphics | undefined
@@ -123,6 +125,18 @@ export class PhaserRoomView {
 
       this.objectViews.bind(worldObject.id, sprite)
       this.spriteById.set(worldObject.id, sprite)
+
+      const label = scene.add
+        .text(0, 0, '', {
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: '14px',
+          color: TEXT_COLOR,
+          stroke: '#000000',
+          strokeThickness: 3,
+        })
+        .setOrigin(0.5, 1)
+        .setDepth(4)
+      this.labelById.set(worldObject.id, label)
     }
 
     this.update(state)
@@ -143,10 +157,10 @@ export class PhaserRoomView {
       }
 
       const sprite = registeredView as Phaser.GameObjects.Image
+      const label = this.labelById.get(worldObject.id)
 
       const objectState = displayState(worldObject)
       const inCurrentRoom = worldObject.roomId === state.currentRoomId
-      const isKnown = worldObject.id === WORLD_OBJECT_IDS.player || objectState.discovered === true
       const alive = objectState.alive !== false
       const equipped = objectState.equippedBy !== null && objectState.equippedBy !== undefined
       const rendered = positionOf(worldObject.id)
@@ -154,23 +168,58 @@ export class PhaserRoomView {
       const y = rendered?.y ?? (typeof objectState.y === 'number' ? objectState.y : 0)
 
       sprite.setPosition(x, y)
-      const visible = inCurrentRoom && isKnown && alive
+      const visible = inCurrentRoom && alive
       sprite.setVisible(visible)
 
       const isWeapon = worldObject.metadata.role === 'weapon' || worldObject.id === WORLD_OBJECT_IDS.dagger
       const dw = typeof objectState.displayWidth === 'number' ? objectState.displayWidth : (isWeapon ? 72 : 176)
       const dh = typeof objectState.displayHeight === 'number' ? objectState.displayHeight : (isWeapon ? 72 : 176)
+      const effectiveDh = isWeapon && equipped ? Math.round(dh * 0.8) : dh
 
       if (isWeapon && equipped) {
-        sprite.setDisplaySize(Math.round(dw * 0.8), Math.round(dh * 0.8))
+        sprite.setDisplaySize(Math.round(dw * 0.8), effectiveDh)
       } else if (isWeapon) {
         sprite.setDisplaySize(dw, dh)
       }
 
-      if (visible && typeof objectState.maxHealth === 'number' && typeof objectState.health === 'number') {
+      const hasHealthBar = visible && typeof objectState.maxHealth === 'number' && typeof objectState.health === 'number'
+      let labelOffsetY: number
+
+      if (hasHealthBar) {
         const barWidth = typeof objectState.width === 'number' ? objectState.width : HEALTH_BAR_WIDTH
         const offsetY = typeof objectState.height === 'number' ? objectState.height / 2 + 20 : HEALTH_BAR_OFFSET_Y
-        this.drawHealthBar(x, y, objectState.health / objectState.maxHealth, barWidth, offsetY)
+        this.drawHealthBar(x, y, (objectState.health as number) / (objectState.maxHealth as number), barWidth, offsetY)
+        labelOffsetY = offsetY + 4
+      } else {
+        labelOffsetY = effectiveDh / 2 + 4
+      }
+
+      if (label) {
+        const isDiscovered = worldObject.id === WORLD_OBJECT_IDS.player || worldObject.metadata.discoverable === false || objectState.discovered === true
+        const objectName = typeof worldObject.metadata.name === 'string'
+          ? worldObject.metadata.name
+          : worldObject.id
+        const labelText = isDiscovered ? objectName : '?'
+
+        label.setText(labelText)
+        const isItem = isWeapon || worldObject.metadata.role === 'item'
+
+        if (isItem && equipped) {
+          const targetWidth = sprite.displayWidth * ITEM_LABEL_WIDTH_RATIO
+          const scale = label.width > 0 ? targetWidth / label.width : 1
+          label.setScale(scale)
+          label.setAlpha(0.9)
+        } else if (isItem && label.width > sprite.displayWidth * ITEM_LABEL_WIDTH_RATIO) {
+          const targetWidth = sprite.displayWidth * ITEM_LABEL_WIDTH_RATIO
+          const scale = label.width > 0 ? targetWidth / label.width : 1
+          label.setScale(scale)
+          label.setAlpha(1)
+        } else {
+          label.setScale(1)
+          label.setAlpha(1)
+        }
+        label.setPosition(x, y - labelOffsetY)
+        label.setVisible(visible)
       }
     }
   }
@@ -179,8 +228,12 @@ export class PhaserRoomView {
     for (const sprite of this.spriteById.values()) {
       sprite.destroy()
     }
+    for (const label of this.labelById.values()) {
+      label.destroy()
+    }
 
     this.spriteById.clear()
+    this.labelById.clear()
     this.objectViews.clear()
     this.roomTitle?.destroy()
     this.roomFrame?.destroy()

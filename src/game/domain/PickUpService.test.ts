@@ -70,4 +70,14 @@ describe('pickUp', () => {
       status: 'nothing-in-reach',
     })
   })
+
+  it('supports picking up non-weapon items with role "item" or pickUpAble metadata', () => {
+    const item = new BasicWorldObject('potion', 'room1', { role: 'item', pickUpAble: true }, [], {
+      x: SIZE + 1, y: 0, width: SIZE, height: SIZE, discovered: false, equippedBy: null,
+    })
+
+    const result = pickUp.pickUp(worldOf(player(0), item), 'player')
+    expect(result).toEqual({ status: 'picked-up', objectId: 'potion' })
+    expect(getMutableWorldObjectState(item)).toMatchObject({ equippedBy: 'player', discovered: true })
+  })
 })

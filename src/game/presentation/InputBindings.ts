@@ -10,7 +10,6 @@ interface ActionBinding {
 export interface InputBindings {
   readonly movement: MovementBindings
   readonly toggleMode: readonly string[]
-  readonly pickUp: ActionBinding
   readonly attack: ActionBinding
 }
 
@@ -23,6 +22,5 @@ export const INPUT_BINDINGS: InputBindings = {
     right: ['d', 'arrowright'],
   },
   toggleMode: ['enter'],
-  pickUp: { keys: ['k'], mouseButtons: ['right'] },
   attack: { keys: ['j'], mouseButtons: ['left'] },
 }

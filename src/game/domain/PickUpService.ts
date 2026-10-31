@@ -46,16 +46,14 @@ export class PickUpService {
     }
 
     const collectorState = getMutableWorldObjectState<CollectorState>(collector)
-    if (collectorState.weaponId !== null) {
-      return { status: 'already-armed' }
-    }
-
     const candidates = state.worldObjects
       .filter(
         (worldObject) =>
           worldObject.roomId === state.currentRoomId &&
-          worldObject.metadata.role === 'weapon' &&
-          getMutableWorldObjectState<WeaponItemState>(worldObject).equippedBy === null,
+          (worldObject.metadata.role === 'weapon' ||
+            worldObject.metadata.role === 'item' ||
+            Boolean(worldObject.metadata.pickUpAble)) &&
+          !getMutableWorldObjectState<WeaponItemState>(worldObject).equippedBy,
       )
       .map((worldObject) => ({ worldObject, box: boxOf(worldObject) }))
 
@@ -64,10 +62,22 @@ export class PickUpService {
       return { status: 'nothing-in-reach' }
     }
 
+    const isWeapon =
+      target.worldObject.metadata.role === 'weapon' ||
+      Boolean(target.worldObject.metadata.weaponId)
+    if (isWeapon && collectorState.weaponId !== null) {
+      return { status: 'already-armed' }
+    }
+
     const itemState = getMutableWorldObjectState<WeaponItemState>(target.worldObject)
     itemState.equippedBy = collectorId
     itemState.discovered = true
-    collectorState.weaponId = String(target.worldObject.metadata.weaponId)
+    const weaponId =
+      target.worldObject.metadata.weaponId ??
+      (target.worldObject.metadata.role === 'weapon' ? target.worldObject.id : null)
+    if (weaponId) {
+      collectorState.weaponId = String(weaponId)
+    }
     return { status: 'picked-up', objectId: target.worldObject.id }
   }
 }

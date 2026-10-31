@@ -3,6 +3,7 @@ import type { PlayerSpeedConfig } from '../../content/room1.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { AabbCollisionWorld } from '../../domain/CollisionWorld.ts'
 import { CombatService } from '../../domain/CombatService.ts'
+import { PICKUP_REACH, PickUpService } from '../../domain/PickUpService.ts'
 import { weaponFor } from '../../domain/WeaponDefinition.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { ProcessTickContext, WorldObjectProcess } from '../TickSimulationEngine.ts'
@@ -18,6 +19,8 @@ interface PlayerState extends CharacterState {
 interface DaggerState extends Record<string, string | number | boolean | null> {
   x: number
   y: number
+  width: number
+  height: number
   equippedBy: string | null
 }
 
@@ -42,6 +45,7 @@ const ROOM_BOUNDS = {
 
 const collision = new AabbCollisionWorld()
 const combat = new CombatService(collision)
+const pickUp = new PickUpService(collision)
 
 function stateOf<T extends MutableWorldObjectState>(
   context: ProcessTickContext,
@@ -61,8 +65,8 @@ function objectState<T extends MutableWorldObjectState>(
   return getMutableWorldObjectState<T>(worldObject)
 }
 
-function boxOf(character: CharacterState) {
-  return { x: character.x, y: character.y, width: character.width, height: character.height }
+function boxOf(entity: { x: number; y: number; width: number; height: number }) {
+  return { x: entity.x, y: entity.y, width: entity.width, height: entity.height }
 }
 
 function moveToward(position: Position, target: Position, speed: number, tickDurationMs: number): void {
@@ -174,6 +178,10 @@ export class PlayerMovementProcess implements WorldObjectProcess {
       Object.assign(player, collision.clampToBounds(boxOf(player), ROOM_BOUNDS))
     }
 
+    if (player.alive && player.weaponId === null) {
+      pickUp.pickUp(context.state, context.worldObject.id)
+    }
+
     const exit = context.state.rooms
       .find((room) => room.id === ROOM_IDS.first)
       ?.exits.find((candidate) => candidate.x === ROOM_LAYOUT.exit.x && candidate.y === ROOM_LAYOUT.exit.y)
@@ -194,6 +202,18 @@ export class DaggerPickupProcess implements WorldObjectProcess {
     }
 
     const dagger = stateOf<DaggerState>(context)
+    if (!dagger.equippedBy) {
+      const playerObj = context.state.worldObjects.find((candidate) => candidate.id === WORLD_OBJECT_IDS.player)
+      if (playerObj) {
+        const player = getMutableWorldObjectState<PlayerState>(playerObj)
+        if (player.alive && player.weaponId === null) {
+          if (collision.gap(boxOf(player), boxOf(dagger)) <= PICKUP_REACH) {
+            pickUp.pickUp(context.state, WORLD_OBJECT_IDS.player)
+          }
+        }
+      }
+    }
+
     if (!dagger.equippedBy) {
       return
     }

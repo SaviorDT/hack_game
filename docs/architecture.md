@@ -29,7 +29,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 | Mode | Time Scale | Player Control | Combat & Actions |
 |---|:---:|---|---|
-| **Movement** | 1.00 | WASD / Arrows (responsive physics) | J / Left-click: attack; K / Right-click: pick up |
+| **Movement** | 1.00 | WASD / Arrows (responsive physics) | J / Left-click: attack (auto-pickup on contact) |
 | **Command** | 0.25 | Disabled (or latched direction) | Ignored |
 
 - **Toggle**: Enter toggles between Movement and Command Mode.
@@ -76,12 +76,13 @@ Characters start with 100 Health. Weapon definitions scale cooldowns with simula
 | Dagger | 35 | 0.5s | 10 px | Single-target |
 | Guard | 20 | 1.0s | 5 px | Hostile guard attack |
 
-Attacks damage nearest character within Reach (bounding-box gap). Pick-up equips nearest object within `PICKUP_REACH = 10` px; both actions mark undiscovered targets discovered. Hitboxes scale proportionally via `scaleX`/`scaleY` from base dimensions (`CHARACTER_SIZE` 110×160, `DAGGER_SIZE` 72×72).
+Attacks damage nearest character within Reach (bounding-box gap). Items (including Dagger) are automatically picked up when within `PICKUP_REACH = 10` px; both actions mark undiscovered targets discovered. Hitboxes scale proportionally via `scaleX`/`scaleY` from base dimensions (`CHARACTER_SIZE` 110×160, `DAGGER_SIZE` 72×72).
 
 ### First Room Behavior
 
 Room 1 initializes with Player Character (upper-left), hidden Dagger (lower-left), and hidden Guard (right). Exiting right leads to Room 2:
 - `ls` discovers hidden objects; interaction works prior to discovery.
+- The player walks with WASD, automatically picks up the Dagger (and any items) on contact/reach, and attacks with J or left click.
 - Guard pursues player when player enters room's right half; attacks within Reach.
 - Player reaching 0 Health triggers `game-over`. Defeating guard stops pursuit. Reaching exit triggers `congratulations`.
 

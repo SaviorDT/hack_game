@@ -110,8 +110,6 @@ export class GameScene extends Phaser.Scene {
       this.commandInputView?.setInputEnabled(true)
     } else if (INPUT_BINDINGS.attack.keys.includes(key)) {
       this.session.attack()
-    } else if (INPUT_BINDINGS.pickUp.keys.includes(key)) {
-      this.session.pickUp()
     }
 
     return false
@@ -129,9 +127,7 @@ export class GameScene extends Phaser.Scene {
       return
     }
 
-    if (INPUT_BINDINGS.pickUp.mouseButtons.includes('right') && pointer.rightButtonDown()) {
-      this.session.pickUp()
-    } else if (INPUT_BINDINGS.attack.mouseButtons.includes('left') && pointer.leftButtonDown()) {
+    if (INPUT_BINDINGS.attack.mouseButtons.includes('left') && pointer.leftButtonDown()) {
       this.session.attack()
     }
   }

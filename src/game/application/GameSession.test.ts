@@ -143,6 +143,20 @@ describe('player movement', () => {
 })
 
 describe('pick-up and attack', () => {
+  it('automatically picks up the undiscovered dagger when moving into reach on tick', () => {
+    const session = newSession()
+    const player = stateOf(session, 'player')
+    const dagger = stateOf(session, 'dagger')
+    player.x = dagger.x
+    player.y = dagger.y
+
+    session.update(SIMULATION_TICK_MS)
+
+    expect(player.weaponId).toBe('dagger')
+    expect(dagger.discovered).toBe(true)
+    expect(dagger.equippedBy).toBe('player')
+  })
+
   it('picks up the undiscovered dagger when standing next to it', () => {
     const session = newSession()
     const player = stateOf(session, 'player')

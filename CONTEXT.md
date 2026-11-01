@@ -52,6 +52,10 @@ _Avoid_: View visibility (when referring to the player's knowledge)
 A command-facing address that resolves to a room or world object inside the game.
 _Avoid_: File path, filesystem path (when referring to the host computer)
 
+**Wildcard**:
+A `*` in a Command argument that stands for any run of characters (including none). It is matched against World Object names, not expanded into the typed command.
+_Avoid_: Glob (when referring to the in-game `*`)
+
 **Process Definition**:
 A reusable description of a behavior that a world object's rules may select.
 _Avoid_: Process (when referring to a reusable description)

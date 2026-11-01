@@ -163,4 +163,104 @@ describe('MvCommandExecutor', () => {
       speed: 300,
     })
   })
+  describe('wildcard sources', () => {
+    const run = (state: ReturnType<typeof createInitialWorldState>, source: string, target: string) =>
+      executor.execute({ name: 'mv', arguments: [source, target], options: [] }, state)
+    const find = (state: ReturnType<typeof createInitialWorldState>, id: string) =>
+      state.worldObjects.find((o) => o.id === id)!
+
+    it('throws every match, case-insensitively, in one popup and excludes the target', () => {
+      const state = createInitialWorldState()
+      const result = run(state, '*', 'GUARD')
+      expect(result).toEqual({
+        status: 'success',
+        feedback: [{ kind: 'popup', text: 'Threw hacker, dagger, guard-2, guard-3 to guard.' }],
+      })
+      const guardState = getMutableWorldObjectState<MutableWorldObjectState>(find(state, WORLD_OBJECT_IDS.guard))
+      expect(guardState.thrown).toBeFalsy()
+      for (const id of [WORLD_OBJECT_IDS.player, WORLD_OBJECT_IDS.dagger, 'guard-2', 'guard-3']) {
+        const st = getMutableWorldObjectState<MutableWorldObjectState>(find(state, id))
+        expect(st.thrown).toMatchObject({ targetObjectId: WORLD_OBJECT_IDS.guard })
+        expect(st.discovered).toBe(true)
+      }
+    })
+
+    it('matches a pattern in the middle of a name', () => {
+      const state = createInitialWorldState()
+      const result = run(state, 'd*x', 'guard')
+      expect(result).toEqual({
+        status: 'rejected',
+        feedback: { kind: 'popup', text: 'Cannot find "d*x".' },
+      })
+      expect(run(state, 'd*r', 'guard').status).toBe('success')
+    })
+
+    it('rejects when nothing matches', () => {
+      const state = createInitialWorldState()
+      expect(run(state, 'z*', 'foo')).toEqual({
+        status: 'rejected',
+        feedback: { kind: 'popup', text: 'Cannot find "z*".' },
+      })
+      expect(find(state, WORLD_OBJECT_IDS.dagger).metadata.name).toBe('dagger')
+    })
+
+    it('rejects when the only match is the target itself', () => {
+      const state = createInitialWorldState()
+      expect(run(state, 'gu*d', 'guard')).toEqual({
+        status: 'rejected',
+        feedback: { kind: 'popup', text: 'Cannot find "gu*d".' },
+      })
+    })
+
+    it('renames a single match to the plain target name', () => {
+      const state = createInitialWorldState()
+      expect(run(state, 'd*', 'knife')).toEqual({
+        status: 'success',
+        feedback: [{ kind: 'popup', text: 'Renamed dagger to knife.' }],
+      })
+      expect(find(state, WORLD_OBJECT_IDS.dagger).metadata.name).toBe('knife')
+    })
+
+    it('renames multiple matches with numeric suffixes', () => {
+      const state = createInitialWorldState()
+      const result = run(state, '*', 'x')
+      expect(result.status).toBe('success')
+      expect(find(state, WORLD_OBJECT_IDS.player).metadata.name).toBe('x_0')
+      expect(find(state, WORLD_OBJECT_IDS.dagger).metadata.name).toBe('x_1')
+      expect(find(state, WORLD_OBJECT_IDS.guard).metadata.name).toBe('x_2')
+      expect(find(state, 'guard-3').metadata.name).toBe('x_4')
+    })
+
+    it('skips suffixes already taken by other objects or exits', () => {
+      const state = createInitialWorldState()
+      find(state, WORLD_OBJECT_IDS.guard).rename('X_1')
+      const result = run(state, '*a*', 'x')
+      expect(result.status).toBe('success')
+      // the renamed guard no longer matches "*a*"; x_1 is taken by it
+      expect(find(state, WORLD_OBJECT_IDS.player).metadata.name).toBe('x_0')
+      expect(find(state, WORLD_OBJECT_IDS.dagger).metadata.name).toBe('x_2')
+      expect(find(state, 'guard-2').metadata.name).toBe('x_3')
+    })
+
+    it('does not count the sources themselves as collisions', () => {
+      const state = createInitialWorldState()
+      find(state, WORLD_OBJECT_IDS.dagger).rename('x_0')
+      run(state, '*', 'x')
+      expect(find(state, WORLD_OBJECT_IDS.player).metadata.name).toBe('x_0')
+    })
+
+    it('treats * in the target as a literal name', () => {
+      const state = createInitialWorldState()
+      expect(run(state, 'dagger', 'k*')).toEqual({
+        status: 'success',
+        feedback: [{ kind: 'popup', text: 'Renamed dagger to k*.' }],
+      })
+      expect(find(state, WORLD_OBJECT_IDS.dagger).metadata.name).toBe('k*')
+      // and a literal-named object is addressable as a target
+      expect(run(state, 'guard', 'k*').status).toBe('success')
+      expect(
+        getMutableWorldObjectState<MutableWorldObjectState>(find(state, WORLD_OBJECT_IDS.guard)).thrown,
+      ).toMatchObject({ targetObjectId: WORLD_OBJECT_IDS.dagger })
+    })
+  })
 })

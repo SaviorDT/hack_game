@@ -72,10 +72,9 @@ describe('MvCommandExecutor', () => {
       targetX: guardState.x,
       targetY: guardState.y,
       targetObjectId: guardObj.id,
-      speed: 300,
+      hitIds: [],
     })
     expect(daggerState.discovered).toBe(true)
-    expect(daggerState.vx).toBeGreaterThan(0)
   })
 
   it('rejects command if extra arguments or options are provided', () => {
@@ -109,7 +108,6 @@ describe('MvCommandExecutor', () => {
     expect(daggerState.thrown).toMatchObject({
       targetX: ROOM_LAYOUT.exit.x,
       targetY: ROOM_LAYOUT.exit.y,
-      speed: 300,
     })
   })
 
@@ -130,39 +128,32 @@ describe('MvCommandExecutor', () => {
     expect(playerState.weaponId).toBeNull()
   })
 
-  it('uses custom mv_speed configuration when provided statically or dynamically', () => {
-    let dynamicSpeed = 450
-    const customExecutor = new MvCommandExecutor(() => dynamicSpeed)
-
+  it('starts a throw at rest: the executor sets no velocity, the flight accelerates it', () => {
     const state = createInitialWorldState()
     const daggerObj = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)!
     const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(daggerObj)
 
-    customExecutor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
-    expect(daggerState.thrown).toMatchObject({
-      speed: 450,
-    })
-
-    // Modify dynamic speed source as object with mv_speed
-    const dynamicConfig = { mv_speed: 600 }
-    const customExecutor2 = new MvCommandExecutor(() => dynamicConfig)
-    customExecutor2.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
-    expect(daggerState.thrown).toMatchObject({
-      speed: 600,
-    })
+    executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
+    expect(daggerState.vx ?? 0).toBe(0)
+    expect(daggerState.vy ?? 0).toBe(0)
   })
 
-  it('uses default decoupled mv_speed across rooms without room1 dependency', () => {
-    const defaultExecutor = new MvCommandExecutor()
+  it('keeps the current velocity and resets hitIds when thrown again mid-flight', () => {
     const state = createInitialWorldState()
     const daggerObj = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)!
     const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(daggerObj)
 
-    defaultExecutor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
-    expect(daggerState.thrown).toMatchObject({
-      speed: 300,
-    })
+    executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
+    daggerState.vx = 120
+    daggerState.vy = -30
+    ;(daggerState.thrown as { hitIds: string[] }).hitIds.push('guard')
+
+    executor.execute({ name: 'mv', arguments: ['dagger', 'room2'], options: [] }, state)
+    expect(daggerState.vx).toBe(120)
+    expect(daggerState.vy).toBe(-30)
+    expect((daggerState.thrown as { hitIds: string[] }).hitIds).toEqual([])
   })
+
   describe('wildcard sources', () => {
     const run = (state: ReturnType<typeof createInitialWorldState>, source: string, target: string) =>
       executor.execute({ name: 'mv', arguments: [source, target], options: [] }, state)

@@ -1,4 +1,4 @@
-import type { PlayerSpeedConfig } from '../content/room1.ts'
+import type { MvAttrConfig, PlayerSpeedConfig } from '../content/room1.ts'
 
 export interface ScalableMovableObject {
   id: string
@@ -16,6 +16,7 @@ export interface ScalableMovableObject {
   acceleration?: number
   frictionAcceleration?: number
   turnaroundAcceleration?: number
+  mv_attr?: MvAttrConfig
 }
 
 export interface MoveChange {
@@ -60,6 +61,36 @@ export interface PropertyChange {
   readonly nextValue: number
 }
 
+export type MvAttrKey = keyof MvAttrConfig
+
+/** Sets or clears (undefined) one per-object mv override; an emptied `mv_attr` is dropped. */
+export function setMvAttrValue(
+  target: ScalableMovableObject,
+  key: MvAttrKey,
+  value: number | undefined,
+): void {
+  const next: MvAttrConfig = { ...target.mv_attr }
+  if (value === undefined) {
+    delete next[key]
+  } else {
+    next[key] = value
+  }
+  if (Object.keys(next).length === 0) {
+    delete target.mv_attr
+  } else {
+    target.mv_attr = next
+  }
+}
+
+export interface MvAttrChange {
+  readonly type: 'mv_attr'
+  readonly objectId: string
+  readonly key: MvAttrKey
+  /** undefined means "no override, use the global default". */
+  readonly prevValue: number | undefined
+  readonly nextValue: number | undefined
+}
+
 export interface SpawnChange {
   readonly type: 'spawn'
   readonly objectId: string
@@ -78,6 +109,7 @@ export type EditorChange =
   | MoveChange
   | ScaleChange
   | PropertyChange
+  | MvAttrChange
   | SpawnChange
   | DespawnChange
 
@@ -122,6 +154,14 @@ export function invertChange(change: EditorChange): EditorChange {
         objectId: change.objectId,
         property: change.property,
         delta: -change.delta,
+        prevValue: change.nextValue,
+        nextValue: change.prevValue,
+      }
+    case 'mv_attr':
+      return {
+        type: 'mv_attr',
+        objectId: change.objectId,
+        key: change.key,
         prevValue: change.nextValue,
         nextValue: change.prevValue,
       }
@@ -184,6 +224,10 @@ export function applyChange(target: ScalableMovableObject, change: EditorChange)
         target.displayWidth = Math.max(16, Math.round(target.baseWidth * target.scaleX))
         target.displayHeight = Math.max(16, Math.round(target.baseHeight * target.scaleY))
       }
+      break
+    }
+    case 'mv_attr': {
+      setMvAttrValue(target, change.key, change.nextValue)
       break
     }
     case 'property': {

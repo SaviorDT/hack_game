@@ -359,22 +359,27 @@ describe('commands', () => {
     expect(guard.discovered).toBe(true)
   })
 
-  it('moves thrown object at constant mv_speed across simulation ticks', () => {
+  it('accelerates a thrown object from rest, capped by its max_velocity', () => {
     const session = newSession()
     const dagger = stateOf(session, 'dagger')
 
     session.submitCommand('mv dagger guard')
-    const daggerRecord = dagger as unknown as Record<string, unknown>
-    const thrown = daggerRecord.thrown as { speed: number }
+    const thrown = (dagger as unknown as Record<string, unknown>).thrown
     expect(thrown).toBeDefined()
-    expect(thrown.speed).toBe(300)
+    expect(Math.hypot((dagger.vx as number) ?? 0, (dagger.vy as number) ?? 0)).toBe(0)
 
-    // Velocity is immediately at throw speed in direction of target
-    expect(Math.hypot(dagger.vx as number, dagger.vy as number)).toBeCloseTo(300, 1)
-
-    // Advance 1 simulation tick (~16.67ms): velocity remains constant at throw speed
+    // After one tick the object has been pulled for one tick: a = 1000 px/s² -> ~16.7 px/s
     session.update(SIMULATION_TICK_MS)
-    expect(Math.hypot(dagger.vx as number, dagger.vy as number)).toBeCloseTo(300, 1)
+    expect(Math.hypot(dagger.vx as number, dagger.vy as number)).toBeCloseTo(1000 * (SIMULATION_TICK_MS / 1000), 1)
+
+    // Long flights never exceed the cap
+    let peak = 0
+    for (let i = 0; i < 400 && (dagger as unknown as Record<string, unknown>).thrown; i++) {
+      session.update(SIMULATION_TICK_MS)
+      peak = Math.max(peak, Math.hypot(dagger.vx as number, dagger.vy as number))
+    }
+    expect(peak).toBeGreaterThan(300)
+    expect(peak).toBeLessThanOrEqual(500 + 1e-6)
   })
 
   it('unequips weapon when thrown and allows pickup when in reach', () => {

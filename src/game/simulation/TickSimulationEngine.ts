@@ -5,6 +5,9 @@ import type { WorldState } from '../domain/WorldState.ts'
 import type { ProcessDefinition } from '../processes/ProcessDefinition.ts'
 import type { ProcessInstance } from '../processes/ProcessInstance.ts'
 import type { RenderPosition, SimulationEngine } from './SimulationEngine.ts'
+import { ContactResolver } from './ContactResolver.ts'
+import { ThrownFlight } from './ThrownFlight.ts'
+import type { MvConfig } from '../commands/mvConstants.ts'
 
 export interface ProcessTickContext {
   readonly state: WorldState
@@ -54,13 +57,17 @@ export class TickSimulationEngine implements SimulationEngine {
   private readonly conditionEvaluator: BehaviorConditionEvaluator
   private accumulatedGameTimeMs = 0
   private readonly previousPositions = new Map<string, RenderPosition>()
+  private readonly thrownFlight: ThrownFlight
+  private readonly contactResolver = new ContactResolver()
 
   constructor(
     processes: readonly WorldObjectProcess[],
     tickDurationMs = SIMULATION_TICK_MS,
     conditionEvaluator: BehaviorConditionEvaluator = (condition) =>
       evaluateAlwaysActiveCondition(condition),
+    mvConfig?: () => MvConfig,
   ) {
+    this.thrownFlight = new ThrownFlight(mvConfig)
     if (!Number.isFinite(tickDurationMs) || tickDurationMs <= 0) {
       throw new Error('Simulation tick duration must be a positive finite number.')
     }
@@ -118,6 +125,14 @@ export class TickSimulationEngine implements SimulationEngine {
     }
 
     state.simulationTick += 1
+
+    // Throws: move with last tick's velocity, resolve contacts at that speed, then update velocity.
+    const arrived = this.thrownFlight.move(state, this.tickDurationMs)
+    this.contactResolver.resolve(state)
+    this.thrownFlight.accelerate(state, this.tickDurationMs, arrived)
+    if (state.outcome !== 'playing') {
+      return
+    }
 
     for (const worldObject of state.worldObjects) {
       const activeDefinitions = new Set<ProcessDefinitionId>()

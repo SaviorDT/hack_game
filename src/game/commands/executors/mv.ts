@@ -4,29 +4,6 @@ import type { WorldState } from '../../domain/WorldState.ts'
 import type { CommandExecutor } from './base.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { WorldObject } from '../../domain/WorldObject.ts'
-import {
-  DEFAULT_MV_SPEED,
-  GAME_MV_SPEED,
-  type MvSpeedConfig,
-} from '../mvConstants.ts'
-
-export type MvSpeedSource = number | MvSpeedConfig | (() => number | MvSpeedConfig)
-
-export function resolveMvSpeed(source?: MvSpeedSource): number {
-  if (typeof source === 'function') {
-    return resolveMvSpeed(source())
-  }
-  if (typeof source === 'number') {
-    return source
-  }
-  if (typeof source === 'object' && source !== null) {
-    if (typeof source.mv_speed === 'number') return source.mv_speed
-    if (typeof (source as Record<string, unknown>).mvSpeed === 'number') {
-      return (source as Record<string, unknown>).mvSpeed as number
-    }
-  }
-  return GAME_MV_SPEED.mv_speed ?? DEFAULT_MV_SPEED
-}
 
 export function findObjectInRoom(state: WorldState, label: string): WorldObject | undefined {
   const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
@@ -88,12 +65,6 @@ function nextFreeName(base: string, taken: Set<string>, counter: { next: number 
 }
 
 export class MvCommandExecutor implements CommandExecutor {
-  private readonly speedSource?: MvSpeedSource
-
-  constructor(speedSource?: MvSpeedSource) {
-    this.speedSource = speedSource
-  }
-
   execute(command: ParsedCommand, state: WorldState): CommandResult {
     if (state.outcome !== 'playing') {
       return { status: 'rejected', feedback: { kind: 'popup', text: 'This game has ended.' } }
@@ -183,8 +154,6 @@ export class MvCommandExecutor implements CommandExecutor {
       }
     }
 
-    const speed = resolveMvSpeed(this.speedSource)
-
     let targetX = 0
     let targetY = 0
     let targetObjectId: string | undefined
@@ -219,9 +188,7 @@ export class MvCommandExecutor implements CommandExecutor {
 
       const currentX = (sourceState.x as number) ?? 0
       const currentY = (sourceState.y as number) ?? 0
-      const deltaX = targetX - currentX
-      const deltaY = targetY - currentY
-      const distance = Math.hypot(deltaX, deltaY)
+      const distance = Math.hypot(targetX - currentX, targetY - currentY)
 
       if (distance === 0) {
         sourceState.x = targetX
@@ -230,13 +197,14 @@ export class MvCommandExecutor implements CommandExecutor {
         sourceState.vy = 0
         sourceState.thrown = null
       } else {
-        sourceState.vx = (deltaX / distance) * speed
-        sourceState.vy = (deltaY / distance) * speed
+        // The central flight keeps any current velocity and accelerates the object towards the target.
+        sourceState.vx = (sourceState.vx as number | undefined) ?? 0
+        sourceState.vy = (sourceState.vy as number | undefined) ?? 0
         sourceState.thrown = {
           targetX,
           targetY,
           targetObjectId: targetObjectId ?? null,
-          speed,
+          hitIds: [],
         }
       }
     }

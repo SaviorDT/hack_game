@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   createSpeedEditorSession,
   DEFAULT_SPEED_CONFIG,
-  DEFAULT_MV_SPEED,
+  GAME_MV_CONFIG,
   getPlayerSpeedFromObjects,
-  getMvSpeedConfig,
+  getMvConfig,
 } from './speedEditorSession.ts'
 import { WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
 import { generateRoom1Source } from '../content/room1Serializer.ts'
@@ -57,15 +57,17 @@ describe('SpeedEditorScene', () => {
     })
   })
 
-  describe('getMvSpeedConfig', () => {
-    it('returns default mv speed config when no override is given', () => {
-      const config = getMvSpeedConfig()
-      expect(config).toEqual({ mv_speed: DEFAULT_MV_SPEED })
+  describe('getMvConfig', () => {
+    it('returns the global mv config when no override is given', () => {
+      expect(getMvConfig()).toEqual({ ...GAME_MV_CONFIG })
     })
 
-    it('handles numeric and object overrides', () => {
-      expect(getMvSpeedConfig(450)).toEqual({ mv_speed: 450 })
-      expect(getMvSpeedConfig({ mv_speed: 500 })).toEqual({ mv_speed: 500 })
+    it('overrides only the given fields', () => {
+      expect(getMvConfig({ mv_force: 800, drag: 2 })).toEqual({
+        ...GAME_MV_CONFIG,
+        mv_force: 800,
+        drag: 2,
+      })
     })
   })
 
@@ -213,34 +215,29 @@ describe('SpeedEditorScene', () => {
       expect(worldState.outcome).toBe('playing')
     })
 
-    it('simulates mv throw physics with configured mv_speed for dagger', () => {
-      let currentMvSpeed = 200
-      const { session, worldState } = createSpeedEditorSession({
-        mvSpeed: () => currentMvSpeed,
-      })
+    it('simulates mv throw physics with the configured mv force for dagger', () => {
+      const config = { ...GAME_MV_CONFIG, mv_force: 2000 }
+      const { session, worldState } = createSpeedEditorSession({ mvConfig: () => config })
 
       const dagger = worldState.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)!
       const state = dagger.state as Record<string, unknown>
-      const startX = state.x as number
 
-      // Execute mv command to throw dagger to guard
       const result = session.submitCommand('mv dagger guard')
       expect(result.status).toBe('success')
+      expect(state.thrown).toBeDefined()
 
-      const thrown = state.thrown as { speed: number }
-      expect(thrown).toBeDefined()
-      expect(thrown.speed).toBe(200)
-      expect(Math.hypot(state.vx as number, state.vy as number)).toBeCloseTo(200, 1)
-
-      // Advance one tick
+      // Rest at launch, then force accelerates it: a = 2000 px/s² -> ~33 px/s after one tick
       session.update(16.67)
-      expect((state.x as number)).toBeGreaterThan(startX)
+      session.update(16.67)
+      const speedAfterTwoTicks = Math.hypot(state.vx as number, state.vy as number)
+      expect(speedAfterTwoTicks).toBeGreaterThan(40)
 
-      // Modify dynamic mvSpeed
-      currentMvSpeed = 500
-      session.submitCommand('mv dagger hacker')
-      const thrown2 = state.thrown as { speed: number }
-      expect(thrown2.speed).toBe(500)
+      // Live config changes apply immediately
+      config.mv_force = 0
+      config.drag = 0
+      const frozen = Math.hypot(state.vx as number, state.vy as number)
+      session.update(16.67)
+      expect(Math.hypot(state.vx as number, state.vy as number)).toBeCloseTo(frozen, 5)
     })
   })
 
@@ -278,17 +275,19 @@ describe('SpeedEditorScene', () => {
       const source = generateRoom1Source(objects)
 
       expect(source).not.toContain('ROOM1_MV_SPEED')
-      expect(source).not.toContain('MvSpeedConfig')
+      expect(source).not.toContain('MvConfig')
     })
 
-    it('serializes mv speed to mv constants without DEFAULT_THROW_SPEED', () => {
-      const source = generateMvConstantsSource(420)
+    it('serializes mv config to mv constants', () => {
+      const source = generateMvConstantsSource({ mv_force: 800, drag: 0.25, mass: 2, max_velocity: 420 })
 
-      expect(source).toContain('export const DEFAULT_MV_SPEED = 420')
-      expect(source).toContain('export interface MvSpeedConfig')
-      expect(source).toContain('export const GAME_MV_SPEED: MvSpeedConfig = {')
-      expect(source).toContain('mv_speed: DEFAULT_MV_SPEED,')
-      expect(source).not.toContain('DEFAULT_THROW_SPEED')
+      expect(source).toContain('export const DEFAULT_MV_FORCE = 800')
+      expect(source).toContain('export const DEFAULT_MV_DRAG = 0.25')
+      expect(source).toContain('export const DEFAULT_MV_MASS = 2')
+      expect(source).toContain('export const DEFAULT_MV_MAX_VELOCITY = 420')
+      expect(source).toContain('export const GAME_MV_CONFIG: MvConfig = {')
+      expect(source).toContain('mv_force: DEFAULT_MV_FORCE,')
+      expect(source).not.toContain('mv_speed')
     })
   })
 })

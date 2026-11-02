@@ -2,6 +2,7 @@ import { BasicWorldObject } from '../domain/BasicWorldObject.ts'
 import type { Room } from '../domain/Room.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import type { WorldState } from '../domain/WorldState.ts'
+import { defaultColliderTags } from '../domain/ColliderTag.ts'
 import { ALWAYS_ACTIVE_BEHAVIOR } from '../processes/BehaviorRule.ts'
 import {
   ROOM_IDS,
@@ -22,11 +23,15 @@ const alwaysActiveRule = (processDefinitionId: string) => ({
 
 function createRoomWorldObject(
   id: string,
-  metadata: Readonly<Record<string, string | boolean>>,
+  metadata: WorldObject['metadata'],
   behaviorRules: WorldObject['behaviorRules'],
   state: WorldObject['state'],
 ): WorldObject {
   return new BasicWorldObject(id, ROOM_IDS.first, metadata, behaviorRules, state)
+}
+
+function mvAttrState(obj: RoomObjectConfig): { mv_attr?: { drag?: number; mass?: number; max_velocity?: number } } {
+  return obj.mv_attr ? { mv_attr: { ...obj.mv_attr } } : {}
 }
 
 export function resolveScale(
@@ -66,7 +71,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
       const { width, height } = computeCollisionSize('player', scaleX, scaleY)
       return createRoomWorldObject(
         obj.id,
-        { name: 'hacker', role: 'player', discoverable: false },
+        { name: 'hacker', role: 'player', discoverable: false, colliderTags: defaultColliderTags('player') },
         [alwaysActiveRule(PROCESS_IDS.player)],
         {
           x: obj.x,
@@ -77,6 +82,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
           displayHeight: obj.displayHeight,
           scaleX,
           scaleY,
+          ...mvAttrState(obj),
           speed: typeof obj.speed === 'object' && obj.speed !== null
             ? {
                 acceleration: obj.speed.acceleration,
@@ -119,7 +125,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
       const { width, height } = computeCollisionSize('weapon', scaleX, scaleY)
       return createRoomWorldObject(
         obj.id,
-        { name: obj.id, role: 'weapon', weaponId: 'dagger', discoverable: true },
+        { name: obj.id, role: 'weapon', weaponId: 'dagger', discoverable: true, colliderTags: defaultColliderTags('weapon') },
         [alwaysActiveRule(PROCESS_IDS.dagger)],
         {
           x: obj.x,
@@ -130,6 +136,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
           displayHeight: obj.displayHeight,
           scaleX,
           scaleY,
+          ...mvAttrState(obj),
           discovered: false,
           equippedBy: null,
         },
@@ -141,7 +148,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
     const { width, height } = computeCollisionSize('guard', scaleX, scaleY)
     return createRoomWorldObject(
       obj.id,
-      { name: obj.id, role: 'guard', discoverable: true },
+      { name: obj.id, role: 'guard', discoverable: true, colliderTags: defaultColliderTags('guard') },
       [alwaysActiveRule(PROCESS_IDS.guard)],
       {
         x: obj.x,
@@ -152,6 +159,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
         displayHeight: obj.displayHeight,
         scaleX,
         scaleY,
+        ...mvAttrState(obj),
         speed: obj.speed ?? 210,
         health: obj.maxHealth ?? MAX_HEALTH,
         maxHealth: obj.maxHealth ?? MAX_HEALTH,

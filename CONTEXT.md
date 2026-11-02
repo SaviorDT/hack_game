@@ -56,6 +56,18 @@ _Avoid_: File path, filesystem path (when referring to the host computer)
 A `*` in a Command argument that stands for any run of characters (including none). It is matched against World Object names, not expanded into the typed command.
 _Avoid_: Glob (when referring to the in-game `*`)
 
+**Throw**:
+The flight of a World Object launched toward a target by the mv Command, lasting until it arrives at the target. Each Throw is separate: a World Object can be thrown again mid-flight.
+_Avoid_: Move (when referring to the flight itself), shot
+
+**Collider Tag**:
+A label on a World Object naming what kind of thing it is when it touches others (such as Weapon or Character), together with any values that kind needs. Touching is decided by the tags the two objects carry.
+_Avoid_: Role (when referring to how an object behaves on contact), type
+
+**Impact Damage**:
+The Health a Character loses when a Weapon touches it during a Throw, growing with the Weapon's speed at that moment. A Weapon hurts a given Character at most once per Throw, and touching changes nothing else.
+_Avoid_: Attack damage (the fixed damage of a Weapon swing)
+
 **Process Definition**:
 A reusable description of a behavior that a world object's rules may select.
 _Avoid_: Process (when referring to a reusable description)

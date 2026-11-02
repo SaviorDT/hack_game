@@ -102,3 +102,23 @@ describe('room1Serializer', () => {
   })
 })
 
+
+describe('generateRoom1Source mv_attr', () => {
+  it('writes only the mv_attr fields that are set', () => {
+    const source = generateRoom1Source([
+      {
+        id: 'dagger',
+        role: 'weapon',
+        x: 1,
+        y: 2,
+        displayWidth: 72,
+        displayHeight: 72,
+        mv_attr: { drag: 1.5, max_velocity: 80 },
+      },
+      { id: 'guard', role: 'guard', x: 1, y: 2, displayWidth: 72, displayHeight: 72, mv_attr: {} },
+    ])
+    expect(source).toContain('mv_attr: {\n      drag: 1.5,\n      max_velocity: 80,\n    },')
+    expect(source).not.toContain('mass:')
+    expect(source.match(/mv_attr/g)).toHaveLength(2) // one in the object, one in the interface
+  })
+})

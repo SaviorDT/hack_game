@@ -6,12 +6,7 @@ import {
   type PlayerSpeedConfig,
   type RoomObjectConfig,
 } from '../content/room1.ts'
-import {
-  DEFAULT_MV_SPEED,
-  GAME_MV_SPEED,
-  type MvSpeedConfig,
-} from '../commands/mvConstants.ts'
-import type { MvSpeedSource } from '../commands/executors/mv.ts'
+import { GAME_MV_CONFIG, type MvConfig } from '../commands/mvConstants.ts'
 import { createInitialWorldState } from '../content/room1WorldState.ts'
 import { createRoom1CommandSubmissionService } from '../content/room1Commands.ts'
 import { GameSession } from '../application/GameSession.ts'
@@ -34,14 +29,14 @@ export const DEFAULT_SPEED_CONFIG: PlayerSpeedConfig = {
   maxSpeed: 300,
 }
 
-export { DEFAULT_MV_SPEED, GAME_MV_SPEED, type MvSpeedConfig }
+export { GAME_MV_CONFIG, type MvConfig }
 
-export function getMvSpeedConfig(speed?: number | Partial<MvSpeedConfig>): MvSpeedConfig {
-  if (typeof speed === 'number') {
-    return { mv_speed: speed }
-  }
+export function getMvConfig(config?: Partial<MvConfig>): MvConfig {
   return {
-    mv_speed: speed?.mv_speed ?? GAME_MV_SPEED.mv_speed ?? DEFAULT_MV_SPEED,
+    mv_force: config?.mv_force ?? GAME_MV_CONFIG.mv_force,
+    drag: config?.drag ?? GAME_MV_CONFIG.drag,
+    mass: config?.mass ?? GAME_MV_CONFIG.mass,
+    max_velocity: config?.max_velocity ?? GAME_MV_CONFIG.max_velocity,
   }
 }
 
@@ -87,7 +82,7 @@ function getStorage(storage?: Storage): Storage {
 
 export function createSpeedEditorSession(options?: {
   playerSpeed?: PlayerSpeedConfig
-  mvSpeed?: MvSpeedSource
+  mvConfig?: () => MvConfig
   storage?: Storage
   objects?: RoomObjectConfig[]
 }): SpeedEditorSessionBundle {
@@ -126,13 +121,15 @@ export function createSpeedEditorSession(options?: {
 
   // Simulation engine runs PlayerMovementProcess and DaggerPickupProcess:
   // guards will not pursue or attack, while player movement and thrown weapon physics execute.
-  const simulationEngine = new TickSimulationEngine([
-    new PlayerMovementProcess(),
-    new DaggerPickupProcess(),
-  ])
+  const simulationEngine = new TickSimulationEngine(
+    [new PlayerMovementProcess(), new DaggerPickupProcess()],
+    undefined,
+    undefined,
+    options?.mvConfig,
+  )
   const session = new GameSession({
     worldState,
-    commandSubmission: createRoom1CommandSubmissionService(options?.mvSpeed),
+    commandSubmission: createRoom1CommandSubmissionService(),
     simulationClock: new RealtimeSimulationClock(),
     simulationEngine,
     saveRepository: new LocalStorageSaveRepository(getStorage(options?.storage), 'hack-game.editor-save'),

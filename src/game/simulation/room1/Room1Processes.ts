@@ -3,6 +3,7 @@ import type { PlayerSpeedConfig } from '../../content/room1.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { AabbCollisionWorld } from '../../domain/CollisionWorld.ts'
 import { CombatService } from '../../domain/CombatService.ts'
+import { applyPlayerDefeat } from '../../domain/PlayerDefeat.ts'
 import { PICKUP_REACH, PickUpService } from '../../domain/PickUpService.ts'
 import { weaponFor } from '../../domain/WeaponDefinition.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
@@ -85,70 +86,6 @@ function moveToward(position: Position, target: Position, speed: number, tickDur
   position.y += (deltaY / remainingDistance) * maxDistance
 }
 
-export interface ThrownState {
-  targetX: number
-  targetY: number
-  targetObjectId?: string | null
-  speed: number
-}
-
-export function updateThrownState(
-  objState: Record<string, unknown>,
-  state: ProcessTickContext['state'],
-  tickDurationMs: number,
-): boolean {
-  const thrown = objState.thrown as ThrownState | undefined | null
-  if (!thrown) {
-    return false
-  }
-
-  let targetX = thrown.targetX
-  let targetY = thrown.targetY
-
-  if (thrown.targetObjectId) {
-    const targetObj = state.worldObjects.find((candidate) => candidate.id === thrown.targetObjectId)
-    if (targetObj) {
-      const targetState = getMutableWorldObjectState<{ x: number; y: number; discovered?: boolean }>(targetObj)
-      targetX = targetState.x
-      targetY = targetState.y
-      thrown.targetX = targetX
-      thrown.targetY = targetY
-    }
-  }
-
-  const currentX = (objState.x as number) ?? 0
-  const currentY = (objState.y as number) ?? 0
-  const deltaX = targetX - currentX
-  const deltaY = targetY - currentY
-  const remainingDistance = Math.hypot(deltaX, deltaY)
-  const maxDistance = (thrown.speed * tickDurationMs) / 1000
-
-  if (remainingDistance <= maxDistance || remainingDistance === 0) {
-    objState.x = targetX
-    objState.y = targetY
-    objState.vx = 0
-    objState.vy = 0
-    objState.thrown = null
-
-    if (thrown.targetObjectId) {
-      const targetObj = state.worldObjects.find((candidate) => candidate.id === thrown.targetObjectId)
-      if (targetObj) {
-        const targetState = getMutableWorldObjectState<{ discovered?: boolean }>(targetObj)
-        targetState.discovered = true
-      }
-    }
-    return true
-  }
-
-  const dirX = deltaX / remainingDistance
-  const dirY = deltaY / remainingDistance
-  objState.x = currentX + dirX * maxDistance
-  objState.y = currentY + dirY * maxDistance
-  objState.vx = dirX * thrown.speed
-  objState.vy = dirY * thrown.speed
-  return false
-}
-
 export class PlayerMovementProcess implements WorldObjectProcess {
   readonly id = PROCESS_IDS.player
   readonly definitionId = PROCESS_IDS.player
@@ -167,7 +104,6 @@ export class PlayerMovementProcess implements WorldObjectProcess {
     }
 
     if ((player as unknown as Record<string, unknown>).thrown) {
-      updateThrownState(player as unknown as Record<string, unknown>, context.state, context.tickDurationMs)
       Object.assign(player, collision.clampToBounds(boxOf(player), ROOM_BOUNDS))
 
       const exit = context.state.rooms
@@ -280,10 +216,6 @@ export class DaggerPickupProcess implements WorldObjectProcess {
     }
 
     const dagger = stateOf<DaggerState>(context)
-    if ((dagger as unknown as Record<string, unknown>).thrown) {
-      updateThrownState(dagger as unknown as Record<string, unknown>, context.state, context.tickDurationMs)
-    }
-
     if (!dagger.equippedBy) {
       const playerObj = context.state.worldObjects.find((candidate) => candidate.id === WORLD_OBJECT_IDS.player)
       if (playerObj) {
@@ -300,7 +232,9 @@ export class DaggerPickupProcess implements WorldObjectProcess {
       return
     }
 
-    (dagger as unknown as Record<string, unknown>).thrown = null
+    ;(dagger as unknown as Record<string, unknown>).thrown = null
+    ;(dagger as unknown as Record<string, unknown>).vx = 0
+    ;(dagger as unknown as Record<string, unknown>).vy = 0
     const holder = objectState<CharacterState>(context, dagger.equippedBy)
     if (holder) {
       dagger.x = holder.x + 44
@@ -325,7 +259,6 @@ export class GuardResponseProcess implements WorldObjectProcess {
     }
 
     if ((guard as unknown as Record<string, unknown>).thrown) {
-      updateThrownState(guard as unknown as Record<string, unknown>, context.state, context.tickDurationMs)
       return
     }
 
@@ -346,13 +279,7 @@ export class GuardResponseProcess implements WorldObjectProcess {
     const attack = combat.attack(context.state, context.worldObject.id)
     guard.attacking = attack.status === 'hit'
 
-    if (!player.alive) {
-      player.moveX = 0
-      player.moveY = 0
-      player.vx = 0
-      player.vy = 0
-      context.state.outcome = 'game-over'
-    }
+    applyPlayerDefeat(context.state)
   }
 }
 

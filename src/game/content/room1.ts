@@ -6,6 +6,13 @@ export interface PlayerSpeedConfig {
   [key: string]: number
 }
 
+/** Per-object overrides of the global mv defaults; unset fields fall back to the defaults. */
+export interface MvAttrConfig {
+  drag?: number
+  mass?: number
+  max_velocity?: number
+}
+
 export interface RoomObjectConfig {
   id: string
   role: 'player' | 'guard' | 'weapon'
@@ -17,6 +24,7 @@ export interface RoomObjectConfig {
   scaleY?: number
   speed?: number | PlayerSpeedConfig
   maxHealth?: number
+  mv_attr?: MvAttrConfig
 }
 
 export const ROOM1_OBJECTS: RoomObjectConfig[] = [

@@ -17,14 +17,14 @@ export interface InputBindings {
 // Keys are lowercase `KeyboardEvent.key` values.
 export const INPUT_BINDINGS: InputBindings = {
   movement: {
-    up: ['arrowup'],
-    down: ['arrowdown'],
-    left: ['arrowleft'],
-    right: ['arrowright'],
+    up: ['w'],
+    down: ['s'],
+    left: ['a'],
+    right: ['d'],
   },
-  enterCommandMode: ['enter'],
-  exitCommandMode: ['escape'],
-  attack: { keys: [' ', 'space'], mouseButtons: ['left'] },
+  enterCommandMode: ['shift'],
+  exitCommandMode: [],
+  attack: { keys: [' ', 'space'], mouseButtons: [] },
 }
 
 export function isAlphabetKey(event: {

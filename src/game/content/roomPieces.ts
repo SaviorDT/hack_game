@@ -1,5 +1,6 @@
 import type { Box } from '../domain/CollisionWorld.ts'
 import type { Room, RoomExit } from '../domain/Room.ts'
+import { assertValidRoom } from '../domain/Room.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import type { RoomObjectConfig } from './room1.ts'
 import { ROOM_LAYOUT } from './room1Constants.ts'
@@ -133,5 +134,6 @@ export function buildRooms(
     restoresHealth: true,
     ...(definition.walls ? { walls: definition.walls } : {}),
   }))
+  rooms.forEach(assertValidRoom)
   return { rooms, worldObjects }
 }

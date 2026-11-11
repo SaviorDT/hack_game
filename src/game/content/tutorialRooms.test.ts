@@ -175,7 +175,7 @@ describe('tutorial rooms', () => {
     const text = result.status === 'success' ? result.feedback.map((feedback) => feedback.text).join('\n') : ''
     expect(text).toContain('cd')
     expect(text).toContain('Tip for tutorial1')
-    expect(text).toContain('ARROW KEYS')
+    expect(text).toContain('WASD')
   })
 
   it('explains why cd is refused at a locked exit', () => {

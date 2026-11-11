@@ -1,19 +1,18 @@
 import Phaser from 'phaser'
 import { PhaserGameHud } from '../presentation/PhaserGameHud.ts'
-import textboxImageUrl from '../../assets/game/ui/textbox.png'
 import type { GameSession } from '../application/GameSession.ts'
 import { createRoom1Session } from '../content/createRoom1Session.ts'
 import { ROOM1_OBJECTS } from '../content/room1.ts'
 import { createGameWorldState } from '../content/tutorialRooms.ts'
-import { INPUT_BINDINGS, isAlphabetKey } from '../presentation/InputBindings.ts'
+import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.ts'
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
-import { COMMAND_INPUT_TEXTURE_KEY, PhaserCommandInputView } from '../presentation/PhaserCommandInputView.ts'
+import { InlineCommandInputView } from '../presentation/InlineCommandInputView.ts'
 import { CommandEditorOverlay } from './CommandEditorOverlay.ts'
 
 export class GameScene extends Phaser.Scene {
     private session!: GameSession
-    private commandInputView: PhaserCommandInputView | undefined
+    private inlineCommandInputView: InlineCommandInputView | undefined
     private readonly roomView = new PhaserRoomView()
     private outcomePanel: PhaserGameOutcomePanel | undefined
     private hud: PhaserGameHud | undefined
@@ -22,6 +21,7 @@ export class GameScene extends Phaser.Scene {
     private resumeFromSave = false
     private startingRoomId?: string
     private initialOpenCommandEditor = false
+    private enteredByShift = false
     /** The room the player was in last frame; entering a different one is a Save Point. */
     private lastRoomId: string | null = null
 
@@ -36,7 +36,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image(COMMAND_INPUT_TEXTURE_KEY, textboxImageUrl)
         for (const [textureKey, imageUrl] of Object.entries(WORLD_OBJECT_TEXTURE_URLS)) {
             this.load.image(textureKey, imageUrl)
         }
@@ -68,31 +67,20 @@ export class GameScene extends Phaser.Scene {
                 }),
         )
 
-        const commandInputView = new PhaserCommandInputView()
-        this.commandInputView = commandInputView
-        commandInputView.setPrompt(this.promptForRoom(worldState.currentRoomId))
-        commandInputView.mount(this, (rawText) => {
-            const result = this.session.submitCommand(rawText)
-            const feedbackList = result.status === 'success'
-                ? result.feedback
-                : [result.feedback]
-
-            for (const feedback of feedbackList) {
-                commandInputView.appendOutput(
-                    feedback.text,
-                    'reverseColorLines' in feedback ? feedback.reverseColorLines : undefined,
-                )
-            }
-
-            commandInputView.setPrompt(
-                this.promptForRoom(this.session.getWorldState().currentRoomId),
-            )
-            commandInputView.setInputEnabled(this.session.inputMode === 'command')
-        }, (rawText, cursorIndex) =>
-            this.session.getCommandCompletionCandidates(rawText, cursorIndex),
+        const inlineCommandInputView = new InlineCommandInputView()
+        this.inlineCommandInputView = inlineCommandInputView
+        inlineCommandInputView.mount(
+            this,
+            (rawText) => {
+                this.session.submitCommand(rawText)
+                inlineCommandInputView.setVisible(false)
+                this.enteredByShift = false
+            },
+            (rawText, cursorIndex) =>
+                this.session.getCommandCompletionCandidates(rawText, cursorIndex),
             () => this.session.getWorldState().commandHistory,
         )
-        commandInputView.setKeyGate(this.handleKeyDown)
+        inlineCommandInputView.setKeyGate(this.handleKeyDown)
 
         this.commandEditor = new CommandEditorOverlay(this, this.session)
         this.commandEditor.mount()
@@ -102,24 +90,21 @@ export class GameScene extends Phaser.Scene {
 
         const keyboard = this.input.keyboard
         keyboard?.on('keyup', this.handleKeyUp)
-        this.input.mouse?.disableContextMenu()
-        this.input.on('pointerdown', this.handlePointerDown)
         this.game.events.on(Phaser.Core.Events.BLUR, this.handleBlur)
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             keyboard?.off('keyup', this.handleKeyUp)
-            this.input.off('pointerdown', this.handlePointerDown)
             this.game.events.off(Phaser.Core.Events.BLUR, this.handleBlur)
             this.commandEditor?.destroy()
             this.commandEditor = undefined
-            commandInputView.destroy()
+            inlineCommandInputView.destroy()
             this.roomView.destroy()
             this.hud?.destroy()
             this.hud = undefined
             this.outcomePanel?.destroy()
             this.outcomePanel = undefined
-            if (this.commandInputView === commandInputView) {
-                this.commandInputView = undefined
+            if (this.inlineCommandInputView === inlineCommandInputView) {
+                this.inlineCommandInputView = undefined
             }
         })
     }
@@ -134,7 +119,19 @@ export class GameScene extends Phaser.Scene {
                 this.session.saveCurrentState()
             }
         }
-        this.commandInputView?.setPrompt(this.promptForRoom(worldState.currentRoomId))
+
+        const player = worldState.worldObjects.find(
+            (object) => object.id === 'player' || object.metadata.role === 'player',
+        )
+        if (player) {
+            const pos = this.session.getRenderPosition(player.id)
+            const px = pos?.x ?? (player.state as Record<string, unknown> | undefined)?.x
+            const py = pos?.y ?? (player.state as Record<string, unknown> | undefined)?.y
+            if (typeof px === 'number' && typeof py === 'number') {
+                this.inlineCommandInputView?.setPlayerPosition(px, py)
+            }
+        }
+
         this.roomView.update(worldState, (objectId) => this.session.getRenderPosition(objectId), delta)
         this.outcomePanel?.update(worldState)
         this.hud?.update(worldState, this.session.inputMode)
@@ -142,8 +139,9 @@ export class GameScene extends Phaser.Scene {
 
         if (worldState.outcome === 'game-over' && this.session.inputMode === 'command') {
             this.session.enterMovementMode()
-            this.commandInputView?.clearInput()
-            this.commandInputView?.setInputEnabled(false)
+            this.inlineCommandInputView?.clearInput()
+            this.inlineCommandInputView?.setVisible(false)
+            this.enteredByShift = false
         }
     }
 
@@ -202,11 +200,12 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (this.session.inputMode === 'movement') {
-            if (INPUT_BINDINGS.enterCommandMode.includes(key)) {
+            if (key === 'shift') {
                 event.preventDefault()
                 if (!event.repeat) {
                     this.session.enterCommandMode()
-                    this.commandInputView?.setInputEnabled(true)
+                    this.inlineCommandInputView?.setVisible(true)
+                    this.enteredByShift = true
                 }
                 return false
             }
@@ -219,11 +218,9 @@ export class GameScene extends Phaser.Scene {
                 return false
             }
 
-            if (isAlphabetKey(event)) {
-                this.session.enterCommandMode()
-                this.commandInputView?.setInputEnabled(true)
-                const { typeable } = this.session.keyDown(key)
-                return typeable
+            if (key === 'enter') {
+                event.preventDefault()
+                return false
             }
 
             this.session.keyDown(key)
@@ -231,11 +228,7 @@ export class GameScene extends Phaser.Scene {
             return false
         }
 
-        if (INPUT_BINDINGS.exitCommandMode.includes(key)) {
-            event.preventDefault()
-            this.session.enterMovementMode()
-            this.commandInputView?.clearInput()
-            this.commandInputView?.setInputEnabled(false)
+        if (key === 'shift') {
             return false
         }
 
@@ -244,27 +237,28 @@ export class GameScene extends Phaser.Scene {
     }
 
     private readonly handleKeyUp = (event: KeyboardEvent): void => {
-        this.session.keyUp(event.key.toLowerCase())
-    }
+        const key = event.key.toLowerCase()
+        this.session.keyUp(key)
 
-    private readonly handlePointerDown = (
-        pointer: Phaser.Input.Pointer,
-        currentlyOver: Phaser.GameObjects.GameObject[],
-    ): void => {
-        if (currentlyOver.length > 0) {
-            return
-        }
-
-        if (INPUT_BINDINGS.attack.mouseButtons.includes('left') && pointer.leftButtonDown()) {
-            this.session.attack()
+        if (key === 'shift' && this.enteredByShift && this.session.inputMode === 'command') {
+            if (this.inlineCommandInputView && this.inlineCommandInputView.getValue().trim().length > 0) {
+                this.inlineCommandInputView.submit()
+            } else {
+                this.session.enterMovementMode()
+                this.inlineCommandInputView?.clearInput()
+                this.inlineCommandInputView?.setVisible(false)
+            }
+            this.enteredByShift = false
         }
     }
 
     private readonly handleBlur = (): void => {
         this.session.releaseAllKeys()
-    }
-
-    private promptForRoom(roomId: string | null): string {
-        return roomId ? `~/${roomId}$ ` : '~$ '
+        if (this.enteredByShift && this.session.inputMode === 'command') {
+            this.session.enterMovementMode()
+            this.inlineCommandInputView?.clearInput()
+            this.inlineCommandInputView?.setVisible(false)
+            this.enteredByShift = false
+        }
     }
 }

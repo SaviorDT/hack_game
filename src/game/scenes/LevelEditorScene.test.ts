@@ -101,7 +101,7 @@ describe('LevelEditorScene & Room Registry', () => {
     })
 
     it('returns hints for tutorial rooms and room1', () => {
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.move)?.hint).toContain('ARROW KEYS')
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.move)?.hint).toContain('WASD')
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.discover)?.hint).toContain('ls')
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.throw)?.hint).toContain('mv dagger guard')
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.slowTime)?.hint).toContain('slows time')

@@ -1,5 +1,6 @@
 import { BasicWorldObject } from '../domain/BasicWorldObject.ts'
 import type { Room } from '../domain/Room.ts'
+import { assertValidRoom } from '../domain/Room.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import { defaultColliderTags } from '../domain/ColliderTag.ts'
@@ -337,6 +338,9 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
     state: { name: ROOM_NAMES[ROOM_IDS.second], width: ROOM_LAYOUT.width, height: ROOM_LAYOUT.height },
     bounds: ROOM_BOUNDS,
   }
+
+  assertValidRoom(firstRoom)
+  assertValidRoom(secondRoom)
 
   return {
     rooms: [firstRoom, secondRoom],

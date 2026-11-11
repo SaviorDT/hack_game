@@ -1,5 +1,4 @@
 import Phaser from 'phaser'
-import textboxImageUrl from '../../assets/game/ui/textbox.png'
 import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
 import {
   PRESET_BEHAVIOR_TREES,
@@ -26,7 +25,6 @@ import {
   PhaserRoomView,
   WORLD_OBJECT_TEXTURE_URLS,
 } from '../presentation/PhaserRoomView.ts'
-import { COMMAND_INPUT_TEXTURE_KEY } from '../presentation/PhaserCommandInputView.ts'
 import { createAiEditorSession, type AiEditorSessionBundle } from './aiEditorSession.ts'
 import { ROOM1_OBJECTS } from '../content/room1.ts'
 import { generateRoom1Source } from '../content/room1Serializer.ts'
@@ -121,9 +119,6 @@ export class BehaviorTreeEditorScene extends Phaser.Scene {
   }
 
   preload(): void {
-    if (!this.textures.exists(COMMAND_INPUT_TEXTURE_KEY)) {
-      this.load.image(COMMAND_INPUT_TEXTURE_KEY, textboxImageUrl)
-    }
     for (const [textureKey, imageUrl] of Object.entries(WORLD_OBJECT_TEXTURE_URLS)) {
       if (!this.textures.exists(textureKey)) {
         this.load.image(textureKey, imageUrl)

@@ -20,7 +20,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   {
     id: TUTORIAL_ROOM_IDS.move,
     hint:
-      'Move with the ARROW KEYS. Walk over the dagger to pick it up, then attack with SPACE or LEFT-CLICK. ' +
+      'Move with WASD. Walk over the dagger to pick it up, then attack with SPACE. ' +
       'Defeat the training dummy to open the exit, then walk into it.',
     goal: 'Defeat the dummy, then walk into the exit.',
     objects: [
@@ -36,8 +36,8 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   {
     id: TUTORIAL_ROOM_IDS.discover,
     hint:
-      'Things you have not identified are marked ?. Press any letter key to open the command line, type ls and ' +
-      'press ENTER: it lists everything here and reveals names. TAB completes names, ESC goes back to moving.',
+      'Things you have not identified are marked ?. Hold SHIFT to open the command line, type ls and ' +
+      'release SHIFT: it executes the command and reveals names. TAB completes names.',
     goal: 'Reveal everything in this room (ls).',
     objects: [
       boulder('tutorial2boulder', 900, 330),

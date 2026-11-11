@@ -478,11 +478,11 @@ describe('render position', () => {
 })
 
 describe('input bindings and mode switching', () => {
-  it('INPUT_BINDINGS movement only includes arrow keys and no WASD', () => {
-    expect(INPUT_BINDINGS.movement.up).toEqual(['arrowup'])
-    expect(INPUT_BINDINGS.movement.down).toEqual(['arrowdown'])
-    expect(INPUT_BINDINGS.movement.left).toEqual(['arrowleft'])
-    expect(INPUT_BINDINGS.movement.right).toEqual(['arrowright'])
+  it('INPUT_BINDINGS movement includes WASD and no arrow keys', () => {
+    expect(INPUT_BINDINGS.movement.up).toEqual(['w'])
+    expect(INPUT_BINDINGS.movement.down).toEqual(['s'])
+    expect(INPUT_BINDINGS.movement.left).toEqual(['a'])
+    expect(INPUT_BINDINGS.movement.right).toEqual(['d'])
 
     const allMovementKeys = [
       ...INPUT_BINDINGS.movement.up,
@@ -490,20 +490,20 @@ describe('input bindings and mode switching', () => {
       ...INPUT_BINDINGS.movement.left,
       ...INPUT_BINDINGS.movement.right,
     ]
-    expect(allMovementKeys).not.toContain('w')
-    expect(allMovementKeys).not.toContain('a')
-    expect(allMovementKeys).not.toContain('s')
-    expect(allMovementKeys).not.toContain('d')
+    expect(allMovementKeys).not.toContain('arrowup')
+    expect(allMovementKeys).not.toContain('arrowdown')
+    expect(allMovementKeys).not.toContain('arrowleft')
+    expect(allMovementKeys).not.toContain('arrowright')
   })
 
-  it('INPUT_BINDINGS attack includes space and left mouse button', () => {
+  it('INPUT_BINDINGS attack includes space and no mouse buttons', () => {
     expect(INPUT_BINDINGS.attack.keys).toContain(' ')
-    expect(INPUT_BINDINGS.attack.mouseButtons).toContain('left')
+    expect(INPUT_BINDINGS.attack.mouseButtons).toEqual([])
   })
 
-  it('INPUT_BINDINGS binds enter to enter command mode and escape to exit', () => {
-    expect(INPUT_BINDINGS.enterCommandMode).toContain('enter')
-    expect(INPUT_BINDINGS.exitCommandMode).toContain('escape')
+  it('INPUT_BINDINGS binds shift to enter command mode and empty exitCommandMode', () => {
+    expect(INPUT_BINDINGS.enterCommandMode).toContain('shift')
+    expect(INPUT_BINDINGS.exitCommandMode).toEqual([])
   })
 
   it('GameSession can enter and exit command mode explicitly', () => {

@@ -240,6 +240,18 @@ describe('MvCommandExecutor', () => {
         feedback: [{ kind: 'popup', text: 'Threw rock to guard.' }],
       })
     })
+
+    it('rejects rename when target label contains uppercase letters', () => {
+      const state = createInitialWorldState()
+      const boulderObj = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.boulder)!
+
+      const result = executor.execute({ name: 'mv', arguments: ['boulder', 'Rock'], options: [] }, state)
+      expect(result).toEqual({
+        status: 'rejected',
+        feedback: { kind: 'popup', text: 'Labels cannot contain uppercase letters.' },
+      })
+      expect(boulderObj.metadata.name).toBe('boulder')
+    })
   })
 
   describe('wildcard sources', () => {
@@ -309,7 +321,7 @@ describe('MvCommandExecutor', () => {
 
     it('skips suffixes already taken by other objects or exits', () => {
       const state = createInitialWorldState()
-      find(state, WORLD_OBJECT_IDS.guard).rename('X_1')
+      find(state, WORLD_OBJECT_IDS.guard).rename('x_1')
       expect(run(state, '*a*', 'x').status).toBe('success')
       // the renamed guard no longer matches "*a*" and keeps x_1 taken
       expect(find(state, WORLD_OBJECT_IDS.player).metadata.name).toBe('x_0')

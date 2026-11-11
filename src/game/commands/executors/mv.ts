@@ -4,6 +4,7 @@ import type { WorldState } from '../../domain/WorldState.ts'
 import type { CommandExecutor } from './base.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { WorldObject } from '../../domain/WorldObject.ts'
+import { hasUppercase } from '../../domain/label.ts'
 
 export function findObjectInRoom(state: WorldState, label: string): WorldObject | undefined {
   const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
@@ -113,6 +114,9 @@ export class MvCommandExecutor implements CommandExecutor {
 
     // If target does not exist, rename sources as target
     if (!targetObject && !targetExit) {
+      if (hasUppercase(label2)) {
+        return { status: 'rejected', feedback: { kind: 'popup', text: 'Labels cannot contain uppercase letters.' } }
+      }
       const renames: string[] = []
       if (sources.length === 1) {
         renames.push(label2)

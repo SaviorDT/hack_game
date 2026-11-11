@@ -99,6 +99,27 @@ describe('InlineCommandInputView', () => {
     expect(onSubmit).toHaveBeenCalledWith('ls')
   })
 
+  it('converts typed characters while pressing shift to lower case', () => {
+    const { view, dispatchKeydown, onSubmit } = setupView()
+    const keyGate = vi.fn(() => true)
+    view.setKeyGate(keyGate)
+
+    view.setVisible(true)
+    // Browser sends uppercase event.key with shiftKey: true when typing while holding Shift
+    dispatchKeydown({ key: 'C', shiftKey: true })
+    dispatchKeydown({ key: 'D', shiftKey: true })
+    dispatchKeydown({ key: ' ', shiftKey: true })
+    dispatchKeydown({ key: 'R', shiftKey: true })
+    dispatchKeydown({ key: 'O', shiftKey: true })
+    dispatchKeydown({ key: 'O', shiftKey: true })
+    dispatchKeydown({ key: 'M', shiftKey: true })
+    dispatchKeydown({ key: '2', shiftKey: true })
+
+    expect(view.getValue()).toBe('cd room2')
+    view.submit()
+    expect(onSubmit).toHaveBeenCalledWith('cd room2')
+  })
+
   it('exposes getValue and submit for external triggers such as shift release', () => {
     const { view, dispatchKeydown, onSubmit } = setupView()
     const keyGate = vi.fn(() => true)

@@ -1,6 +1,7 @@
 import type { Box, Bounds } from './CollisionWorld.ts'
 import type { WorldObjectId, RoomId } from './ids.ts'
 import type { JsonValue } from './JsonValue.ts'
+import { assertValidLabel } from './label.ts'
 
 /** What must be true in a Room before its Exit opens. */
 export type ExitRequirement =
@@ -20,6 +21,16 @@ export interface RoomExit {
   readonly requires?: ExitRequirement | readonly ExitRequirement[]
   /** Going through ends the run with `congratulations` instead of entering the target room. */
   readonly endsGame?: boolean
+}
+
+export function assertValidRoomExit(exit: RoomExit): void {
+  assertValidLabel(exit.label, 'room exit label')
+}
+
+export function assertValidRoom(room: Room): void {
+  for (const exit of room.exits) {
+    assertValidRoomExit(exit)
+  }
 }
 
 export interface Room {

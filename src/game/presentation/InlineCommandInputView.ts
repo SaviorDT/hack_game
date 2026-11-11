@@ -277,7 +277,8 @@ export class InlineCommandInputView {
     ) {
       event.preventDefault()
       this.resetHistoryNavigation()
-      characters.splice(this.cursorIndex, 0, event.key)
+      const char = event.shiftKey ? event.key.toLowerCase() : event.key
+      characters.splice(this.cursorIndex, 0, char)
       this.cursorIndex += 1
       this.value = characters.join('')
       this.cursorVisible = true

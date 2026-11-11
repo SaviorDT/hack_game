@@ -30,7 +30,7 @@ export class PhaserGameHud {
     this.health = scene.add.rectangle(64, 840, 360, 14, 0xb97869).setOrigin(0)
     this.healthText = label(64, 866, '', 18)
     const divider = scene.add.rectangle(480, 830, 2, 166, 0x314854).setOrigin(0)
-    const controls = label(516, 840, 'ARROWS       Move\nSPACE / CLICK Attack\nENTER / A–Z  Enter command\nESC          Return to movement', 20)
+    const controls = label(516, 840, 'WASD         Move\nSPACE        Attack\nHOLD SHIFT   Command\nENTER        Execute', 20)
       .setLineSpacing(12)
     this.goalText = label(64, 1004, '', 19, '#d3c49e').setWordWrapWidth(960)
     // The room's hint sits in a banner along the top of the room, which room layouts keep clear.

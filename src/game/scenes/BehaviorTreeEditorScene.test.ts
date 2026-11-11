@@ -104,7 +104,7 @@ describe('BehaviorTreeEditorScene Logic & Presets', () => {
     expect(node.params?.range).toBe(600)
   })
 
-  it('allows moving the player in the arena using arrow keys', () => {
+  it('allows moving the player in the arena using movement keys', () => {
     const sessionBundle = createAiEditorSession({
       tree: STANDARD_GUARD_TREE,
     })
@@ -113,7 +113,7 @@ describe('BehaviorTreeEditorScene Logic & Presets', () => {
     const pState = playerObj.state as { x: number; y: number; vx: number }
     const initialX = pState.x
 
-    sessionBundle.session.keyDown('arrowright')
+    sessionBundle.session.keyDown('d')
     for (let i = 0; i < 10; i++) {
       sessionBundle.step(20)
     }

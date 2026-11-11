@@ -42,12 +42,12 @@ describe('GameScene key handling', () => {
   function setupScene() {
     const scene = new GameScene()
     const session = createRoom1Session({ movementBindings: INPUT_BINDINGS.movement, storage: memoryStorage })
-    const mockCommandInputView = {
-      setInputEnabled: vi.fn(),
+    const mockInlineCommandInputView = {
+      setVisible: vi.fn(),
       clearInput: vi.fn(),
+      setPlayerPosition: vi.fn(),
     }
 
-    // Assign private session and commandInputView for targeted handler testing
     const mockCommandEditor = {
       isOpen: vi.fn(() => false),
       isModalPromptOpen: vi.fn(() => false),
@@ -60,17 +60,73 @@ describe('GameScene key handling', () => {
 
     Object.assign(scene, {
       session,
-      commandInputView: mockCommandInputView,
+      inlineCommandInputView: mockInlineCommandInputView,
       commandEditor: mockCommandEditor,
     })
 
     const handleKeyDown = (scene as unknown as { handleKeyDown: (event: KeyboardEvent) => boolean }).handleKeyDown
+    const handleKeyUp = (scene as unknown as { handleKeyUp: (event: KeyboardEvent) => void }).handleKeyUp
 
-    return { scene, session, mockCommandInputView, mockCommandEditor, handleKeyDown }
+    return { scene, session, mockInlineCommandInputView, mockCommandEditor, handleKeyDown, handleKeyUp }
   }
 
-  it('enters command mode when Enter is pressed in movement mode', () => {
-    const { session, mockCommandInputView, handleKeyDown } = setupScene()
+  it('moves player with WASD in movement mode', () => {
+    const { session, handleKeyDown, handleKeyUp } = setupScene()
+    expect(session.inputMode).toBe('movement')
+
+    for (const key of ['w', 'a', 's', 'd']) {
+      const preventDefault = vi.fn()
+      const result = handleKeyDown({
+        key,
+        repeat: false,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(result).toBe(false)
+
+      handleKeyUp({
+        key,
+      } as unknown as KeyboardEvent)
+    }
+  })
+
+  it('enters command mode when Shift is pressed in movement mode', () => {
+    const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+    expect(session.inputMode).toBe('movement')
+
+    const preventDefault = vi.fn()
+    const result = handleKeyDown({
+      key: 'Shift',
+      repeat: false,
+      preventDefault,
+    } as unknown as KeyboardEvent)
+
+    expect(preventDefault).toHaveBeenCalled()
+    expect(session.inputMode).toBe('command')
+    expect(mockInlineCommandInputView.setVisible).toHaveBeenCalledWith(true)
+    expect(result).toBe(false)
+  })
+
+  it('does not re-enter command mode when Shift is repeated in movement mode', () => {
+    const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+    const spy = vi.spyOn(session, 'enterCommandMode')
+
+    const preventDefault = vi.fn()
+    const result = handleKeyDown({
+      key: 'Shift',
+      repeat: true,
+      preventDefault,
+    } as unknown as KeyboardEvent)
+
+    expect(preventDefault).toHaveBeenCalled()
+    expect(spy).not.toHaveBeenCalled()
+    expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
+    expect(result).toBe(false)
+  })
+
+  it('does not enter command mode when Enter is pressed in movement mode', () => {
+    const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
     expect(session.inputMode).toBe('movement')
 
     const preventDefault = vi.fn()
@@ -81,26 +137,8 @@ describe('GameScene key handling', () => {
     } as unknown as KeyboardEvent)
 
     expect(preventDefault).toHaveBeenCalled()
-    expect(session.inputMode).toBe('command')
-    expect(mockCommandInputView.setInputEnabled).toHaveBeenCalledWith(true)
-    // Key gate returns false so command input view does not submit immediately on the opening Enter
-    expect(result).toBe(false)
-  })
-
-  it('does not re-enter or trigger command mode when Enter is repeated in movement mode', () => {
-    const { session, mockCommandInputView, handleKeyDown } = setupScene()
-    const spy = vi.spyOn(session, 'enterCommandMode')
-
-    const preventDefault = vi.fn()
-    const result = handleKeyDown({
-      key: 'Enter',
-      repeat: true,
-      preventDefault,
-    } as unknown as KeyboardEvent)
-
-    expect(preventDefault).toHaveBeenCalled()
-    expect(spy).not.toHaveBeenCalled()
-    expect(mockCommandInputView.setInputEnabled).not.toHaveBeenCalled()
+    expect(session.inputMode).toBe('movement')
+    expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
     expect(result).toBe(false)
   })
 
@@ -116,12 +154,12 @@ describe('GameScene key handling', () => {
       preventDefault,
     } as unknown as KeyboardEvent)
 
-    // In command mode, typeable is returned so PhaserCommandInputView can handle the submission
+    // In command mode, typeable is returned so InlineCommandInputView can handle the submission
     expect(result).toBe(true)
   })
 
-  it('exits command mode when Escape is pressed in command mode', () => {
-    const { session, mockCommandInputView, handleKeyDown } = setupScene()
+  it('does not exit command mode when Escape is pressed in command mode', () => {
+    const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
     session.enterCommandMode()
 
     const preventDefault = vi.fn()
@@ -131,11 +169,30 @@ describe('GameScene key handling', () => {
       preventDefault,
     } as unknown as KeyboardEvent)
 
-    expect(preventDefault).toHaveBeenCalled()
+    expect(session.inputMode).toBe('command')
+    expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
+    expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
+    expect(result).toBe(true)
+  })
+
+  it('exits command mode when Shift is released if entered by Shift', () => {
+    const { scene, session, mockInlineCommandInputView, handleKeyDown, handleKeyUp } = setupScene()
+    handleKeyDown({
+      key: 'Shift',
+      repeat: false,
+      preventDefault: vi.fn(),
+    } as unknown as KeyboardEvent)
+    expect(session.inputMode).toBe('command')
+    expect((scene as any).enteredByShift).toBe(true)
+
+    handleKeyUp({
+      key: 'Shift',
+    } as unknown as KeyboardEvent)
+
     expect(session.inputMode).toBe('movement')
-    expect(mockCommandInputView.clearInput).toHaveBeenCalled()
-    expect(mockCommandInputView.setInputEnabled).toHaveBeenCalledWith(false)
-    expect(result).toBe(false)
+    expect(mockInlineCommandInputView.clearInput).toHaveBeenCalled()
+    expect(mockInlineCommandInputView.setVisible).toHaveBeenCalledWith(false)
+    expect((scene as any).enteredByShift).toBe(false)
   })
 
   describe('command editor overlay integration (F1)', () => {
@@ -157,7 +214,7 @@ describe('GameScene key handling', () => {
     })
 
     it('closes command editor when Escape is pressed while command editor is open', () => {
-      const { scene, mockCommandEditor, handleKeyDown, mockCommandInputView } = setupScene()
+      const { scene, mockCommandEditor, handleKeyDown, mockInlineCommandInputView } = setupScene()
       mockCommandEditor.isOpen.mockReturnValue(true)
       const closeSpy = vi.spyOn(scene, 'closeCommandEditor')
 
@@ -171,8 +228,7 @@ describe('GameScene key handling', () => {
       expect(preventDefault).toHaveBeenCalled()
       expect(closeSpy).toHaveBeenCalled()
       expect(mockCommandEditor.close).toHaveBeenCalled()
-      // Does not pass to command input view clearInput
-      expect(mockCommandInputView.clearInput).not.toHaveBeenCalled()
+      expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
       expect(result).toBe(false)
     })
 

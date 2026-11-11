@@ -2,37 +2,37 @@ import { describe, expect, it } from 'vitest'
 import { INPUT_BINDINGS, isAlphabetKey } from './InputBindings.ts'
 
 describe('INPUT_BINDINGS', () => {
-  it('does not contain wasd in movement bindings', () => {
+  it('contains wasd in movement bindings', () => {
+    expect(INPUT_BINDINGS.movement.up).toEqual(['w'])
+    expect(INPUT_BINDINGS.movement.down).toEqual(['s'])
+    expect(INPUT_BINDINGS.movement.left).toEqual(['a'])
+    expect(INPUT_BINDINGS.movement.right).toEqual(['d'])
+  })
+
+  it('does not bind arrow keys for movement', () => {
     const allMovementKeys = [
       ...INPUT_BINDINGS.movement.up,
       ...INPUT_BINDINGS.movement.down,
       ...INPUT_BINDINGS.movement.left,
       ...INPUT_BINDINGS.movement.right,
     ]
-    expect(allMovementKeys).not.toContain('w')
-    expect(allMovementKeys).not.toContain('a')
-    expect(allMovementKeys).not.toContain('s')
-    expect(allMovementKeys).not.toContain('d')
+    expect(allMovementKeys).not.toContain('arrowup')
+    expect(allMovementKeys).not.toContain('arrowdown')
+    expect(allMovementKeys).not.toContain('arrowleft')
+    expect(allMovementKeys).not.toContain('arrowright')
   })
 
-  it('only binds arrow keys for movement', () => {
-    expect(INPUT_BINDINGS.movement.up).toEqual(['arrowup'])
-    expect(INPUT_BINDINGS.movement.down).toEqual(['arrowdown'])
-    expect(INPUT_BINDINGS.movement.left).toEqual(['arrowleft'])
-    expect(INPUT_BINDINGS.movement.right).toEqual(['arrowright'])
-  })
-
-  it('binds spacebar and left click for attack', () => {
+  it('binds spacebar for attack and no mouse buttons', () => {
     expect(INPUT_BINDINGS.attack.keys).toContain(' ')
-    expect(INPUT_BINDINGS.attack.mouseButtons).toContain('left')
+    expect(INPUT_BINDINGS.attack.mouseButtons).toEqual([])
   })
 
-  it('binds escape to exit command mode', () => {
-    expect(INPUT_BINDINGS.exitCommandMode).toContain('escape')
+  it('has no keys to exit command mode via keypress', () => {
+    expect(INPUT_BINDINGS.exitCommandMode).toEqual([])
   })
 
-  it('binds enter to enter command mode', () => {
-    expect(INPUT_BINDINGS.enterCommandMode).toContain('enter')
+  it('binds shift to enter command mode', () => {
+    expect(INPUT_BINDINGS.enterCommandMode).toEqual(['shift'])
   })
 })
 

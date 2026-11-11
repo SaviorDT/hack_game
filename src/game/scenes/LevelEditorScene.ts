@@ -1,5 +1,4 @@
 import Phaser from 'phaser'
-import textboxImageUrl from '../../assets/game/ui/textbox.png'
 import {
   ROOM_LAYOUT,
   WORLD_OBJECT_IDS,
@@ -38,7 +37,6 @@ import {
   DAGGER_TEXTURE_KEY,
   BOULDER_TEXTURE_KEY,
 } from '../presentation/PhaserRoomView.ts'
-import { COMMAND_INPUT_TEXTURE_KEY } from '../presentation/PhaserCommandInputView.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import {
   EditorHistory,
@@ -187,9 +185,6 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   preload(): void {
-    if (!this.textures.exists(COMMAND_INPUT_TEXTURE_KEY)) {
-      this.load.image(COMMAND_INPUT_TEXTURE_KEY, textboxImageUrl)
-    }
     for (const [textureKey, imageUrl] of Object.entries(WORLD_OBJECT_TEXTURE_URLS)) {
       if (!this.textures.exists(textureKey)) {
         this.load.image(textureKey, imageUrl)

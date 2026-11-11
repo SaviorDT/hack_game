@@ -22,6 +22,7 @@ import { PickUpService } from '../domain/PickUpService.ts'
 import { LocalStorageSaveRepository } from '../persistence/LocalStorageSaveRepository.ts'
 import { JsonWorldStateCodec } from '../persistence/JsonWorldStateCodec.ts'
 import type { WorldState } from '../domain/WorldState.ts'
+import { getEditorStorage } from '../application/editorStorage.ts'
 
 export const DEFAULT_SPEED_CONFIG: PlayerSpeedConfig = {
   acceleration: 2500,
@@ -72,28 +73,6 @@ export function getPlayerSpeedFromObjects(objects: RoomObjectConfig[]): PlayerSp
 export interface SpeedEditorSessionBundle {
   session: GameSession
   worldState: WorldState
-}
-
-function getStorage(storage?: Storage): Storage {
-  if (storage) return storage
-  if (typeof window !== 'undefined' && window.localStorage) return window.localStorage
-  const memory = new Map<string, string>()
-  return {
-    getItem: (key: string) => memory.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      memory.set(key, value)
-    },
-    removeItem: (key: string) => {
-      memory.delete(key)
-    },
-    clear: () => {
-      memory.clear()
-    },
-    key: (index: number) => Array.from(memory.keys())[index] ?? null,
-    get length() {
-      return memory.size
-    },
-  }
 }
 
 export function createSpeedEditorSession(options?: {
@@ -155,7 +134,7 @@ export function createSpeedEditorSession(options?: {
     commandSubmission: createRoom1CommandSubmissionService(),
     simulationClock: new RealtimeSimulationClock(),
     simulationEngine,
-    saveRepository: new LocalStorageSaveRepository(getStorage(options?.storage), 'hack-game.editor-save'),
+    saveRepository: new LocalStorageSaveRepository(getEditorStorage(options?.storage), 'hack-game.editor-save'),
     worldStateCodec: new JsonWorldStateCodec(),
     inputMode: new InputModeController(INPUT_BINDINGS.movement),
     combat: new CombatService(),

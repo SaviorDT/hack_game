@@ -32,13 +32,14 @@ import { ROOM1_OBJECTS } from '../content/room1.ts'
 import { generateRoom1Source } from '../content/room1Serializer.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
-
-const FONT_FAMILY = '"Press Start 2P", monospace'
-const TEXT_COLOR = '#d6d6d6'
-const DIM_COLOR = '#888888'
-const ACCENT_COLOR = '#4fc3f7'
-const VALUE_COLOR = '#64ffda'
-const PANEL_BG = 0x181818
+import {
+  FONT_FAMILY,
+  TEXT_COLOR,
+  DIM_COLOR,
+  ACCENT_COLOR,
+  VALUE_COLOR,
+  PANEL_BG,
+} from './editorTheme.ts'
 
 // Category colors for node cards & buttons
 const CATEGORY_COLORS = {

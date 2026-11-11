@@ -26,6 +26,7 @@ import type {
   BehaviorTreeDef,
   BehaviorTreeStatus,
 } from '../ai/behaviorTree/BehaviorTreeTypes.ts'
+import { getEditorStorage } from '../application/editorStorage.ts'
 
 export interface AiEditorSessionBundle {
   session: GameSession
@@ -40,28 +41,6 @@ export interface AiEditorSessionBundle {
   damageBoss: (amount: number) => void
   healBoss: (amount: number) => void
   step: (deltaMs?: number) => void
-}
-
-function getStorage(storage?: Storage): Storage {
-  if (storage) return storage
-  if (typeof window !== 'undefined' && window.localStorage) return window.localStorage
-  const memory = new Map<string, string>()
-  return {
-    getItem: (key: string) => memory.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      memory.set(key, value)
-    },
-    removeItem: (key: string) => {
-      memory.delete(key)
-    },
-    clear: () => {
-      memory.clear()
-    },
-    key: (index: number) => Array.from(memory.keys())[index] ?? null,
-    get length() {
-      return memory.size
-    },
-  }
 }
 
 export function createAiEditorSession(options?: {
@@ -128,7 +107,7 @@ export function createAiEditorSession(options?: {
     commandSubmission: createRoom1CommandSubmissionService(),
     simulationClock: new RealtimeSimulationClock(),
     simulationEngine,
-    saveRepository: new LocalStorageSaveRepository(getStorage(options?.storage), 'hack-game.editor-save'),
+    saveRepository: new LocalStorageSaveRepository(getEditorStorage(options?.storage), 'hack-game.editor-save'),
     worldStateCodec: new JsonWorldStateCodec(),
     inputMode: new InputModeController(INPUT_BINDINGS.movement),
     combat: new CombatService(),

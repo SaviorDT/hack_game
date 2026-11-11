@@ -52,12 +52,14 @@ import {
   setPhysicsAttrValue,
 } from './levelEditorHistory.ts'
 import { SceneManager } from './SceneManager.ts'
+import {
+  FONT_FAMILY,
+  TEXT_COLOR,
+  DIM_COLOR,
+  ACCENT_COLOR,
+  PANEL_BG,
+} from './editorTheme.ts'
 
-const FONT_FAMILY = '"Press Start 2P", monospace'
-const TEXT_COLOR = '#d6d6d6'
-const DIM_COLOR = '#777777'
-const ACCENT_COLOR = '#4fc3f7'
-const PANEL_BG = 0x1a1a1a
 const SELECTED_OUTLINE = 0x4fc3f7
 const HANDLE_COLOR = 0xffcc00
 const HANDLE_SIZE = 16

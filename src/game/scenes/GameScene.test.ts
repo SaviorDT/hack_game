@@ -46,6 +46,8 @@ describe('GameScene key handling', () => {
       setVisible: vi.fn(),
       clearInput: vi.fn(),
       setPlayerPosition: vi.fn(),
+      getValue: vi.fn(() => ''),
+      submit: vi.fn(),
     }
 
     const mockCommandEditor = {
@@ -175,7 +177,7 @@ describe('GameScene key handling', () => {
     expect(result).toBe(true)
   })
 
-  it('exits command mode when Shift is released if entered by Shift', () => {
+  it('exits command mode when Shift is released if entered by Shift with empty draft', () => {
     const { scene, session, mockInlineCommandInputView, handleKeyDown, handleKeyUp } = setupScene()
     handleKeyDown({
       key: 'Shift',
@@ -192,6 +194,25 @@ describe('GameScene key handling', () => {
     expect(session.inputMode).toBe('movement')
     expect(mockInlineCommandInputView.clearInput).toHaveBeenCalled()
     expect(mockInlineCommandInputView.setVisible).toHaveBeenCalledWith(false)
+    expect((scene as any).enteredByShift).toBe(false)
+  })
+
+  it('submits command when Shift is released if entered by Shift with non-empty draft', () => {
+    const { scene, session, mockInlineCommandInputView, handleKeyDown, handleKeyUp } = setupScene()
+    handleKeyDown({
+      key: 'Shift',
+      repeat: false,
+      preventDefault: vi.fn(),
+    } as unknown as KeyboardEvent)
+    expect(session.inputMode).toBe('command')
+
+    mockInlineCommandInputView.getValue.mockReturnValue('ls')
+
+    handleKeyUp({
+      key: 'Shift',
+    } as unknown as KeyboardEvent)
+
+    expect(mockInlineCommandInputView.submit).toHaveBeenCalled()
     expect((scene as any).enteredByShift).toBe(false)
   })
 

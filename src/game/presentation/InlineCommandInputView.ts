@@ -127,6 +127,10 @@ export class InlineCommandInputView {
     this.render()
   }
 
+  getValue(): string {
+    return this.value
+  }
+
   setPlayerPosition(x: number, y: number): void {
     this.playerX = x
     this.playerY = y
@@ -281,7 +285,7 @@ export class InlineCommandInputView {
     }
   }
 
-  private submit(): void {
+  submit(): void {
     const textToSubmit = this.value
     this.value = ''
     this.cursorIndex = 0

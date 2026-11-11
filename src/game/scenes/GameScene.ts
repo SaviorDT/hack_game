@@ -241,9 +241,13 @@ export class GameScene extends Phaser.Scene {
         this.session.keyUp(key)
 
         if (key === 'shift' && this.enteredByShift && this.session.inputMode === 'command') {
-            this.session.enterMovementMode()
-            this.inlineCommandInputView?.clearInput()
-            this.inlineCommandInputView?.setVisible(false)
+            if (this.inlineCommandInputView && this.inlineCommandInputView.getValue().trim().length > 0) {
+                this.inlineCommandInputView.submit()
+            } else {
+                this.session.enterMovementMode()
+                this.inlineCommandInputView?.clearInput()
+                this.inlineCommandInputView?.setVisible(false)
+            }
             this.enteredByShift = false
         }
     }

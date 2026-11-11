@@ -37,7 +37,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     id: TUTORIAL_ROOM_IDS.discover,
     hint:
       'Things you have not identified are marked ?. Hold SHIFT to open the command line, type ls and ' +
-      'press ENTER: it lists everything here and reveals names. TAB completes names; release SHIFT to cancel.',
+      'release SHIFT: it executes the command and reveals names. TAB completes names.',
     goal: 'Reveal everything in this room (ls).',
     objects: [
       boulder('tutorial2boulder', 900, 330),

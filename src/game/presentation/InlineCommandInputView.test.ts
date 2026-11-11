@@ -98,5 +98,20 @@ describe('InlineCommandInputView', () => {
 
     expect(onSubmit).toHaveBeenCalledWith('ls')
   })
+
+  it('exposes getValue and submit for external triggers such as shift release', () => {
+    const { view, dispatchKeydown, onSubmit } = setupView()
+    const keyGate = vi.fn(() => true)
+    view.setKeyGate(keyGate)
+
+    view.setVisible(true)
+    dispatchKeydown({ key: 'm' })
+    dispatchKeydown({ key: 'v' })
+
+    expect(view.getValue()).toBe('mv')
+    view.submit()
+    expect(onSubmit).toHaveBeenCalledWith('mv')
+    expect(view.getValue()).toBe('')
+  })
 })
 

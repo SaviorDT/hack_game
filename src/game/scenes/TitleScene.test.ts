@@ -12,6 +12,7 @@ vi.mock('phaser', () => {
       container: vi.fn((_x: number, _y: number) => {
         const items: unknown[] = []
         return {
+          y: _y,
           add: vi.fn((item: unknown) => {
             if (Array.isArray(item)) {
               items.push(...item)
@@ -20,6 +21,7 @@ vi.mock('phaser', () => {
             }
           }),
           setVisible: vi.fn().mockReturnThis(),
+          setY: vi.fn().mockReturnThis(),
         }
       }),
       graphics: vi.fn(() => ({
@@ -29,6 +31,7 @@ vi.mock('phaser', () => {
       })),
       text: vi.fn((_x: number, _y: number, _text: string | string[], _style?: Record<string, unknown>) => {
         const textObj = {
+          width: 304,
           setOrigin: vi.fn().mockReturnThis(),
           setText: vi.fn().mockReturnThis(),
           setColor: vi.fn().mockReturnThis(),
@@ -40,9 +43,26 @@ vi.mock('phaser', () => {
       }),
     }
     time = {
-      addEvent: vi.fn(() => ({
-        destroy: vi.fn(),
-      })),
+      addEvent: vi.fn((config?: { callback?: () => void; repeat?: number }) => {
+        if (config?.callback) {
+          const repeat = config.repeat ?? 0
+          for (let i = 0; i <= repeat; i++) {
+            config.callback()
+          }
+        }
+        return { destroy: vi.fn() }
+      }),
+      delayedCall: vi.fn((_delay: number, callback?: () => void) => {
+        callback?.()
+        return { destroy: vi.fn() }
+      }),
+    }
+    tweens = {
+      add: vi.fn((config: Record<string, unknown>) => {
+        if (typeof config.onComplete === 'function') {
+          config.onComplete()
+        }
+      }),
     }
     input = {
       keyboard: {
@@ -74,7 +94,14 @@ vi.mock('phaser', () => {
   }
 })
 
-import { TitleScene, TITLE_MENU_ITEMS } from './TitleScene.ts'
+import {
+  TitleScene,
+  TITLE_MENU_ITEMS,
+  TYPING_SPEED_MS,
+  SCROLL_SPEED_MS,
+  PAUSE_DURATION_MS,
+  EXECUTION_PAUSE_MS,
+} from './TitleScene.ts'
 
 describe('TitleScene', () => {
   function setupScene() {
@@ -200,5 +227,28 @@ describe('TitleScene', () => {
     // Press Enter to return to main menu
     handleKeyDown(enterEvent)
     expect(scene.isInHelp()).toBe(false)
+  })
+
+  it('suppresses key navigation during menu transition', () => {
+    const { scene, handleKeyDown } = setupScene()
+    ;(scene as unknown as { isTransitioning: boolean }).isTransitioning = true
+    expect(scene.isMenuTransitioning()).toBe(true)
+
+    const arrowDownEvent = { key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent
+    handleKeyDown(arrowDownEvent)
+    expect(arrowDownEvent.preventDefault).toHaveBeenCalled()
+    expect(scene.getSelectedChoice()).toBe('START')
+
+    const enterEvent = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent
+    handleKeyDown(enterEvent)
+    expect(enterEvent.preventDefault).toHaveBeenCalled()
+    expect(scene.isInHelp()).toBe(false)
+  })
+
+  it('exports shell animation timing constants', () => {
+    expect(TYPING_SPEED_MS).toBe(22)
+    expect(SCROLL_SPEED_MS).toBe(30)
+    expect(PAUSE_DURATION_MS).toBe(200)
+    expect(EXECUTION_PAUSE_MS).toBe(200)
   })
 })

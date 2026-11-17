@@ -3,6 +3,11 @@ import Phaser from 'phaser'
 export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
 export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number]
 
+export const TYPING_SPEED_MS = 15
+export const SCROLL_SPEED_MS = 27
+export const PAUSE_DURATION_MS = 150
+export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS
+
 const TERMINAL_FONT = '"Press Start 2P", monospace'
 const COLOR_WHITE = '#ffffff'
 const COLOR_DIM = '#555555'
@@ -14,7 +19,10 @@ export class TitleScene extends Phaser.Scene {
   private menuTexts: Phaser.GameObjects.Text[] = []
   private mainMenuContainer!: Phaser.GameObjects.Container
   private helpScreenContainer!: Phaser.GameObjects.Container
+  private mainPromptCommand!: Phaser.GameObjects.Text
+  private helpPromptCommand!: Phaser.GameObjects.Text
   private inHelp = false
+  private isTransitioning = false
 
   constructor() {
     super({ key: 'title' })
@@ -47,17 +55,56 @@ export class TitleScene extends Phaser.Scene {
     return this.inHelp
   }
 
-  public showHelp(): void {
-    this.inHelp = true
-    this.mainMenuContainer.setVisible(false)
-    this.helpScreenContainer.setVisible(true)
+  public isMenuTransitioning(): boolean {
+    return this.isTransitioning
   }
 
-  public exitHelp(): void {
+  public showHelp(animated = true): void {
+    if (this.isTransitioning) return
+    this.inHelp = true
+
+    if (!animated) {
+      this.mainMenuContainer.setVisible(false).setY(0)
+      this.helpScreenContainer.setVisible(true).setY(0)
+      this.mainPromptCommand?.setText('')
+      return
+    }
+
+    this.isTransitioning = true
+    this.typeCommand(this.mainPromptCommand, 'help', () => {
+      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
+        this.scrollTransition(this.mainMenuContainer, this.helpScreenContainer, () => {
+          this.mainMenuContainer.setVisible(false).setY(0)
+          this.mainPromptCommand?.setText('')
+          this.isTransitioning = false
+        })
+      })
+    })
+  }
+
+  public exitHelp(animated = true): void {
+    if (this.isTransitioning) return
     this.inHelp = false
-    this.helpScreenContainer.setVisible(false)
-    this.mainMenuContainer.setVisible(true)
-    this.updateSelection()
+
+    if (!animated) {
+      this.helpScreenContainer.setVisible(false).setY(0)
+      this.mainMenuContainer.setVisible(true).setY(0)
+      this.helpPromptCommand?.setText('')
+      this.updateSelection()
+      return
+    }
+
+    this.isTransitioning = true
+    this.typeCommand(this.helpPromptCommand, './main', () => {
+      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
+        this.scrollTransition(this.helpScreenContainer, this.mainMenuContainer, () => {
+          this.helpScreenContainer.setVisible(false).setY(0)
+          this.helpPromptCommand?.setText('')
+          this.isTransitioning = false
+          this.updateSelection()
+        })
+      })
+    })
   }
 
   public confirmSelection(): TitleMenuItem {
@@ -69,6 +116,55 @@ export class TitleScene extends Phaser.Scene {
       this.showHelp()
     }
     return choice
+  }
+
+  private typeCommand(
+    textObj: Phaser.GameObjects.Text,
+    command: string,
+    onComplete: () => void,
+  ): void {
+    if (!textObj) {
+      onComplete()
+      return
+    }
+    textObj.setText('')
+    const charDelay = TYPING_SPEED_MS
+    // Type character 1
+    this.time.delayedCall(charDelay, () => {
+      textObj.setText(command.slice(0, 1))
+      // Type character 2
+      this.time.delayedCall(charDelay, () => {
+        textObj.setText(command.slice(0, 2))
+        // Tab complete the rest of the command
+        this.time.delayedCall(charDelay, () => {
+          textObj.setText(command)
+          onComplete()
+        })
+      })
+    })
+  }
+
+  private scrollTransition(
+    fromContainer: Phaser.GameObjects.Container,
+    toContainer: Phaser.GameObjects.Container,
+    onComplete: () => void,
+  ): void {
+    toContainer.setY(850).setVisible(true)
+    if (this.tweens?.add) {
+      this.tweens.add({
+        targets: [fromContainer, toContainer],
+        y: '-=850',
+        duration: SCROLL_SPEED_MS,
+        ease: 'Linear',
+        onComplete: () => {
+          onComplete()
+        },
+      })
+    } else {
+      toContainer.setY(0)
+      fromContainer.setY(-850)
+      onComplete()
+    }
   }
 
   private buildDecorations(): void {
@@ -151,6 +247,13 @@ export class TitleScene extends Phaser.Scene {
       color: COLOR_PROMPT,
     })
 
+    const prefixWidth = promptText.width || 304
+    this.mainPromptCommand = this.add.text(80 + prefixWidth, 920, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '16px',
+      color: COLOR_WHITE,
+    })
+
     const navText = this.add.text(960, 980, '[W / UP] [S / DOWN] SELECT    [ENTER] CONFIRM', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
@@ -158,7 +261,7 @@ export class TitleScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5, 0.5)
 
-    this.mainMenuContainer.add([promptText, navText])
+    this.mainMenuContainer.add([promptText, this.mainPromptCommand, navText])
   }
 
   private buildHelpScreen(): void {
@@ -225,6 +328,13 @@ export class TitleScene extends Phaser.Scene {
       color: COLOR_PROMPT,
     })
 
+    const bottomPrefixWidth = bottomPrompt.width || 304
+    this.helpPromptCommand = this.add.text(80 + bottomPrefixWidth, 920, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '16px',
+      color: COLOR_WHITE,
+    })
+
     const navHelpText = this.add.text(960, 980, '[ENTER] RETURN TO MAIN MENU', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
@@ -240,6 +350,7 @@ export class TitleScene extends Phaser.Scene {
       bottomLine,
       returnBtn,
       bottomPrompt,
+      this.helpPromptCommand,
       navHelpText,
     ])
   }
@@ -259,13 +370,18 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private moveSelection(delta: -1 | 1): void {
-    if (this.inHelp) return
+    if (this.inHelp || this.isTransitioning) return
     const count = TITLE_MENU_ITEMS.length
     this.selectedIndex = (this.selectedIndex + delta + count) % count
     this.updateSelection()
   }
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
+    if (this.isTransitioning) {
+      event.preventDefault()
+      return
+    }
+
     const key = event.key.toUpperCase()
 
     if (this.inHelp) {

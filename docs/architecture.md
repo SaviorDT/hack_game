@@ -24,7 +24,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 ### Phaser Scene
 
-`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. Selecting `HELP` performs a full scene replacement displaying the control reference, commands, and shortcuts as if `help` was executed in `guest_terminal:~$`, with a return button back to the main menu. `createGame` boots with `TitleScene`.
+`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. Transitioning between the main menu and help view plays a shell animation typing the first two characters of `help` or `./main` into `guest_terminal:~$`, tab-completing the command, pausing for execution (200ms), and performing a rapid 30ms linear scroll transition into the target menu view. `createGame` boots with `TitleScene`.
 
 `GameScene` (1920×1080 reference space) mounts Room 1 domain state, session, room/object views, input, feedback, and outcome panels, forwarding Phaser's frame delta to `GameSession`.
 

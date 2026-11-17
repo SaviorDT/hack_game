@@ -12,6 +12,9 @@ const COLOR_PROMPT = '#888888'
 export class TitleScene extends Phaser.Scene {
   private selectedIndex = 0
   private menuTexts: Phaser.GameObjects.Text[] = []
+  private mainMenuContainer!: Phaser.GameObjects.Container
+  private helpScreenContainer!: Phaser.GameObjects.Container
+  private inHelp = false
 
   constructor() {
     super({ key: 'title' })
@@ -20,10 +23,14 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#000000')
 
+    this.mainMenuContainer = this.add.container(0, 0)
+    this.helpScreenContainer = this.add.container(0, 0).setVisible(false)
+
     this.buildDecorations()
     this.buildTitle()
     this.buildMenu()
     this.buildPrompt()
+    this.buildHelpScreen()
     this.setupInput()
     this.updateSelection()
   }
@@ -36,11 +43,30 @@ export class TitleScene extends Phaser.Scene {
     return TITLE_MENU_ITEMS[this.selectedIndex]
   }
 
+  public isInHelp(): boolean {
+    return this.inHelp
+  }
+
+  public showHelp(): void {
+    this.inHelp = true
+    this.mainMenuContainer.setVisible(false)
+    this.helpScreenContainer.setVisible(true)
+  }
+
+  public exitHelp(): void {
+    this.inHelp = false
+    this.helpScreenContainer.setVisible(false)
+    this.mainMenuContainer.setVisible(true)
+    this.updateSelection()
+  }
+
   public confirmSelection(): TitleMenuItem {
     const choice = this.getSelectedChoice()
     console.log(`[TitleScene] selected: ${choice}`)
     if (choice === 'START') {
       this.scene.start('game')
+    } else if (choice === 'HELP') {
+      this.showHelp()
     }
     return choice
   }
@@ -53,7 +79,7 @@ export class TitleScene extends Phaser.Scene {
     graphics.lineStyle(1, 0x222222, 1)
     graphics.strokeRect(48, 48, 1824, 984)
 
-    this.add.text(80, 70, [
+    const kernelText = this.add.text(80, 70, [
       '> SYS.KERNEL: V1.0.4-LTS',
       '> TERMINAL DISPLAY 1920x1080 [MONOCHROME]',
       '> READY FOR INPUT',
@@ -64,17 +90,19 @@ export class TitleScene extends Phaser.Scene {
       lineSpacing: 8,
     })
 
-    this.add.text(1840, 70, 'MODE: TTY-0\nBAUD: 115200', {
+    const modeText = this.add.text(1840, 70, 'MODE: TTY-0\nBAUD: 115200', {
       fontFamily: TERMINAL_FONT,
       fontSize: '12px',
       color: COLOR_MUTED,
       align: 'right',
       lineSpacing: 6,
     }).setOrigin(1, 0)
+
+    this.mainMenuContainer.add([kernelText, modeText])
   }
 
   private buildTitle(): void {
-    this.add.text(960, 240, 'H A C K _ G A M E', {
+    const titleText = this.add.text(960, 240, 'H A C K _ G A M E', {
       fontFamily: TERMINAL_FONT,
       fontSize: '52px',
       color: COLOR_WHITE,
@@ -85,44 +113,135 @@ export class TitleScene extends Phaser.Scene {
     line.lineStyle(2, 0xffffff, 1)
     line.lineBetween(660, 290, 1260, 290)
 
-    this.add.text(960, 330, 'A COMMAND-DRIVEN RTS ADVENTURE', {
+    const subtitleText = this.add.text(960, 330, 'A COMMAND-DRIVEN RTS ADVENTURE', {
       fontFamily: TERMINAL_FONT,
       fontSize: '18px',
       color: COLOR_PROMPT,
       align: 'center',
     }).setOrigin(0.5, 0.5)
+
+    this.mainMenuContainer.add([titleText, line, subtitleText])
   }
 
   private buildMenu(): void {
     const box = this.add.graphics()
     box.lineStyle(2, 0x333333, 1)
     box.strokeRect(710, 430, 500, 270)
+    this.mainMenuContainer.add(box)
 
     const baseY = 510
     const gapY = 55
     this.menuTexts = TITLE_MENU_ITEMS.map((item, index) => {
-      return this.add.text(960, baseY + index * gapY, `[ ${item} ]`, {
+      const text = this.add.text(960, baseY + index * gapY, `[ ${item} ]`, {
         fontFamily: TERMINAL_FONT,
         fontSize: '22px',
         color: COLOR_DIM,
         align: 'center',
       }).setOrigin(0.5, 0.5)
+
+      this.mainMenuContainer.add(text)
+      return text
     })
   }
 
   private buildPrompt(): void {
-    this.add.text(80, 920, 'guest@hack-terminal:~$ ', {
+    const promptText = this.add.text(80, 920, 'guest_terminal:~$ ', {
       fontFamily: TERMINAL_FONT,
       fontSize: '16px',
       color: COLOR_PROMPT,
     })
 
-    this.add.text(960, 980, '[W / UP] [S / DOWN] SELECT    [ENTER] CONFIRM', {
+    const navText = this.add.text(960, 980, '[W / UP] [S / DOWN] SELECT    [ENTER] CONFIRM', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
       color: COLOR_DIM,
       align: 'center',
     }).setOrigin(0.5, 0.5)
+
+    this.mainMenuContainer.add([promptText, navText])
+  }
+
+  private buildHelpScreen(): void {
+    const promptPrefix = this.add.text(80, 70, 'guest_terminal:~$ ', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '16px',
+      color: COLOR_PROMPT,
+    })
+
+    const prefixWidth = promptPrefix.width || 304
+    const promptCommand = this.add.text(80 + prefixWidth, 70, 'help', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '16px',
+      color: COLOR_WHITE,
+    })
+
+    const topLine = this.add.graphics()
+    topLine.lineStyle(1, 0x333333, 1)
+    topLine.lineBetween(80, 105, 1840, 105)
+
+    const helpLines = [
+      '[ MOVEMENT & COMBAT ]',
+      '  WASD / ARROW KEYS    Move hacker',
+      '  SPACE                Attack with equipped weapon (auto-pickup on touch)',
+      '',
+      '[ COMMAND LINE ]',
+      '  HOLD SHIFT           Open command prompt beneath hacker (slows time to 0.25x)',
+      '  RELEASE SHIFT        Execute typed command (empty input cancels & closes)',
+      '',
+      '[ VIRTUAL COMMANDS ]',
+      '  help                 Print available commands and current room objective',
+      '  ls                   Discover and reveal hidden objects in current room',
+      '  mv <src> <target>    Throw object towards target, or rename object',
+      '  cd <room>            Pass through exit doorway into adjacent room',
+      '',
+      '[ SHORTCUTS & EDITING ]',
+      '  TAB                  Auto-complete command name or discovered object label',
+      '  CTRL+BACKSPACE       Delete previous word in prompt',
+      '  UP / DOWN            Browse command history',
+      '  F1                   Toggle live Command Editor overlay',
+    ]
+
+    const manualText = this.add.text(80, 125, helpLines, {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '15px',
+      color: COLOR_WHITE,
+      lineSpacing: 10,
+    })
+
+    const bottomLine = this.add.graphics()
+    bottomLine.lineStyle(1, 0x333333, 1)
+    bottomLine.lineBetween(80, 750, 1840, 750)
+
+    const returnBtn = this.add.text(960, 810, '> [ RETURN ] <', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '22px',
+      color: COLOR_WHITE,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    const bottomPrompt = this.add.text(80, 920, 'guest_terminal:~$ ', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '16px',
+      color: COLOR_PROMPT,
+    })
+
+    const navHelpText = this.add.text(960, 980, '[ENTER] RETURN TO MAIN MENU', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '14px',
+      color: COLOR_DIM,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    this.helpScreenContainer.add([
+      promptPrefix,
+      promptCommand,
+      topLine,
+      manualText,
+      bottomLine,
+      returnBtn,
+      bottomPrompt,
+      navHelpText,
+    ])
   }
 
   private updateSelection(): void {
@@ -140,6 +259,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private moveSelection(delta: -1 | 1): void {
+    if (this.inHelp) return
     const count = TITLE_MENU_ITEMS.length
     this.selectedIndex = (this.selectedIndex + delta + count) % count
     this.updateSelection()
@@ -147,6 +267,15 @@ export class TitleScene extends Phaser.Scene {
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
     const key = event.key.toUpperCase()
+
+    if (this.inHelp) {
+      if (key === 'ENTER') {
+        event.preventDefault()
+        this.exitHelp()
+      }
+      return
+    }
+
     if (key === 'ARROWUP' || key === 'W') {
       event.preventDefault()
       this.moveSelection(-1)

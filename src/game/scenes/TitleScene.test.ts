@@ -9,6 +9,19 @@ vi.mock('phaser', () => {
       },
     }
     add = {
+      container: vi.fn((_x: number, _y: number) => {
+        const items: unknown[] = []
+        return {
+          add: vi.fn((item: unknown) => {
+            if (Array.isArray(item)) {
+              items.push(...item)
+            } else {
+              items.push(item)
+            }
+          }),
+          setVisible: vi.fn().mockReturnThis(),
+        }
+      }),
       graphics: vi.fn(() => ({
         lineStyle: vi.fn().mockReturnThis(),
         strokeRect: vi.fn().mockReturnThis(),
@@ -20,6 +33,8 @@ vi.mock('phaser', () => {
           setText: vi.fn().mockReturnThis(),
           setColor: vi.fn().mockReturnThis(),
           setVisible: vi.fn().mockReturnThis(),
+          setInteractive: vi.fn().mockReturnThis(),
+          on: vi.fn().mockReturnThis(),
         }
         return textObj
       }),
@@ -126,7 +141,7 @@ describe('TitleScene', () => {
 
   it('confirms the selection on Enter key and starts GameScene when START is selected', () => {
     const { scene, handleKeyDown } = setupScene()
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
 
     const enterEvent = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent
     handleKeyDown(enterEvent)
@@ -135,8 +150,8 @@ describe('TitleScene', () => {
     expect(consoleSpy).toHaveBeenCalledWith('[TitleScene] selected: START')
     expect(scene.scene.start).toHaveBeenCalledWith('game')
 
-    // Arrow down to SETTING
-    ;(scene.scene.start as unknown as ReturnType<typeof vi.fn>).mockClear()
+      // Arrow down to SETTING
+      ; (scene.scene.start as unknown as ReturnType<typeof vi.fn>).mockClear()
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     handleKeyDown(enterEvent)
     expect(scene.getSelectedChoice()).toBe('SETTING')
@@ -148,7 +163,7 @@ describe('TitleScene', () => {
 
   it('ignores other keys like Space', () => {
     const { scene, handleKeyDown } = setupScene()
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
 
     const spaceEvent = { key: ' ', preventDefault: vi.fn() } as unknown as KeyboardEvent
     handleKeyDown(spaceEvent)
@@ -158,5 +173,32 @@ describe('TitleScene', () => {
     expect(consoleSpy).not.toHaveBeenCalled()
 
     consoleSpy.mockRestore()
+  })
+
+  it('swaps to full scene help screen when HELP is confirmed, ignores Escape, and returns on Enter', () => {
+    const { scene, handleKeyDown } = setupScene()
+    expect(scene.isInHelp()).toBe(false)
+
+    // Navigate to HELP
+    handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('HELP')
+
+    // Confirm HELP
+    const enterEvent = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent
+    handleKeyDown(enterEvent)
+    expect(scene.isInHelp()).toBe(true)
+
+    // While in help, W and S should not move selection
+    handleKeyDown({ key: 'w', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('HELP')
+
+    // Escape should NOT return to main menu
+    const escEvent = { key: 'Escape', preventDefault: vi.fn() } as unknown as KeyboardEvent
+    handleKeyDown(escEvent)
+    expect(scene.isInHelp()).toBe(true)
+
+    // Press Enter to return to main menu
+    handleKeyDown(enterEvent)
+    expect(scene.isInHelp()).toBe(false)
   })
 })

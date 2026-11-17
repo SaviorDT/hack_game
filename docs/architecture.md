@@ -24,7 +24,9 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 ### Phaser Scene
 
-`GameScene` (1920×1080 reference space) mounts Room 1 domain state, session, room/object views, input, feedback, and outcome panels, forwarding Phaser's frame delta to `GameSession`. `createGame` boots with `GameScene`.
+`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. `createGame` boots with `TitleScene`.
+
+`GameScene` (1920×1080 reference space) mounts Room 1 domain state, session, room/object views, input, feedback, and outcome panels, forwarding Phaser's frame delta to `GameSession`.
 
 `InlineCommandInputView` renders a single-line command prompt (`$ <command>`) floating directly beneath the Player Character while holding Shift. `PhaserGameHud` owns the main-game room header, editor shortcuts, lower-left live Health bar, input-mode/time-scale status, control hints, the room's hint banner along the top of the room (sized to its text, hidden in rooms without a `hint`) and the goal line (`GOAL <room.goal>` while an Exit is locked, `DONE …` with how to leave once a gated Exit opens). The main game uses a dark blue background and retains the shared Room coordinates so editor layouts and domain collision remain consistent. HUD objects are destroyed on scene shutdown. No Mana or identity statistics are shown until those systems exist. In Command Mode, the inline prompt accepts printable ASCII, cursor editing, tab completion, and history navigation (`Up`/`Down`); releasing Shift executes the command (Enter also submits). In Movement Mode, it is hidden. `PhaserRoomView` projects world objects to Phaser sprites (orienting characters horizontally based on `facing` via `flipX`, and rendering equipped items in local holder coordinates `WEAPON_HOLD_OFFSET = { x: 20, y: 26 }` mirrored with the holder's facing direction, translating equipped dagger position along the horizontal facing axis during attacks by `DAGGER_ATTACK_DISTANCE` [30 px] over `DAGGER_ATTACK_DURATION_MS` [200 ms]) and overhead labels (`?` for undiscovered objects, object name once revealed, and `hacker` for the player character; equipped items remain visible with label scale shrunk to `ITEM_LABEL_WIDTH_RATIO` [0.75] of item sprite width to avoid overlapping the character); `PhaserGameOutcomePanel` displays Game Over / Congratulations states.
 
@@ -216,6 +218,7 @@ When `outcome === 'game-over'`, `PhaserGameOutcomePanel` shows two buttons below
 
 ```mermaid
 classDiagram
+  PhaserScene <|-- TitleScene
   PhaserScene <|-- GameScene
   PhaserScene <|-- LevelEditorScene
   PhaserScene <|-- SpeedEditorScene
@@ -278,7 +281,7 @@ src/
   application/  GameSession.ts, InputModeController.ts, editorStorage.ts
   ai/           behaviorTree/{BehaviorTreeTypes.ts, BehaviorTreeEvaluator.ts, BehaviorTreePresets.ts, BehaviorTreeProcess.ts, BehaviorTreeModel.ts}
   content/      room1.ts, room1Constants.ts, weaponConstants.ts, archerConstants.ts, room1Commands.ts, room1Serializer.ts, room1WorldState.ts, createRoom1Session.ts, roomPieces.ts, tutorialRooms.ts, homeArea.ts
-  scenes/       GameScene.ts, SceneManager.ts, CommandEditorOverlay.ts, LevelEditorScene.ts, levelEditorHistory.ts, SpeedEditorScene.ts, speedEditorSession.ts, BehaviorTreeEditorScene.ts, aiEditorSession.ts, editorTheme.ts
+  scenes/       TitleScene.ts, GameScene.ts, SceneManager.ts, CommandEditorOverlay.ts, LevelEditorScene.ts, levelEditorHistory.ts, SpeedEditorScene.ts, speedEditorSession.ts, BehaviorTreeEditorScene.ts, aiEditorSession.ts, editorTheme.ts
   domain/       WorldState.ts, Room.ts, WorldObject.ts, BasicWorldObject.ts, CharacterState.ts, CollisionWorld.ts, CollisionResponse.ts, ColliderTag.ts, PhysicsAttr.ts, PlayerDefeat.ts, RoomTravel.ts, PressurePlate.ts, CombatService.ts, PickUpService.ts, WeaponDefinition.ts, ids.ts, JsonValue.ts, WorldPath.ts, WorldPathResolver.ts, VirtualWorldPathResolver.ts
   processes/    BehaviorRule.ts, ProcessDefinition.ts, ProcessInstance.ts
   commands/     mvConstants.ts, mvSerializer.ts, CommandSubmissionService.ts, CommandRegistry.ts, RegisteredCommandRegistry.ts, CommandParser.ts, VirtualCommandParser.ts, CommandRequirement.ts, CommandRequirementChecker.ts, EveryCommandRequirementChecker.ts, ParsedCommand.ts, CommandHistory.ts, CommandFeedback.ts, CommandResult.ts, executors/{base.ts, help.ts, ls.ts, mv.ts, cd.ts}

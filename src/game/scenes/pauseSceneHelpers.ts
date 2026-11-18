@@ -174,6 +174,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  TAB                  Auto-complete command name or discovered object label',
     '  CTRL+BACKSPACE       Delete previous word in prompt',
     '  UP / DOWN            Browse command history',
+    '  CTRL+P               Pause or resume game',
   ]
 }
 

@@ -66,6 +66,7 @@ vi.mock('phaser', () => {
 })
 
 import { PauseScene, PAUSE_MENU_ITEMS } from './PauseScene.ts'
+import { getHelpLines } from './pauseSceneHelpers.ts'
 
 function setupScene() {
   const scene = new PauseScene()
@@ -112,6 +113,11 @@ describe('PauseScene', () => {
     const resumeSpy = vi.spyOn(scene, 'resumeGame')
     handleKeyDown({ key: 'p', ctrlKey: true, preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(resumeSpy).toHaveBeenCalled()
+  })
+
+  it('displays CTRL+P in help screen', () => {
+    const lines = getHelpLines('hold-shift')
+    expect(lines.some((line) => line.includes('CTRL+P') && line.includes('Pause or resume game'))).toBe(true)
   })
 
   it('suppresses navigation during transitions', () => {

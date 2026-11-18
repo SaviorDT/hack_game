@@ -287,11 +287,13 @@ describe('TitleScene', () => {
     const linesDefault = (scene as any).getHelpLines('hold-shift')
     expect(linesDefault.some((line: string) => line.includes('HOLD SHIFT'))).toBe(true)
     expect(linesDefault.some((line: string) => line.includes('ENTER on empty bar'))).toBe(false)
+    expect(linesDefault.some((line: string) => line.includes('CTRL+P'))).toBe(true)
 
     // In enter-sticky mode
     const linesSticky = (scene as any).getHelpLines('enter-sticky')
     expect(linesSticky.some((line: string) => line.includes('HOLD SHIFT'))).toBe(false)
     expect(linesSticky.some((line: string) => line.includes('ENTER on empty bar'))).toBe(true)
+    expect(linesSticky.some((line: string) => line.includes('CTRL+P'))).toBe(true)
 
     // Changing mode updates the help manual text
     const setTextSpy = vi.spyOn(helpTextObj, 'setText')
@@ -417,6 +419,7 @@ describe('TitleScene', () => {
     expect(helpDescObj.setText).toHaveBeenCalled()
     const descArg = (helpDescObj.setText as any).mock.calls[0][0]
     expect(descArg.some((line: string) => line.includes('WASD / ARROW KEYS'))).toBe(true)
+    expect(descArg.some((line: string) => line.includes('CTRL+P'))).toBe(true)
     expect(descArg.some((line: string) => line.includes('── MOVEMENT & COMBAT ──'))).toBe(false)
   })
 })

@@ -14,6 +14,7 @@ export const SCROLL_SPEED_MS = 27
 export const PAUSE_DURATION_MS = 150
 export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS
 export const SHRINK_MS = 50
+export const EXPAND_MS = 75
 
 export interface SubscreenChrome {
   bottomCommandText: Phaser.GameObjects.Text
@@ -86,33 +87,82 @@ export function shrinkToPoint(
   targetY: number,
   onComplete: () => void,
 ): void {
+  const pivot = wrapChildrenAtPoint(scene, targetX, targetY)
+  tweenPointScale(scene, pivot, 0, SHRINK_MS, 'Quad.easeIn', onComplete)
+}
+
+export function expandFromPoint(
+  scene: Phaser.Scene,
+  sourceX: number,
+  sourceY: number,
+  onComplete: () => void,
+): void {
+  const pivot = wrapChildrenAtPoint(scene, sourceX, sourceY)
+  pivot.setScale(0)
+  tweenPointScale(scene, pivot, 1, EXPAND_MS, 'Quad.easeOut', () => {
+    restoreChildrenAtOrigin(pivot, sourceX, sourceY)
+    onComplete()
+  })
+}
+
+function wrapChildrenAtPoint(
+  scene: Phaser.Scene,
+  pointX: number,
+  pointY: number,
+): Phaser.GameObjects.Container {
   const allChildren = [...(scene.children?.list ?? [])]
-  const pivot = scene.add.container(targetX, targetY)
+  const pivot = scene.add.container(pointX, pointY)
 
   for (const child of allChildren) {
-    const displayObject = child as Phaser.GameObjects.GameObject & {
-      x?: number
-      y?: number
-      setPosition?: (x: number, y: number) => void
-    }
-    if (displayObject.x !== undefined && displayObject.y !== undefined && displayObject.setPosition) {
-      displayObject.setPosition(displayObject.x - targetX, displayObject.y - targetY)
-    }
+    offsetDisplayObject(child, -pointX, -pointY)
     pivot.add(child)
   }
 
+  return pivot
+}
+
+function tweenPointScale(
+  scene: Phaser.Scene,
+  pivot: Phaser.GameObjects.Container,
+  scale: number,
+  duration: number,
+  ease: string,
+  onComplete: () => void,
+): void {
   if (scene.tweens?.add) {
     scene.tweens.add({
       targets: pivot,
-      scaleX: 0,
-      scaleY: 0,
-      duration: SHRINK_MS,
-      ease: 'Quad.easeIn',
+      scaleX: scale,
+      scaleY: scale,
+      duration,
+      ease,
       onComplete,
     })
   } else {
-    pivot.setScale(0, 0)
+    pivot.setScale(scale)
     onComplete()
+  }
+}
+
+function restoreChildrenAtOrigin(
+  pivot: Phaser.GameObjects.Container,
+  offsetX: number,
+  offsetY: number,
+): void {
+  for (const child of pivot.list) {
+    offsetDisplayObject(child, offsetX, offsetY)
+  }
+  pivot.setPosition(0, 0)
+}
+
+function offsetDisplayObject(child: Phaser.GameObjects.GameObject, offsetX: number, offsetY: number): void {
+  const displayObject = child as Phaser.GameObjects.GameObject & {
+    x?: number
+    y?: number
+    setPosition?: (x: number, y: number) => void
+  }
+  if (displayObject.x !== undefined && displayObject.y !== undefined && displayObject.setPosition) {
+    displayObject.setPosition(displayObject.x + offsetX, displayObject.y + offsetY)
   }
 }
 

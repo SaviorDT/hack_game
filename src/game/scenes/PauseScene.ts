@@ -11,6 +11,7 @@ import {
   COLOR_MUTED,
   COLOR_PROMPT,
   COLOR_WHITE,
+  expandFromPoint,
   EXECUTION_PAUSE_MS,
   getHelpLines,
   scrollTransition,
@@ -49,6 +50,7 @@ export class PauseScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.isTransitioning = true
     this.cameras.main.setBackgroundColor('#000000')
     this.currentTypingMode = loadCommandTypingMode()
     this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
@@ -123,6 +125,19 @@ export class PauseScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown', this.handleKeyDown)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.keyboard?.off('keydown', this.handleKeyDown)
+    })
+
+    const gameScene = this.scene.get('game') as unknown as {
+      session?: {
+        getRenderPosition?: (id: string) => { x: number; y: number } | undefined
+      }
+    }
+    const position = gameScene?.session?.getRenderPosition?.('player')
+    const sourceX = position?.x ?? 960
+    const sourceY = position?.y ?? 540
+
+    expandFromPoint(this, sourceX, sourceY, () => {
+      this.isTransitioning = false
     })
   }
 

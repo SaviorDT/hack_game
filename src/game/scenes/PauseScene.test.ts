@@ -10,13 +10,36 @@ vi.mock('phaser', () => {
       resume: ReturnType<typeof vi.fn>
     }
     cameras = { main: { setBackgroundColor: vi.fn() } }
+    children = { list: [] as unknown[] }
     add = {
-      container: vi.fn(() => {
+      container: vi.fn((x = 0, y = 0) => {
+        const containerChildren: unknown[] = []
         const container = {
+          x,
+          y,
+          list: containerChildren,
+          setScale: vi.fn().mockReturnThis(),
+          setPosition: vi.fn((nextX: number, nextY: number) => {
+            container.x = nextX
+            container.y = nextY
+            return container
+          }),
           setVisible: vi.fn().mockReturnThis(),
-          setY: vi.fn().mockReturnThis(),
-          add: vi.fn().mockReturnThis(),
+          setY: vi.fn((nextY: number) => {
+            container.y = nextY
+            return container
+          }),
+          add: vi.fn((child: unknown | unknown[]) => {
+            const addedChildren = Array.isArray(child) ? child : [child]
+            containerChildren.push(...addedChildren)
+            for (const addedChild of addedChildren) {
+              const childIndex = this.children.list.indexOf(addedChild)
+              if (childIndex !== -1) this.children.list.splice(childIndex, 1)
+            }
+            return container
+          }),
         }
+        this.children.list.push(container)
         return container
       }),
       graphics: vi.fn(() => ({
@@ -66,7 +89,7 @@ vi.mock('phaser', () => {
 })
 
 import { PauseScene, PAUSE_MENU_ITEMS } from './PauseScene.ts'
-import { getHelpLines } from './pauseSceneHelpers.ts'
+import { EXPAND_MS, getHelpLines } from './pauseSceneHelpers.ts'
 
 function setupScene() {
   const scene = new PauseScene()
@@ -83,6 +106,40 @@ describe('PauseScene', () => {
     expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'SETTING', 'HELP'])
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('RESUME')
+  })
+
+  it('expands from the live player position when created', () => {
+    const scene = new PauseScene()
+    const containerFactory = vi.spyOn(scene.add, 'container')
+    ;(scene.scene.get as ReturnType<typeof vi.fn>).mockReturnValue({
+      session: {
+        getRenderPosition: vi.fn(() => ({ x: 400, y: 300 })),
+      },
+    })
+
+    scene.create()
+
+    expect(scene.tweens.add).toHaveBeenCalledWith(expect.objectContaining({
+      scaleX: 1,
+      scaleY: 1,
+      duration: EXPAND_MS,
+      ease: 'Quad.easeOut',
+    }))
+    expect(scene.isMenuTransitioning()).toBe(false)
+    const [mainMenu, helpScreen, settingsScreen, pivot] = containerFactory.mock.results
+      .map(({ value }) => value as { x: number; y: number })
+    expect([mainMenu, helpScreen, settingsScreen, pivot].map(({ x, y }) => [x, y])).toEqual([
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+    ])
+
+    scene.showSettings(false)
+    expect(settingsScreen.y + pivot.y).toBe(0)
+    scene.exitSettings(false)
+    scene.showHelp(false)
+    expect(helpScreen.y + pivot.y).toBe(0)
   })
 
   it('cycles menu selection and wraps', () => {

@@ -365,4 +365,55 @@ describe('TitleScene', () => {
     expect(PAUSE_DURATION_MS).toBe(150)
     expect(EXECUTION_PAUSE_MS).toBe(150)
   })
+
+  it('positions all navText (mainMenu, setting menu, help menu) above bottom guest_terminal:~$ prompt', () => {
+    const scene = new TitleScene()
+    const textSpy = vi.spyOn(scene.add, 'text')
+    scene.create()
+
+    const bottomPromptCalls = textSpy.mock.calls.filter(
+      call => call[2] === 'guest_terminal:~$ ' && call[1] >= 500,
+    )
+    expect(bottomPromptCalls.length).toBe(3) // 1 in main menu, 2 across subscreens
+    const bottomPromptY = bottomPromptCalls[0][1]
+    expect(bottomPromptY).toBe(920)
+
+    const navHints = [
+      '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM',
+      '<ENTER> CONFIRM',
+    ]
+    const navTextCalls = textSpy.mock.calls.filter(
+      call => typeof call[2] === 'string' && navHints.includes(call[2]),
+    )
+
+    expect(navTextCalls.length).toBe(3)
+    navTextCalls.forEach(call => {
+      const navY = call[1]
+      expect(navY).toBeLessThan(bottomPromptY)
+      expect(navY).toBe(860)
+    })
+  })
+
+  it('renders help manual titles in COLOR_PROMPT and command & description columns in COLOR_DIM', () => {
+    const scene = new TitleScene()
+    const textSpy = vi.spyOn(scene.add, 'text')
+    scene.create()
+
+    // Find the text calls for helpManualText (color: #888888) and helpDescText (color: #555555)
+    const helpManualCall = textSpy.mock.calls.find(
+      call => call[1] === 125 && (call[3] as any)?.color === '#888888',
+    )
+    const helpDescCall = textSpy.mock.calls.find(
+      call => call[1] === 125 && (call[3] as any)?.color === '#555555',
+    )
+
+    expect(helpManualCall).toBeDefined()
+    expect(helpDescCall).toBeDefined()
+
+    const helpDescObj = (scene as any).helpDescText
+    expect(helpDescObj.setText).toHaveBeenCalled()
+    const descArg = (helpDescObj.setText as any).mock.calls[0][0]
+    expect(descArg.some((line: string) => line.includes('WASD / ARROW KEYS'))).toBe(true)
+    expect(descArg.some((line: string) => line.includes('── MOVEMENT & COMBAT ──'))).toBe(false)
+  })
 })

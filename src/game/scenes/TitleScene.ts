@@ -660,22 +660,12 @@ export class TitleScene extends Phaser.Scene {
       if (key === 'ENTER') {
         event.preventDefault()
         if (this.settingFocusIndex === 0) {
-          if (this.currentTypingMode !== 'hold-shift') {
-            this.currentTypingMode = 'hold-shift'
-          } else {
-            this.currentTypingMode = 'enter-sticky'
-            this.settingFocusIndex = 1
-          }
+          this.currentTypingMode = 'hold-shift'
           saveCommandTypingMode(this.currentTypingMode)
           this.updateSettingDisplay()
           this.updateHelpText()
         } else if (this.settingFocusIndex === 1) {
-          if (this.currentTypingMode !== 'enter-sticky') {
-            this.currentTypingMode = 'enter-sticky'
-          } else {
-            this.currentTypingMode = 'hold-shift'
-            this.settingFocusIndex = 0
-          }
+          this.currentTypingMode = 'enter-sticky'
           saveCommandTypingMode(this.currentTypingMode)
           this.updateSettingDisplay()
           this.updateHelpText()

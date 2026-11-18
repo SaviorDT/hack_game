@@ -208,13 +208,7 @@ describe('TitleScene', () => {
     expect(scene.getSettingSelectedIndex()).toBe(0)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
 
-    // Pressing Enter on the toggle switch toggles to enter-sticky WITHOUT exiting settings
-    handleKeyDown(enterEvent)
-    expect(scene.isInSettings()).toBe(true)
-    expect(scene.getSettingSelectedIndex()).toBe(1)
-    expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
-
-    // Pressing Enter again toggles back to hold-shift without exiting
+    // Pressing Enter while focused on [* HOLD SHIFT *] keeps hold-shift selected without exiting settings
     handleKeyDown(enterEvent)
     expect(scene.isInSettings()).toBe(true)
     expect(scene.getSettingSelectedIndex()).toBe(0)
@@ -254,7 +248,15 @@ describe('TitleScene', () => {
     expect(scene.getSettingSelectedIndex()).toBe(0)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
 
-    // Toggle to enter-sticky using Enter
+    // Move focus to enter-sticky and select it using Enter
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(1)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    handleKeyDown(enterEvent)
+    expect(scene.getSettingSelectedIndex()).toBe(1)
+    expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
+
+    // Pressing Enter again while focused on [* ENTER + STICKY *] keeps it selected
     handleKeyDown(enterEvent)
     expect(scene.getSettingSelectedIndex()).toBe(1)
     expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
@@ -295,7 +297,8 @@ describe('TitleScene', () => {
     const setTextSpy = vi.spyOn(helpTextObj, 'setText')
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select SETTING
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // open SETTING
-    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // toggle to enter-sticky
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent) // focus enter-sticky
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select enter-sticky
 
     expect(setTextSpy).toHaveBeenCalled()
     const lastCallArg = setTextSpy.mock.calls[setTextSpy.mock.calls.length - 1][0]

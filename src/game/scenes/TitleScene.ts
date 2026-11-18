@@ -15,11 +15,12 @@ export const SCROLL_SPEED_MS = 27
 export const PAUSE_DURATION_MS = 150
 export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS
 
+// https://lospec.com/palette-list/optimized-grayscale-4
 const TERMINAL_FONT = '"Press Start 2P", monospace'
 const COLOR_WHITE = '#ffffff'
-const COLOR_DIM = '#555555'
-const COLOR_MUTED = '#333333'
-const COLOR_PROMPT = '#888888'
+const COLOR_DIM = '#606060'
+const COLOR_MUTED = '#202020'
+const COLOR_PROMPT = '#9f9f9f'
 
 interface SubscreenChrome {
   bottomCommandText: Phaser.GameObjects.Text

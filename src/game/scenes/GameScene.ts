@@ -193,8 +193,27 @@ export class GameScene extends Phaser.Scene {
         return this.commandEditor
     }
 
+    public openPause(): void {
+        if (this.scene.isActive('pause')) return
+        this.session.releaseAllKeys()
+        ;(this.session as unknown as {
+            dependencies: { simulationClock: { setTimeScale: (scale: number) => void } }
+        }).dependencies.simulationClock.setTimeScale(0)
+        this.scene.launch('pause')
+        this.scene.pause()
+    }
+
+    public resumeFromPause(): void {
+        this.scene.resume()
+        this.session.syncTimeScale()
+    }
+
     // Returns whether the command input should process the key event.
     private readonly handleKeyDown = (event: KeyboardEvent): boolean => {
+        if (event.ctrlKey && event.key.toLowerCase() === 'p') {
+            event.preventDefault()
+            return false
+        }
         if (this.commandEditor?.isModalPromptOpen?.()) {
             return false
         }

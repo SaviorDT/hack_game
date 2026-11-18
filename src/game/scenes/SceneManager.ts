@@ -221,6 +221,23 @@ export class SceneManager {
     const key = event.key.toUpperCase()
     const activeKey = this.getActiveSceneKey()
 
+    if (event.ctrlKey && key === 'P') {
+      if (activeKey === 'pause') {
+        event.preventDefault?.()
+        event.stopImmediatePropagation?.()
+        const pauseScene = this.game?.scene.getScene?.('pause') as unknown as { resumeGame?: () => void }
+        pauseScene?.resumeGame?.()
+      } else if (activeKey === 'game') {
+        event.preventDefault?.()
+        event.stopImmediatePropagation?.()
+        const gameScene = this.game?.scene.getScene?.('game') as unknown as { openPause?: () => void }
+        gameScene?.openPause?.()
+      } else {
+        return false
+      }
+      return true
+    }
+
     // 0. Check if F1 was pressed (Command Editor overlay toggle)
     if (key === 'F1') {
       event.preventDefault?.()

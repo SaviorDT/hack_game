@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { TitleScene } from './scenes/TitleScene.ts'
+import { PauseScene } from './scenes/PauseScene.ts'
 import { GameScene } from './scenes/GameScene.ts'
 import { LevelEditorScene } from './scenes/LevelEditorScene.ts'
 import { SpeedEditorScene } from './scenes/SpeedEditorScene.ts'
@@ -22,7 +23,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [TitleScene, GameScene, LevelEditorScene, SpeedEditorScene, BehaviorTreeEditorScene],
+    scene: [TitleScene, GameScene, PauseScene, LevelEditorScene, SpeedEditorScene, BehaviorTreeEditorScene],
   })
 
   new SceneManager(game)

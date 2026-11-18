@@ -4,28 +4,33 @@ import {
   saveCommandTypingMode,
   type CommandTypingMode,
 } from '../application/gameSettings.ts'
+import {
+  buildHelpScreen,
+  buildSettingScreen,
+  getHelpLines,
+  scrollTransition,
+  typeCommand,
+  updateSettingDisplay,
+  EXECUTION_PAUSE_MS,
+  TERMINAL_FONT,
+  COLOR_WHITE,
+  COLOR_DIM,
+  COLOR_MUTED,
+  COLOR_PROMPT,
+} from './pauseSceneHelpers.ts'
+
+export {
+  TYPING_SPEED_MS,
+  SCROLL_SPEED_MS,
+  PAUSE_DURATION_MS,
+  EXECUTION_PAUSE_MS,
+} from './pauseSceneHelpers.ts'
 
 export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
 export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number]
 
 export const TYPING_MODES: readonly CommandTypingMode[] = ['hold-shift', 'enter-sticky']
 
-export const TYPING_SPEED_MS = 15
-export const SCROLL_SPEED_MS = 27
-export const PAUSE_DURATION_MS = 150
-export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS
-
-// https://lospec.com/palette-list/optimized-grayscale-4
-const TERMINAL_FONT = '"Press Start 2P", monospace'
-const COLOR_WHITE = '#ffffff'
-const COLOR_DIM = '#606060'
-const COLOR_MUTED = '#202020'
-const COLOR_PROMPT = '#9f9f9f'
-
-interface SubscreenChrome {
-  bottomCommandText: Phaser.GameObjects.Text
-  returnBtn: Phaser.GameObjects.Text
-}
 
 export class TitleScene extends Phaser.Scene {
   private selectedIndex = 0
@@ -211,22 +216,7 @@ export class TitleScene extends Phaser.Scene {
     command: string,
     onComplete: () => void,
   ): void {
-    if (!textObj) {
-      onComplete()
-      return
-    }
-    textObj.setText('')
-    const charDelay = TYPING_SPEED_MS
-    this.time.delayedCall(charDelay, () => {
-      textObj.setText(command.slice(0, 1))
-      this.time.delayedCall(charDelay, () => {
-        textObj.setText(command.slice(0, 2))
-        this.time.delayedCall(charDelay, () => {
-          textObj.setText(command)
-          onComplete()
-        })
-      })
-    })
+    typeCommand(this, textObj, command, onComplete)
   }
 
   private scrollTransition(
@@ -234,22 +224,7 @@ export class TitleScene extends Phaser.Scene {
     toContainer: Phaser.GameObjects.Container,
     onComplete: () => void,
   ): void {
-    toContainer.setY(850).setVisible(true)
-    if (this.tweens?.add) {
-      this.tweens.add({
-        targets: [fromContainer, toContainer],
-        y: '-=850',
-        duration: SCROLL_SPEED_MS,
-        ease: 'Linear',
-        onComplete: () => {
-          onComplete()
-        },
-      })
-    } else {
-      toContainer.setY(0)
-      fromContainer.setY(-850)
-      onComplete()
-    }
+    scrollTransition(this, fromContainer, toContainer, onComplete)
   }
 
   private buildDecorations(): void {
@@ -349,102 +324,8 @@ export class TitleScene extends Phaser.Scene {
     this.mainMenuContainer.add([navText, promptText, this.mainPromptCommand])
   }
 
-  private buildSubscreenChrome(
-    container: Phaser.GameObjects.Container,
-    command: string,
-    navHint: string,
-  ): SubscreenChrome {
-    const promptPrefix = this.add.text(80, 70, 'guest_terminal:~$ ', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '16px',
-      color: COLOR_PROMPT,
-    })
-    const prefixWidth = promptPrefix.width || 304
-    const promptCommand = this.add.text(80 + prefixWidth, 70, command, {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '16px',
-      color: COLOR_WHITE,
-    })
-
-    const topLine = this.add.graphics()
-    topLine.lineStyle(1, 0x333333, 1)
-    topLine.lineBetween(80, 105, 1840, 105)
-
-    const bottomLine = this.add.graphics()
-    bottomLine.lineStyle(1, 0x333333, 1)
-    bottomLine.lineBetween(80, 750, 1840, 750)
-
-    const returnBtn = this.add.text(960, 810, '> [ RETURN ] <', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '22px',
-      color: COLOR_WHITE,
-      align: 'center',
-    }).setOrigin(0.5, 0.5)
-
-    const navText = this.add.text(960, 860, navHint, {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '14px',
-      color: COLOR_MUTED,
-      align: 'center',
-    }).setOrigin(0.5, 0.5)
-
-    const bottomPrompt = this.add.text(80, 920, 'guest_terminal:~$ ', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '16px',
-      color: COLOR_PROMPT,
-    })
-    const bottomPrefixWidth = bottomPrompt.width || 304
-    const bottomCommandText = this.add.text(80 + bottomPrefixWidth, 920, '', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '16px',
-      color: COLOR_WHITE,
-    })
-
-    container.add([
-      promptPrefix,
-      promptCommand,
-      topLine,
-      bottomLine,
-      returnBtn,
-      navText,
-      bottomPrompt,
-      bottomCommandText,
-    ])
-
-    return { bottomCommandText, returnBtn }
-  }
-
   private getHelpLines(mode: CommandTypingMode): string[] {
-    const commandLineBindings =
-      mode === 'hold-shift'
-        ? [
-          '  HOLD SHIFT           Open command prompt beneath hacker (slows time to 0.25x)',
-          '  RELEASE SHIFT        Execute typed command (empty input cancels & closes)',
-        ]
-        : [
-          '  ENTER                Open command prompt (slows time to 0.25x)',
-          '  ENTER on empty bar   Close command prompt without executing',
-        ]
-
-    return [
-      '── MOVEMENT & COMBAT ──',
-      '  WASD / ARROW KEYS    Move hacker',
-      '  SPACE                Attack with equipped weapon (auto-pickup on touch)',
-      '',
-      '── COMMAND LINE ──',
-      ...commandLineBindings,
-      '',
-      '── VIRTUAL COMMANDS ──',
-      '  help                 Print available commands and current room objective',
-      '  ls                   Discover and reveal hidden objects in current room',
-      '  mv <src> <target>    Throw object towards target, or rename object',
-      '  cd <room>            Pass through exit doorway into adjacent room',
-      '',
-      '── SHORTCUTS ──',
-      '  TAB                  Auto-complete command name or discovered object label',
-      '  CTRL+BACKSPACE       Delete previous word in prompt',
-      '  UP / DOWN            Browse command history',
-    ]
+    return getHelpLines(mode)
   }
 
   private updateHelpText(): void {
@@ -452,132 +333,33 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private buildHelpScreen(): void {
-    const chrome = this.buildSubscreenChrome(
-      this.helpScreenContainer,
-      'help',
-      '<ENTER> CONFIRM',
-    )
-    this.helpPromptCommand = chrome.bottomCommandText
-
-    this.helpManualText = this.add.text(80, 125, '', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_PROMPT,
-      lineSpacing: 10,
-    })
-
-    this.helpDescText = this.add.text(80, 125, '', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_DIM,
-      lineSpacing: 10,
-    })
-
-    const originalSetText = this.helpManualText.setText.bind(this.helpManualText)
-    this.helpManualText.setText = ((value: string | string[]) => {
-      const lines = Array.isArray(value) ? value : [value]
-      const titleLines = lines.map(line =>
-        line.startsWith('──') ? line : '',
-      )
-      const bodyLines = lines.map(line =>
-        line.startsWith('──') ? '' : line,
-      )
-      this.helpDescText?.setText(bodyLines)
-      return originalSetText(titleLines)
-    }) as typeof this.helpManualText.setText
-
-    this.helpManualText.setText(this.getHelpLines(this.currentTypingMode))
-
-    this.helpScreenContainer.add([this.helpManualText, this.helpDescText])
+    const refs = buildHelpScreen(this, this.helpScreenContainer, this.currentTypingMode)
+    this.helpPromptCommand = refs.promptCommand
+    this.helpManualText = refs.manualText
+    this.helpDescText = refs.descText
   }
 
   private buildSettingScreen(): void {
-    const chrome = this.buildSubscreenChrome(
-      this.settingsScreenContainer,
-      'settings',
-      '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM',
-    )
-    this.settingsPromptCommand = chrome.bottomCommandText
-    this.settingsReturnBtn = chrome.returnBtn
-
-    const header = this.add.text(80, 125, '── IN-GAME COMMAND TYPING MODE ──', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_PROMPT,
-    })
-
-    this.settingShiftText = this.add.text(110, 165, '', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_WHITE,
-    })
-
-    this.settingSeparatorText = this.add.text(435, 165, '-', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_DIM,
-    })
-
-    this.settingStickyText = this.add.text(475, 165, '', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_DIM,
-    })
-
-    this.settingDescText = this.add.text(110, 210, '', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '14px',
-      color: COLOR_DIM,
-    })
-
-    this.settingsScreenContainer.add([
-      header,
-      this.settingShiftText,
-      this.settingSeparatorText,
-      this.settingStickyText,
-      this.settingDescText,
-    ])
-
+    const refs = buildSettingScreen(this, this.settingsScreenContainer, this.currentTypingMode)
+    this.settingsPromptCommand = refs.promptCommand
+    this.settingsReturnBtn = refs.returnBtn
+    this.settingShiftText = refs.shiftText
+    this.settingSeparatorText = refs.separatorText
+    this.settingStickyText = refs.stickyText
+    this.settingDescText = refs.descText
     this.updateSettingDisplay()
   }
 
   private updateSettingDisplay(): void {
-    const isShiftSelected = this.currentTypingMode === 'hold-shift'
-
-    if (this.settingShiftText && this.settingStickyText) {
-      const isShiftFocused = this.settingFocusIndex === 0
-      const isStickyFocused = this.settingFocusIndex === 1
-
-      const shiftTag = isShiftSelected ? '* HOLD SHIFT *' : '  HOLD SHIFT  '
-      const shiftTextStr = isShiftFocused ? `> [${shiftTag}] <` : `  [${shiftTag}]  `
-      this.settingShiftText.setText(shiftTextStr)
-      this.settingShiftText.setColor(isShiftFocused ? COLOR_WHITE : COLOR_DIM)
-
-      const stickyTag = !isShiftSelected ? '* ENTER + STICKY *' : '  ENTER + STICKY  '
-      const stickyTextStr = isStickyFocused ? `> [${stickyTag}] <` : `  [${stickyTag}]  `
-      this.settingStickyText.setText(stickyTextStr)
-      this.settingStickyText.setColor(isStickyFocused ? COLOR_WHITE : COLOR_DIM)
-    }
-
-    if (this.settingDescText) {
-      const activeForDesc =
-        this.settingFocusIndex === 0
-          ? 'hold-shift'
-          : this.settingFocusIndex === 1
-            ? 'enter-sticky'
-            : this.currentTypingMode
-      const desc =
-        activeForDesc === 'hold-shift'
-          ? 'Hold Shift to type commands; release Shift to submit or cancel.'
-          : 'Press Enter to open/submit; Enter on empty bar closes; Shift disabled.'
-      this.settingDescText.setText(desc)
-    }
-
-    if (this.settingsReturnBtn) {
-      const isReturnFocused = this.settingFocusIndex === 2
-      this.settingsReturnBtn.setText(isReturnFocused ? '> [ RETURN ] <' : '  [ RETURN ]  ')
-      this.settingsReturnBtn.setColor(isReturnFocused ? COLOR_WHITE : COLOR_DIM)
-    }
+    if (!this.settingsReturnBtn || !this.settingShiftText || !this.settingStickyText || !this.settingDescText) return
+    updateSettingDisplay({
+      typingMode: this.currentTypingMode,
+      focusIndex: this.settingFocusIndex,
+      returnBtn: this.settingsReturnBtn,
+      shiftText: this.settingShiftText,
+      stickyText: this.settingStickyText,
+      descText: this.settingDescText,
+    })
   }
 
   private updateSelection(): void {
@@ -699,10 +481,12 @@ export class TitleScene extends Phaser.Scene {
       this.menuTexts = []
       this.settingsReturnBtn = undefined
       this.settingShiftText = undefined
+      this.settingSeparatorText?.destroy?.()
       this.settingSeparatorText = undefined
       this.settingStickyText = undefined
       this.settingDescText = undefined
       this.helpManualText = undefined
+      this.helpDescText?.destroy?.()
       this.helpDescText = undefined
     })
   }

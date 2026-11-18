@@ -23,6 +23,7 @@ function createMockGame(activeScene: Phaser.Scene): Phaser.Game {
     scene: {
       getScenes: vi.fn((isActive?: boolean) => (isActive ? scenes : scenes)),
       start: vi.fn(),
+      getScene: vi.fn((key: string) => scenes.find((scene) => scene.scene.key === key)),
     },
     registry: {
       set: vi.fn(),
@@ -36,9 +37,10 @@ function createMockGame(activeScene: Phaser.Scene): Phaser.Game {
   return game
 }
 
-function createMockKeyboardEvent(key: string): KeyboardEvent {
+function createMockKeyboardEvent(key: string, ctrlKey = false): KeyboardEvent {
   return {
     key,
+    ctrlKey,
     preventDefault: vi.fn(),
     stopImmediatePropagation: vi.fn(),
   } as unknown as KeyboardEvent
@@ -418,6 +420,42 @@ describe('SceneManager', () => {
       expect(closeSpy).toHaveBeenCalled()
       manager.toggleCommandEditor()
       expect(toggleSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('Pause (Ctrl+P)', () => {
+    it('opens pause from the game scene', () => {
+      const openPause = vi.fn()
+      const gameScene = createMockScene('game', { openPause })
+      const mockGame = createMockGame(gameScene)
+      mockGame.scene.getScene = vi.fn((key: string) => key === 'game' ? gameScene : undefined) as typeof mockGame.scene.getScene
+      const manager = new SceneManager(mockGame)
+      const event = createMockKeyboardEvent('p', true)
+
+      expect(manager.handleKeyDown(event)).toBe(true)
+      expect(openPause).toHaveBeenCalled()
+    })
+
+    it('closes pause from the pause scene', () => {
+      const resumeGame = vi.fn()
+      const pauseScene = createMockScene('pause', { resumeGame })
+      const mockGame = createMockGame(pauseScene)
+      mockGame.scene.getScene = vi.fn((key: string) => key === 'pause' ? pauseScene : undefined) as typeof mockGame.scene.getScene
+      const manager = new SceneManager(mockGame)
+      const event = createMockKeyboardEvent('P', true)
+
+      expect(manager.handleKeyDown(event)).toBe(true)
+      expect(resumeGame).toHaveBeenCalled()
+    })
+
+    it('does not toggle pause outside game or pause scenes', () => {
+      const gameScene = createMockScene('title')
+      const mockGame = createMockGame(gameScene)
+      const manager = new SceneManager(mockGame)
+      const event = createMockKeyboardEvent('p', true)
+
+      expect(manager.handleKeyDown(event)).toBe(false)
+      expect(event.preventDefault).not.toHaveBeenCalled()
     })
   })
 

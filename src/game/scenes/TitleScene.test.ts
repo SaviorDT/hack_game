@@ -101,6 +101,7 @@ import {
   SCROLL_SPEED_MS,
   PAUSE_DURATION_MS,
   EXECUTION_PAUSE_MS,
+  SHRINK_MS,
 } from './TitleScene.ts'
 
 describe('TitleScene', () => {
@@ -369,6 +370,22 @@ describe('TitleScene', () => {
     expect(SCROLL_SPEED_MS).toBe(27)
     expect(PAUSE_DURATION_MS).toBe(150)
     expect(EXECUTION_PAUSE_MS).toBe(150)
+    expect(SHRINK_MS).toBe(220)
+  })
+
+  it('types ./main and starts the game when confirming START', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const typeCommandSpy = vi.spyOn(scene as any, 'typeCommand')
+    const startSpy = vi.spyOn(scene.scene, 'start')
+
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+
+    expect(typeCommandSpy).toHaveBeenCalledWith(
+      (scene as any).mainPromptCommand,
+      './main',
+      expect.any(Function),
+    )
+    expect(startSpy).toHaveBeenCalledWith('game')
   })
 
   it('positions all navText (mainMenu, setting menu, help menu) above bottom guest_terminal:~$ prompt', () => {

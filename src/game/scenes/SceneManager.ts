@@ -225,8 +225,6 @@ export class SceneManager {
       if (activeKey === 'pause') {
         event.preventDefault?.()
         event.stopImmediatePropagation?.()
-        const pauseScene = this.game?.scene.getScene?.('pause') as unknown as { resumeGame?: () => void }
-        pauseScene?.resumeGame?.()
       } else if (activeKey === 'game') {
         event.preventDefault?.()
         event.stopImmediatePropagation?.()

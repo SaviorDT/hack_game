@@ -436,7 +436,7 @@ describe('SceneManager', () => {
       expect(openPause).toHaveBeenCalled()
     })
 
-    it('closes pause from the pause scene', () => {
+    it('does nothing with Ctrl+P while pause is active', () => {
       const resumeGame = vi.fn()
       const pauseScene = createMockScene('pause', { resumeGame })
       const mockGame = createMockGame(pauseScene)
@@ -445,7 +445,7 @@ describe('SceneManager', () => {
       const event = createMockKeyboardEvent('P', true)
 
       expect(manager.handleKeyDown(event)).toBe(true)
-      expect(resumeGame).toHaveBeenCalled()
+      expect(resumeGame).not.toHaveBeenCalled()
     })
 
     it('does not toggle pause outside game or pause scenes', () => {

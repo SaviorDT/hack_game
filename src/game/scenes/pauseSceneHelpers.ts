@@ -13,6 +13,7 @@ export const TYPING_SPEED_MS = 15
 export const SCROLL_SPEED_MS = 27
 export const PAUSE_DURATION_MS = 150
 export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS
+export const SHRINK_MS = 50
 
 export interface SubscreenChrome {
   bottomCommandText: Phaser.GameObjects.Text
@@ -75,6 +76,42 @@ export function scrollTransition(
   } else {
     toContainer.setY(0)
     fromContainer.setY(-850)
+    onComplete()
+  }
+}
+
+export function shrinkToPoint(
+  scene: Phaser.Scene,
+  targetX: number,
+  targetY: number,
+  onComplete: () => void,
+): void {
+  const allChildren = [...(scene.children?.list ?? [])]
+  const pivot = scene.add.container(targetX, targetY)
+
+  for (const child of allChildren) {
+    const displayObject = child as Phaser.GameObjects.GameObject & {
+      x?: number
+      y?: number
+      setPosition?: (x: number, y: number) => void
+    }
+    if (displayObject.x !== undefined && displayObject.y !== undefined && displayObject.setPosition) {
+      displayObject.setPosition(displayObject.x - targetX, displayObject.y - targetY)
+    }
+    pivot.add(child)
+  }
+
+  if (scene.tweens?.add) {
+    scene.tweens.add({
+      targets: pivot,
+      scaleX: 0,
+      scaleY: 0,
+      duration: SHRINK_MS,
+      ease: 'Quad.easeIn',
+      onComplete,
+    })
+  } else {
+    pivot.setScale(0, 0)
     onComplete()
   }
 }
@@ -174,7 +211,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  TAB                  Auto-complete command name or discovered object label',
     '  CTRL+BACKSPACE       Delete previous word in prompt',
     '  UP / DOWN            Browse command history',
-    '  CTRL+P               Pause or resume game',
+    '  CTRL+P               Open pause menu',
   ]
 }
 

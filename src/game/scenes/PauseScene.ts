@@ -14,6 +14,7 @@ import {
   EXECUTION_PAUSE_MS,
   getHelpLines,
   scrollTransition,
+  shrinkToPoint,
   TERMINAL_FONT,
   typeCommand,
   updateSettingDisplay,
@@ -171,9 +172,32 @@ export class PauseScene extends Phaser.Scene {
   }
 
   private confirmSelection(): void {
-    if (this.getSelectedChoice() === 'RESUME') this.resumeGame()
+    if (this.getSelectedChoice() === 'RESUME') this.resumeWithAnimation()
     if (this.getSelectedChoice() === 'SETTING') this.showSettings()
     if (this.getSelectedChoice() === 'HELP') this.showHelp()
+  }
+
+  private resumeWithAnimation(): void {
+    if (this.isTransitioning) return
+    this.isTransitioning = true
+
+    const gameScene = this.scene.get('game') as unknown as {
+      session?: {
+        getRenderPosition?: (id: string) => { x: number; y: number } | undefined
+      }
+    }
+    const position = gameScene?.session?.getRenderPosition?.('player')
+    const targetX = position?.x ?? 960
+    const targetY = position?.y ?? 540
+
+    typeCommand(this, this.mainPromptCommand, './main', () => {
+      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
+        shrinkToPoint(this, targetX, targetY, () => {
+          this.isTransitioning = false
+          this.resumeGame()
+        })
+      })
+    })
   }
 
   private transitionToSubscreen(
@@ -243,11 +267,6 @@ export class PauseScene extends Phaser.Scene {
   }
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
-    if (event.ctrlKey && event.key.toLowerCase() === 'p') {
-      event.preventDefault()
-      this.resumeGame()
-      return
-    }
     if (this.isTransitioning) {
       event.preventDefault()
       return

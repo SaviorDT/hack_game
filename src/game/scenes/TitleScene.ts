@@ -12,6 +12,7 @@ import {
   typeCommand,
   updateSettingDisplay,
   EXECUTION_PAUSE_MS,
+  shrinkToPoint,
   TERMINAL_FONT,
   COLOR_WHITE,
   COLOR_DIM,
@@ -24,6 +25,7 @@ export {
   SCROLL_SPEED_MS,
   PAUSE_DURATION_MS,
   EXECUTION_PAUSE_MS,
+  SHRINK_MS,
 } from './pauseSceneHelpers.ts'
 
 export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
@@ -53,6 +55,8 @@ export class TitleScene extends Phaser.Scene {
   private inHelp = false
   private inSettings = false
   private isTransitioning = false
+  private static readonly PLAYER_SPAWN_X = 424
+  private static readonly PLAYER_SPAWN_Y = 439
 
   constructor() {
     super({ key: 'title' })
@@ -144,13 +148,31 @@ export class TitleScene extends Phaser.Scene {
     const choice = this.getSelectedChoice()
     console.log(`[TitleScene] selected: ${choice}`)
     if (choice === 'START') {
-      this.scene.start('game')
+      this.startWithAnimation()
     } else if (choice === 'HELP') {
       this.showHelp()
     } else if (choice === 'SETTING') {
       this.showSettings()
     }
     return choice
+  }
+
+  private startWithAnimation(): void {
+    if (this.isTransitioning) return
+    this.isTransitioning = true
+    this.typeCommand(this.mainPromptCommand, './main', () => {
+      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
+        shrinkToPoint(
+          this,
+          TitleScene.PLAYER_SPAWN_X,
+          TitleScene.PLAYER_SPAWN_Y,
+          () => {
+            this.isTransitioning = false
+            this.scene.start('game')
+          },
+        )
+      })
+    })
   }
 
   private transitionToSubscreen(

@@ -108,16 +108,25 @@ describe('PauseScene', () => {
     expect(scene.isInHelp()).toBe(true)
   })
 
-  it('Ctrl+P dismisses the pause scene', () => {
+  it('does not dismiss the pause scene on Ctrl+P', () => {
     const { scene, handleKeyDown } = setupScene()
     const resumeSpy = vi.spyOn(scene, 'resumeGame')
     handleKeyDown({ key: 'p', ctrlKey: true, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(resumeSpy).not.toHaveBeenCalled()
+  })
+
+  it('types ./main and resumes after confirming RESUME', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const resumeSpy = vi.spyOn(scene, 'resumeGame')
+
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+
     expect(resumeSpy).toHaveBeenCalled()
   })
 
   it('displays CTRL+P in help screen', () => {
     const lines = getHelpLines('hold-shift')
-    expect(lines.some((line) => line.includes('CTRL+P') && line.includes('Pause or resume game'))).toBe(true)
+    expect(lines.some((line) => line.includes('CTRL+P') && line.includes('Open pause menu'))).toBe(true)
   })
 
   it('suppresses navigation during transitions', () => {

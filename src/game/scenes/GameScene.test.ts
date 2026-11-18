@@ -216,6 +216,120 @@ describe('GameScene key handling', () => {
     expect((scene as any).enteredByShift).toBe(false)
   })
 
+  describe('enter-sticky typing mode', () => {
+    it('disables Shift in movement mode', () => {
+      const { scene, session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+      scene.setCommandTypingMode('enter-sticky')
+      expect(scene.getCommandTypingMode()).toBe('enter-sticky')
+
+      const preventDefault = vi.fn()
+      const result = handleKeyDown({
+        key: 'Shift',
+        repeat: false,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(session.inputMode).toBe('movement')
+      expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
+      expect(result).toBe(false)
+    })
+
+    it('enters command mode when Enter is pressed in movement mode', () => {
+      const { scene, session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+      scene.setCommandTypingMode('enter-sticky')
+
+      const preventDefault = vi.fn()
+      const result = handleKeyDown({
+        key: 'Enter',
+        repeat: false,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(session.inputMode).toBe('command')
+      expect(mockInlineCommandInputView.setVisible).toHaveBeenCalledWith(true)
+      expect(result).toBe(false)
+    })
+
+    it('does not re-enter when Enter is repeated in movement mode', () => {
+      const { scene, session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+      scene.setCommandTypingMode('enter-sticky')
+      const spy = vi.spyOn(session, 'enterCommandMode')
+
+      const preventDefault = vi.fn()
+      const result = handleKeyDown({
+        key: 'Enter',
+        repeat: true,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalled()
+      expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
+      expect(result).toBe(false)
+    })
+
+    it('does not exit command mode when Shift is released in enter-sticky mode', () => {
+      const { scene, session, mockInlineCommandInputView, handleKeyDown, handleKeyUp } = setupScene()
+      scene.setCommandTypingMode('enter-sticky')
+
+      // Enter command mode via Enter
+      handleKeyDown({
+        key: 'Enter',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+      expect(session.inputMode).toBe('command')
+
+      // Releasing shift should do nothing in enter-sticky mode
+      handleKeyUp({
+        key: 'Shift',
+      } as unknown as KeyboardEvent)
+
+      expect(session.inputMode).toBe('command')
+      expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
+    })
+
+    it('closes command prompt on empty submission without error or executing', () => {
+      const scene = new GameScene()
+      const session = createRoom1Session({ movementBindings: INPUT_BINDINGS.movement, storage: memoryStorage })
+
+      const mockInlineCommandInputView = {
+        setVisible: vi.fn(),
+        clearInput: vi.fn(),
+        setPlayerPosition: vi.fn(),
+        setKeyGate: vi.fn(),
+        destroy: vi.fn(),
+      }
+
+      Object.assign(scene, {
+        session,
+        inlineCommandInputView: mockInlineCommandInputView,
+      })
+      scene.setCommandTypingMode('enter-sticky')
+      session.enterCommandMode()
+      expect(session.inputMode).toBe('command')
+
+      const submitCommandSpy = vi.spyOn(session, 'submitCommand')
+
+      const onSubmit = (rawText: string) => {
+        if (rawText.trim().length === 0) {
+          session.enterMovementMode()
+          mockInlineCommandInputView.setVisible(false)
+          return
+        }
+        session.submitCommand(rawText)
+        mockInlineCommandInputView.setVisible(false)
+      }
+
+      onSubmit('   ')
+      expect(session.inputMode).toBe('movement')
+      expect(mockInlineCommandInputView.setVisible).toHaveBeenCalledWith(false)
+      expect(submitCommandSpy).not.toHaveBeenCalled()
+    })
+  })
+
   describe('command editor overlay integration (F1)', () => {
     it('toggles command editor when F1 is pressed', () => {
       const { scene, mockCommandEditor, handleKeyDown } = setupScene()

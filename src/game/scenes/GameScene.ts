@@ -9,6 +9,10 @@ import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.t
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
 import { InlineCommandInputView } from '../presentation/InlineCommandInputView.ts'
 import { CommandEditorOverlay } from './CommandEditorOverlay.ts'
+import {
+    loadCommandTypingMode,
+    type CommandTypingMode,
+} from '../application/gameSettings.ts'
 
 export class GameScene extends Phaser.Scene {
     private session!: GameSession
@@ -21,6 +25,8 @@ export class GameScene extends Phaser.Scene {
     private resumeFromSave = false
     private startingRoomId?: string
     private initialOpenCommandEditor = false
+    private commandTypingMode: CommandTypingMode = 'hold-shift'
+    private customCommandTypingMode?: CommandTypingMode
     private enteredByShift = false
     /** The room the player was in last frame; entering a different one is a Save Point. */
     private lastRoomId: string | null = null
@@ -29,10 +35,16 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'game' })
     }
 
-    init(data?: { resumeFromSave?: boolean; startingRoomId?: string; openCommandEditor?: boolean }): void {
+    init(data?: {
+        resumeFromSave?: boolean
+        startingRoomId?: string
+        openCommandEditor?: boolean
+        commandTypingMode?: CommandTypingMode
+    }): void {
         this.resumeFromSave = data?.resumeFromSave === true
         this.startingRoomId = data?.startingRoomId
         this.initialOpenCommandEditor = data?.openCommandEditor === true
+        this.customCommandTypingMode = data?.commandTypingMode
     }
 
     preload(): void {
@@ -42,6 +54,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     create(): void {
+        this.commandTypingMode = this.customCommandTypingMode ?? loadCommandTypingMode()
         this.session = createRoom1Session({
             movementBindings: INPUT_BINDINGS.movement,
             worldState: createGameWorldState(ROOM1_OBJECTS, this.startingRoomId),
@@ -72,6 +85,12 @@ export class GameScene extends Phaser.Scene {
         inlineCommandInputView.mount(
             this,
             (rawText) => {
+                if (rawText.trim().length === 0) {
+                    this.session.enterMovementMode()
+                    inlineCommandInputView.setVisible(false)
+                    this.enteredByShift = false
+                    return
+                }
                 this.session.submitCommand(rawText)
                 inlineCommandInputView.setVisible(false)
                 this.enteredByShift = false
@@ -149,6 +168,15 @@ export class GameScene extends Phaser.Scene {
         return this.commandEditor?.isOpen() ?? false
     }
 
+    public getCommandTypingMode(): CommandTypingMode {
+        return this.commandTypingMode
+    }
+
+    public setCommandTypingMode(mode: CommandTypingMode): void {
+        this.commandTypingMode = mode
+        this.customCommandTypingMode = mode
+    }
+
     public toggleCommandEditor(): void {
         this.commandEditor?.toggle()
     }
@@ -200,14 +228,35 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (this.session.inputMode === 'movement') {
-            if (key === 'shift') {
-                event.preventDefault()
-                if (!event.repeat) {
-                    this.session.enterCommandMode()
-                    this.inlineCommandInputView?.setVisible(true)
-                    this.enteredByShift = true
+            if (this.commandTypingMode === 'enter-sticky') {
+                if (key === 'shift') {
+                    event.preventDefault()
+                    return false
                 }
-                return false
+
+                if (key === 'enter') {
+                    event.preventDefault()
+                    if (!event.repeat) {
+                        this.session.enterCommandMode()
+                        this.inlineCommandInputView?.setVisible(true)
+                    }
+                    return false
+                }
+            } else {
+                if (key === 'shift') {
+                    event.preventDefault()
+                    if (!event.repeat) {
+                        this.session.enterCommandMode()
+                        this.inlineCommandInputView?.setVisible(true)
+                        this.enteredByShift = true
+                    }
+                    return false
+                }
+
+                if (key === 'enter') {
+                    event.preventDefault()
+                    return false
+                }
             }
 
             if (INPUT_BINDINGS.attack.keys.includes(key)) {
@@ -215,11 +264,6 @@ export class GameScene extends Phaser.Scene {
                 if (!event.repeat) {
                     this.session.attack()
                 }
-                return false
-            }
-
-            if (key === 'enter') {
-                event.preventDefault()
                 return false
             }
 
@@ -240,7 +284,7 @@ export class GameScene extends Phaser.Scene {
         const key = event.key.toLowerCase()
         this.session.keyUp(key)
 
-        if (key === 'shift' && this.enteredByShift && this.session.inputMode === 'command') {
+        if (this.commandTypingMode === 'hold-shift' && key === 'shift' && this.enteredByShift && this.session.inputMode === 'command') {
             if (this.inlineCommandInputView && this.inlineCommandInputView.getValue().trim().length > 0) {
                 this.inlineCommandInputView.submit()
             } else {
@@ -254,7 +298,7 @@ export class GameScene extends Phaser.Scene {
 
     private readonly handleBlur = (): void => {
         this.session.releaseAllKeys()
-        if (this.enteredByShift && this.session.inputMode === 'command') {
+        if (this.commandTypingMode === 'hold-shift' && this.enteredByShift && this.session.inputMode === 'command') {
             this.session.enterMovementMode()
             this.inlineCommandInputView?.clearInput()
             this.inlineCommandInputView?.setVisible(false)

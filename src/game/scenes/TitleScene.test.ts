@@ -184,8 +184,122 @@ describe('TitleScene', () => {
     expect(scene.getSelectedChoice()).toBe('SETTING')
     expect(consoleSpy).toHaveBeenCalledWith('[TitleScene] selected: SETTING')
     expect(scene.scene.start).not.toHaveBeenCalled()
+    expect(scene.isInSettings()).toBe(true)
 
     consoleSpy.mockRestore()
+  })
+
+  it('swaps to settings screen when SETTING is confirmed, allows in-place toggle switch, and exits on RETURN', () => {
+    const { scene, handleKeyDown } = setupScene()
+    expect(scene.isInSettings()).toBe(false)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+
+    // Navigate to SETTING
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('SETTING')
+
+    // Confirm SETTING
+    const enterEvent = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent
+    handleKeyDown(enterEvent)
+    expect(scene.isInSettings()).toBe(true)
+
+    // Initially in 'hold-shift' (index 0) with focus on the toggle switch (focus row 0)
+    expect(scene.getSettingFocusRow()).toBe(0)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+
+    // Pressing Enter on the toggle switch toggles to enter-sticky WITHOUT exiting settings
+    handleKeyDown(enterEvent)
+    expect(scene.isInSettings()).toBe(true)
+    expect(scene.getSettingSelectedIndex()).toBe(1)
+    expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
+
+    // Pressing Enter again toggles back to hold-shift without exiting
+    handleKeyDown(enterEvent)
+    expect(scene.isInSettings()).toBe(true)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+
+    // Arrow keys (ArrowRight, ArrowLeft, D, A) change focus but do not change the current mode value
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(1)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+    expect((scene as any).settingStickyText.setText).toHaveBeenCalledWith('> [  ENTER + STICKY  ] <')
+    expect((scene as any).settingStickyText.setColor).toHaveBeenCalledWith('#ffffff')
+    expect((scene as any).settingShiftText.setText).toHaveBeenCalledWith('  [* HOLD SHIFT *]  ')
+    expect((scene as any).settingShiftText.setColor).toHaveBeenCalledWith('#555555')
+
+    handleKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(0)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+    expect((scene as any).settingShiftText.setText).toHaveBeenCalledWith('> [* HOLD SHIFT *] <')
+    expect((scene as any).settingShiftText.setColor).toHaveBeenCalledWith('#ffffff')
+    expect((scene as any).settingStickyText.setText).toHaveBeenCalledWith('  [  ENTER + STICKY  ]  ')
+    expect((scene as any).settingStickyText.setColor).toHaveBeenCalledWith('#555555')
+
+    handleKeyDown({ key: 'd', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(1)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+
+    handleKeyDown({ key: 'a', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(0)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+
+    // Space does not toggle mode
+    handleKeyDown({ key: ' ', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingSelectedIndex()).toBe(0)
+    expect(scene.getCurrentTypingMode()).toBe('hold-shift')
+
+    // Toggle to enter-sticky using Enter
+    handleKeyDown(enterEvent)
+    expect(scene.getSettingSelectedIndex()).toBe(1)
+    expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
+
+    // Move focus down to [ RETURN ] button (focus row 1)
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusRow()).toBe(1)
+
+    // Move focus back up to toggle switch
+    handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusRow()).toBe(0)
+
+    // Move focus to [ RETURN ] using S key
+    handleKeyDown({ key: 's', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusRow()).toBe(1)
+
+    // Press Enter while focused on [ RETURN ] to return to main menu
+    handleKeyDown(enterEvent)
+    expect(scene.isInSettings()).toBe(false)
+    expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
+  })
+
+  it('displays command line bindings in help screen matching the active typing mode', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const helpTextObj = (scene as any).helpManualText
+
+    // In default hold-shift mode
+    const linesDefault = (scene as any).getHelpLines('hold-shift')
+    expect(linesDefault.some((line: string) => line.includes('HOLD SHIFT'))).toBe(true)
+    expect(linesDefault.some((line: string) => line.includes('ENTER on empty bar'))).toBe(false)
+
+    // In enter-sticky mode
+    const linesSticky = (scene as any).getHelpLines('enter-sticky')
+    expect(linesSticky.some((line: string) => line.includes('HOLD SHIFT'))).toBe(false)
+    expect(linesSticky.some((line: string) => line.includes('ENTER on empty bar'))).toBe(true)
+
+    // Changing mode updates the help manual text
+    const setTextSpy = vi.spyOn(helpTextObj, 'setText')
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select SETTING
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // open SETTING
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // toggle to enter-sticky
+
+    expect(setTextSpy).toHaveBeenCalled()
+    const lastCallArg = setTextSpy.mock.calls[setTextSpy.mock.calls.length - 1][0]
+    expect(lastCallArg).toEqual(linesSticky)
   })
 
   it('ignores other keys like Space', () => {
@@ -231,7 +345,7 @@ describe('TitleScene', () => {
 
   it('suppresses key navigation during menu transition', () => {
     const { scene, handleKeyDown } = setupScene()
-    ;(scene as unknown as { isTransitioning: boolean }).isTransitioning = true
+      ; (scene as unknown as { isTransitioning: boolean }).isTransitioning = true
     expect(scene.isMenuTransitioning()).toBe(true)
 
     const arrowDownEvent = { key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent
@@ -246,9 +360,9 @@ describe('TitleScene', () => {
   })
 
   it('exports shell animation timing constants', () => {
-    expect(TYPING_SPEED_MS).toBe(22)
-    expect(SCROLL_SPEED_MS).toBe(30)
-    expect(PAUSE_DURATION_MS).toBe(200)
-    expect(EXECUTION_PAUSE_MS).toBe(200)
+    expect(TYPING_SPEED_MS).toBe(15)
+    expect(SCROLL_SPEED_MS).toBe(27)
+    expect(PAUSE_DURATION_MS).toBe(150)
+    expect(EXECUTION_PAUSE_MS).toBe(150)
   })
 })

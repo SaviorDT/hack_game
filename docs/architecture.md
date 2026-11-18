@@ -24,7 +24,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 ### Phaser Scene
 
-`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. Transitioning between the main menu and help view plays a shell animation typing the first two characters of `help` or `./main` into `guest_terminal:~$`, tab-completing the command, pausing for execution (200ms), and performing a rapid 30ms linear scroll transition into the target menu view. `createGame` boots with `TitleScene`.
+`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. Transitioning between the main menu and subscreen views (`[HELP]` and `[SETTING]`) plays a shell animation typing commands (`help`, `settings`, or `./main`) into `guest_terminal:~$`, pausing for execution, and performing a rapid linear scroll transition into the target view. The Settings screen features a `[ HOLD SHIFT ] - [ ENTER + STICKY ]` horizontal toggle switch allowing in-place mode toggling before navigating to `[ RETURN ]` to return to the main menu. It persists the active command typing mode (`'hold-shift'` or `'enter-sticky'`) to `localStorage` (`hack-game.command-typing-mode`), and the Help view dynamically reflects the active mode's control bindings. `createGame` boots with `TitleScene`.
 
 `GameScene` (1920×1080 reference space) mounts Room 1 domain state, session, room/object views, input, feedback, and outcome panels, forwarding Phaser's frame delta to `GameSession`.
 
@@ -37,8 +37,11 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 | **Movement** | 1.00 | WASD (responsive physics, turning left/right) | Space: attack (auto-pickup on contact) |
 | **Command** | 0.25 | Disabled (or latched direction) | Ignored |
 
-- **Shell Entry & Exit**: Holding Shift while in Movement Mode opens the inline command prompt (`$ `) under the player. Releasing Shift executes the command (if non-empty) and closes the prompt, returning to Movement Mode. Releasing Shift without typing anything cancels and clears the prompt. Escape does not close the command utility.
-- **Submission**: Commands are submitted and executed when Shift is released (or when Enter is pressed), returning to Movement Mode.
+- **Shell Entry & Exit**:
+  - In **Hold Shift mode** (`'hold-shift'`, default): Holding Shift while in Movement Mode opens the inline command prompt (`$ `) under the player. Releasing Shift executes the command (if non-empty) and closes the prompt, returning to Movement Mode. Releasing Shift without typing anything cancels and clears the prompt. Enter also submits.
+  - In **Enter + Sticky mode** (`'enter-sticky'`): Shift is disabled. Pressing Enter in Movement Mode opens the inline command prompt. Pressing Enter executes typed commands and closes the prompt; pressing Enter on an empty prompt closes the bar without executing.
+  - Escape does not close the command prompt in either mode.
+- **Submission**: Commands are submitted and executed when Shift is released (in hold-shift mode) or when Enter is pressed, returning to Movement Mode.
 - **Latched Movement**: Holding Shift while holding movement keys latches velocity until collision, room exit, or release/submission; latched keys are suppressed from typing input.
 - **Prompt**: Displays `$ ` (current room is displayed in the HUD header).
 

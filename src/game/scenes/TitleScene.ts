@@ -1,7 +1,14 @@
 import Phaser from 'phaser'
+import {
+  loadCommandTypingMode,
+  saveCommandTypingMode,
+  type CommandTypingMode,
+} from '../application/gameSettings.ts'
 
 export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
 export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number]
+
+export const TYPING_MODES: readonly CommandTypingMode[] = ['hold-shift', 'enter-sticky']
 
 export const TYPING_SPEED_MS = 15
 export const SCROLL_SPEED_MS = 27
@@ -14,14 +21,31 @@ const COLOR_DIM = '#555555'
 const COLOR_MUTED = '#333333'
 const COLOR_PROMPT = '#888888'
 
+interface SubscreenChrome {
+  bottomCommandText: Phaser.GameObjects.Text
+  returnBtn: Phaser.GameObjects.Text
+}
+
 export class TitleScene extends Phaser.Scene {
   private selectedIndex = 0
   private menuTexts: Phaser.GameObjects.Text[] = []
   private mainMenuContainer!: Phaser.GameObjects.Container
   private helpScreenContainer!: Phaser.GameObjects.Container
+  private settingsScreenContainer!: Phaser.GameObjects.Container
   private mainPromptCommand!: Phaser.GameObjects.Text
   private helpPromptCommand!: Phaser.GameObjects.Text
+  private settingsPromptCommand!: Phaser.GameObjects.Text
+  private settingsReturnBtn?: Phaser.GameObjects.Text
+  private settingStatusText?: Phaser.GameObjects.Text
+  private settingShiftText?: Phaser.GameObjects.Text
+  private settingSeparatorText?: Phaser.GameObjects.Text
+  private settingStickyText?: Phaser.GameObjects.Text
+  private settingDescText?: Phaser.GameObjects.Text
+  private helpManualText?: Phaser.GameObjects.Text
+  private currentTypingMode: CommandTypingMode = 'hold-shift'
+  private settingFocusIndex: 0 | 1 | 2 = 0
   private inHelp = false
+  private inSettings = false
   private isTransitioning = false
 
   constructor() {
@@ -31,14 +55,19 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#000000')
 
+    this.currentTypingMode = loadCommandTypingMode()
+    this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
+
     this.mainMenuContainer = this.add.container(0, 0)
     this.helpScreenContainer = this.add.container(0, 0).setVisible(false)
+    this.settingsScreenContainer = this.add.container(0, 0).setVisible(false)
 
     this.buildDecorations()
     this.buildTitle()
     this.buildMenu()
     this.buildPrompt()
     this.buildHelpScreen()
+    this.buildSettingScreen()
     this.setupInput()
     this.updateSelection()
   }
@@ -55,56 +84,54 @@ export class TitleScene extends Phaser.Scene {
     return this.inHelp
   }
 
+  public isInSettings(): boolean {
+    return this.inSettings
+  }
+
+  public getCurrentTypingMode(): CommandTypingMode {
+    return this.currentTypingMode
+  }
+
+  public getSettingSelectedIndex(): number {
+    return this.currentTypingMode === 'hold-shift' ? 0 : 1
+  }
+
+  public getSettingFocusRow(): number {
+    return this.settingFocusIndex === 2 ? 1 : 0
+  }
+
+  public getSettingFocusIndex(): number {
+    return this.settingFocusIndex
+  }
+
   public isMenuTransitioning(): boolean {
     return this.isTransitioning
   }
 
   public showHelp(animated = true): void {
-    if (this.isTransitioning) return
-    this.inHelp = true
-
-    if (!animated) {
-      this.mainMenuContainer.setVisible(false).setY(0)
-      this.helpScreenContainer.setVisible(true).setY(0)
-      this.mainPromptCommand?.setText('')
-      return
-    }
-
-    this.isTransitioning = true
-    this.typeCommand(this.mainPromptCommand, 'help', () => {
-      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
-        this.scrollTransition(this.mainMenuContainer, this.helpScreenContainer, () => {
-          this.mainMenuContainer.setVisible(false).setY(0)
-          this.mainPromptCommand?.setText('')
-          this.isTransitioning = false
-        })
-      })
-    })
+    this.transitionToSubscreen(this.helpScreenContainer, 'help', () => {
+      this.inHelp = true
+    }, animated)
   }
 
   public exitHelp(animated = true): void {
-    if (this.isTransitioning) return
-    this.inHelp = false
+    this.transitionFromSubscreen(this.helpScreenContainer, this.helpPromptCommand, () => {
+      this.inHelp = false
+    }, animated)
+  }
 
-    if (!animated) {
-      this.helpScreenContainer.setVisible(false).setY(0)
-      this.mainMenuContainer.setVisible(true).setY(0)
-      this.helpPromptCommand?.setText('')
-      this.updateSelection()
-      return
-    }
+  public showSettings(animated = true): void {
+    this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
+    this.updateSettingDisplay()
+    this.transitionToSubscreen(this.settingsScreenContainer, 'settings', () => {
+      this.inSettings = true
+    }, animated)
+  }
 
-    this.isTransitioning = true
-    this.typeCommand(this.helpPromptCommand, './main', () => {
-      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
-        this.scrollTransition(this.helpScreenContainer, this.mainMenuContainer, () => {
-          this.helpScreenContainer.setVisible(false).setY(0)
-          this.helpPromptCommand?.setText('')
-          this.isTransitioning = false
-          this.updateSelection()
-        })
-      })
-    })
+  public exitSettings(animated = true): void {
+    this.transitionFromSubscreen(this.settingsScreenContainer, this.settingsPromptCommand, () => {
+      this.inSettings = false
+    }, animated)
   }
 
   public confirmSelection(): TitleMenuItem {
@@ -114,8 +141,68 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('game')
     } else if (choice === 'HELP') {
       this.showHelp()
+    } else if (choice === 'SETTING') {
+      this.showSettings()
     }
     return choice
+  }
+
+  private transitionToSubscreen(
+    targetContainer: Phaser.GameObjects.Container,
+    commandText: string,
+    onEntered: () => void,
+    animated: boolean,
+  ): void {
+    if (this.isTransitioning) return
+    onEntered()
+
+    if (!animated) {
+      this.mainMenuContainer.setVisible(false).setY(0)
+      targetContainer.setVisible(true).setY(0)
+      this.mainPromptCommand?.setText('')
+      return
+    }
+
+    this.isTransitioning = true
+    this.typeCommand(this.mainPromptCommand, commandText, () => {
+      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
+        this.scrollTransition(this.mainMenuContainer, targetContainer, () => {
+          this.mainMenuContainer.setVisible(false).setY(0)
+          this.mainPromptCommand?.setText('')
+          this.isTransitioning = false
+        })
+      })
+    })
+  }
+
+  private transitionFromSubscreen(
+    sourceContainer: Phaser.GameObjects.Container,
+    promptText: Phaser.GameObjects.Text | undefined,
+    onExited: () => void,
+    animated: boolean,
+  ): void {
+    if (this.isTransitioning) return
+    onExited()
+
+    if (!animated) {
+      sourceContainer.setVisible(false).setY(0)
+      this.mainMenuContainer.setVisible(true).setY(0)
+      promptText?.setText('')
+      this.updateSelection()
+      return
+    }
+
+    this.isTransitioning = true
+    this.typeCommand(promptText!, './main', () => {
+      this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
+        this.scrollTransition(sourceContainer, this.mainMenuContainer, () => {
+          sourceContainer.setVisible(false).setY(0)
+          promptText?.setText('')
+          this.isTransitioning = false
+          this.updateSelection()
+        })
+      })
+    })
   }
 
   private typeCommand(
@@ -129,13 +216,10 @@ export class TitleScene extends Phaser.Scene {
     }
     textObj.setText('')
     const charDelay = TYPING_SPEED_MS
-    // Type character 1
     this.time.delayedCall(charDelay, () => {
       textObj.setText(command.slice(0, 1))
-      // Type character 2
       this.time.delayedCall(charDelay, () => {
         textObj.setText(command.slice(0, 2))
-        // Tab complete the rest of the command
         this.time.delayedCall(charDelay, () => {
           textObj.setText(command)
           onComplete()
@@ -254,7 +338,7 @@ export class TitleScene extends Phaser.Scene {
       color: COLOR_WHITE,
     })
 
-    const navText = this.add.text(960, 980, '[W / UP] [S / DOWN] SELECT    [ENTER] CONFIRM', {
+    const navText = this.add.text(960, 980, '[W A S D] [ARROWS] SELECT    [ENTER] CONFIRM', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
       color: COLOR_DIM,
@@ -264,15 +348,18 @@ export class TitleScene extends Phaser.Scene {
     this.mainMenuContainer.add([promptText, this.mainPromptCommand, navText])
   }
 
-  private buildHelpScreen(): void {
+  private buildSubscreenChrome(
+    container: Phaser.GameObjects.Container,
+    command: string,
+    navHint: string,
+  ): SubscreenChrome {
     const promptPrefix = this.add.text(80, 70, 'guest_terminal:~$ ', {
       fontFamily: TERMINAL_FONT,
       fontSize: '16px',
       color: COLOR_PROMPT,
     })
-
     const prefixWidth = promptPrefix.width || 304
-    const promptCommand = this.add.text(80 + prefixWidth, 70, 'help', {
+    const promptCommand = this.add.text(80 + prefixWidth, 70, command, {
       fontFamily: TERMINAL_FONT,
       fontSize: '16px',
       color: COLOR_WHITE,
@@ -281,35 +368,6 @@ export class TitleScene extends Phaser.Scene {
     const topLine = this.add.graphics()
     topLine.lineStyle(1, 0x333333, 1)
     topLine.lineBetween(80, 105, 1840, 105)
-
-    const helpLines = [
-      '[ MOVEMENT & COMBAT ]',
-      '  WASD / ARROW KEYS    Move hacker',
-      '  SPACE                Attack with equipped weapon (auto-pickup on touch)',
-      '',
-      '[ COMMAND LINE ]',
-      '  HOLD SHIFT           Open command prompt beneath hacker (slows time to 0.25x)',
-      '  RELEASE SHIFT        Execute typed command (empty input cancels & closes)',
-      '',
-      '[ VIRTUAL COMMANDS ]',
-      '  help                 Print available commands and current room objective',
-      '  ls                   Discover and reveal hidden objects in current room',
-      '  mv <src> <target>    Throw object towards target, or rename object',
-      '  cd <room>            Pass through exit doorway into adjacent room',
-      '',
-      '[ SHORTCUTS & EDITING ]',
-      '  TAB                  Auto-complete command name or discovered object label',
-      '  CTRL+BACKSPACE       Delete previous word in prompt',
-      '  UP / DOWN            Browse command history',
-      '  F1                   Toggle live Command Editor overlay',
-    ]
-
-    const manualText = this.add.text(80, 125, helpLines, {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '15px',
-      color: COLOR_WHITE,
-      lineSpacing: 10,
-    })
 
     const bottomLine = this.add.graphics()
     bottomLine.lineStyle(1, 0x333333, 1)
@@ -327,32 +385,202 @@ export class TitleScene extends Phaser.Scene {
       fontSize: '16px',
       color: COLOR_PROMPT,
     })
-
     const bottomPrefixWidth = bottomPrompt.width || 304
-    this.helpPromptCommand = this.add.text(80 + bottomPrefixWidth, 920, '', {
+    const bottomCommandText = this.add.text(80 + bottomPrefixWidth, 920, '', {
       fontFamily: TERMINAL_FONT,
       fontSize: '16px',
       color: COLOR_WHITE,
     })
 
-    const navHelpText = this.add.text(960, 980, '[ENTER] RETURN TO MAIN MENU', {
+    const navText = this.add.text(960, 980, navHint, {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
       color: COLOR_DIM,
       align: 'center',
     }).setOrigin(0.5, 0.5)
 
-    this.helpScreenContainer.add([
+    container.add([
       promptPrefix,
       promptCommand,
       topLine,
-      manualText,
       bottomLine,
       returnBtn,
       bottomPrompt,
-      this.helpPromptCommand,
-      navHelpText,
+      bottomCommandText,
+      navText,
     ])
+
+    return { bottomCommandText, returnBtn }
+  }
+
+  private getHelpLines(mode: CommandTypingMode): string[] {
+    const commandLineBindings =
+      mode === 'hold-shift'
+        ? [
+          '  HOLD SHIFT           Open command prompt beneath hacker (slows time to 0.25x)',
+          '  RELEASE SHIFT        Execute typed command (empty input cancels & closes)',
+        ]
+        : [
+          '  ENTER                Open command prompt (slows time to 0.25x)',
+          '  ENTER on empty bar   Close command prompt without executing',
+        ]
+
+    return [
+      '[ MOVEMENT & COMBAT ]',
+      '  WASD / ARROW KEYS    Move hacker',
+      '  SPACE                Attack with equipped weapon (auto-pickup on touch)',
+      '',
+      '[ COMMAND LINE ]',
+      ...commandLineBindings,
+      '',
+      '[ VIRTUAL COMMANDS ]',
+      '  help                 Print available commands and current room objective',
+      '  ls                   Discover and reveal hidden objects in current room',
+      '  mv <src> <target>    Throw object towards target, or rename object',
+      '  cd <room>            Pass through exit doorway into adjacent room',
+      '',
+      '[ SHORTCUTS & EDITING ]',
+      '  TAB                  Auto-complete command name or discovered object label',
+      '  CTRL+BACKSPACE       Delete previous word in prompt',
+      '  UP / DOWN            Browse command history',
+      '  F1                   Toggle live Command Editor overlay',
+    ]
+  }
+
+  private updateHelpText(): void {
+    this.helpManualText?.setText(this.getHelpLines(this.currentTypingMode))
+  }
+
+  private buildHelpScreen(): void {
+    const chrome = this.buildSubscreenChrome(
+      this.helpScreenContainer,
+      'help',
+      '[ENTER] RETURN TO MAIN MENU',
+    )
+    this.helpPromptCommand = chrome.bottomCommandText
+
+    this.helpManualText = this.add.text(80, 125, this.getHelpLines(this.currentTypingMode), {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '15px',
+      color: COLOR_WHITE,
+      lineSpacing: 10,
+    })
+
+    this.helpScreenContainer.add(this.helpManualText)
+  }
+
+  private buildSettingScreen(): void {
+    const chrome = this.buildSubscreenChrome(
+      this.settingsScreenContainer,
+      'settings',
+      '[W A S D] [ARROWS] SELECT    [ENTER] CONFIRM',
+    )
+    this.settingsPromptCommand = chrome.bottomCommandText
+    this.settingsReturnBtn = chrome.returnBtn
+
+    const header = this.add.text(80, 140, '[ COMMAND TYPING MODE ]', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '20px',
+      color: COLOR_WHITE,
+    })
+
+    const promptText = this.add.text(80, 180, 'Toggle in-game command prompt trigger behavior:', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '14px',
+      color: COLOR_PROMPT,
+    })
+
+    this.settingStatusText = this.add.text(960, 240, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '18px',
+      color: COLOR_WHITE,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    this.settingShiftText = this.add.text(640, 320, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '18px',
+      color: COLOR_WHITE,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    this.settingSeparatorText = this.add.text(960, 320, '-', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '18px',
+      color: COLOR_DIM,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    this.settingStickyText = this.add.text(1280, 320, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '18px',
+      color: COLOR_DIM,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    this.settingDescText = this.add.text(960, 420, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '14px',
+      color: COLOR_DIM,
+      align: 'center',
+    }).setOrigin(0.5, 0.5)
+
+    this.settingsScreenContainer.add([
+      header,
+      promptText,
+      this.settingStatusText,
+      this.settingShiftText,
+      this.settingSeparatorText,
+      this.settingStickyText,
+      this.settingDescText,
+    ])
+
+    this.updateSettingDisplay()
+  }
+
+  private updateSettingDisplay(): void {
+    const isShiftSelected = this.currentTypingMode === 'hold-shift'
+
+    if (this.settingStatusText) {
+      this.settingStatusText.setText(
+        `CURRENT MODE: ${isShiftSelected ? 'HOLD SHIFT' : 'ENTER + STICKY'}`,
+      )
+    }
+
+    if (this.settingShiftText && this.settingStickyText) {
+      const isShiftFocused = this.settingFocusIndex === 0
+      const isStickyFocused = this.settingFocusIndex === 1
+
+      const shiftTag = isShiftSelected ? '* HOLD SHIFT *' : '  HOLD SHIFT  '
+      const shiftTextStr = isShiftFocused ? `> [${shiftTag}] <` : `  [${shiftTag}]  `
+      this.settingShiftText.setText(shiftTextStr)
+      this.settingShiftText.setColor(isShiftFocused ? COLOR_WHITE : COLOR_DIM)
+
+      const stickyTag = !isShiftSelected ? '* ENTER + STICKY *' : '  ENTER + STICKY  '
+      const stickyTextStr = isStickyFocused ? `> [${stickyTag}] <` : `  [${stickyTag}]  `
+      this.settingStickyText.setText(stickyTextStr)
+      this.settingStickyText.setColor(isStickyFocused ? COLOR_WHITE : COLOR_DIM)
+    }
+
+    if (this.settingDescText) {
+      const activeForDesc =
+        this.settingFocusIndex === 0
+          ? 'hold-shift'
+          : this.settingFocusIndex === 1
+            ? 'enter-sticky'
+            : this.currentTypingMode
+      const desc =
+        activeForDesc === 'hold-shift'
+          ? 'Hold Shift to type commands; release Shift to submit or cancel.'
+          : 'Press Enter to open/submit; Enter on empty bar closes; Shift disabled.'
+      this.settingDescText.setText(desc)
+    }
+
+    if (this.settingsReturnBtn) {
+      const isReturnFocused = this.settingFocusIndex === 2
+      this.settingsReturnBtn.setText(isReturnFocused ? '> [ RETURN ] <' : '  [ RETURN ]  ')
+      this.settingsReturnBtn.setColor(isReturnFocused ? COLOR_WHITE : COLOR_DIM)
+    }
   }
 
   private updateSelection(): void {
@@ -370,7 +598,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private moveSelection(delta: -1 | 1): void {
-    if (this.inHelp || this.isTransitioning) return
+    if (this.inHelp || this.inSettings || this.isTransitioning) return
     const count = TITLE_MENU_ITEMS.length
     this.selectedIndex = (this.selectedIndex + delta + count) % count
     this.updateSelection()
@@ -388,6 +616,77 @@ export class TitleScene extends Phaser.Scene {
       if (key === 'ENTER') {
         event.preventDefault()
         this.exitHelp()
+      }
+      return
+    }
+
+    if (this.inSettings) {
+      if (key === 'ARROWLEFT' || key === 'A') {
+        event.preventDefault()
+        if (this.settingFocusIndex !== 0) {
+          this.settingFocusIndex = 0
+          this.updateSettingDisplay()
+        }
+        return
+      }
+
+      if (key === 'ARROWRIGHT' || key === 'D') {
+        event.preventDefault()
+        if (this.settingFocusIndex !== 1) {
+          this.settingFocusIndex = 1
+          this.updateSettingDisplay()
+        }
+        return
+      }
+
+      if (key === 'ARROWDOWN' || key === 'S') {
+        event.preventDefault()
+        if (this.settingFocusIndex === 0 || this.settingFocusIndex === 1) {
+          this.settingFocusIndex = 2
+        } else {
+          this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
+        }
+        this.updateSettingDisplay()
+        return
+      }
+
+      if (key === 'ARROWUP' || key === 'W') {
+        event.preventDefault()
+        if (this.settingFocusIndex === 2) {
+          this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
+        } else {
+          this.settingFocusIndex = 2
+        }
+        this.updateSettingDisplay()
+        return
+      }
+
+      if (key === 'ENTER') {
+        event.preventDefault()
+        if (this.settingFocusIndex === 0) {
+          if (this.currentTypingMode !== 'hold-shift') {
+            this.currentTypingMode = 'hold-shift'
+          } else {
+            this.currentTypingMode = 'enter-sticky'
+            this.settingFocusIndex = 1
+          }
+          saveCommandTypingMode(this.currentTypingMode)
+          this.updateSettingDisplay()
+          this.updateHelpText()
+        } else if (this.settingFocusIndex === 1) {
+          if (this.currentTypingMode !== 'enter-sticky') {
+            this.currentTypingMode = 'enter-sticky'
+          } else {
+            this.currentTypingMode = 'hold-shift'
+            this.settingFocusIndex = 0
+          }
+          saveCommandTypingMode(this.currentTypingMode)
+          this.updateSettingDisplay()
+          this.updateHelpText()
+        } else if (this.settingFocusIndex === 2) {
+          this.exitSettings()
+        }
+        return
       }
       return
     }
@@ -411,6 +710,12 @@ export class TitleScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       keyboard?.off('keydown', this.handleKeyDown)
       this.menuTexts = []
+      this.settingsReturnBtn = undefined
+      this.settingStatusText = undefined
+      this.settingShiftText = undefined
+      this.settingSeparatorText = undefined
+      this.settingStickyText = undefined
+      this.settingDescText = undefined
     })
   }
 }

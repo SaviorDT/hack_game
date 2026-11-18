@@ -422,4 +422,53 @@ describe('TitleScene', () => {
     expect(descArg.some((line: string) => line.includes('CTRL+P'))).toBe(true)
     expect(descArg.some((line: string) => line.includes('── MOVEMENT & COMBAT ──'))).toBe(false)
   })
+
+  it('types ./setting when entering settings and ./menu when returning to menu', () => {
+    const { scene } = setupScene()
+    const typeCommandSpy = vi.spyOn(scene as any, 'typeCommand')
+
+    scene.showSettings()
+    expect(typeCommandSpy).toHaveBeenCalledWith(
+      (scene as any).mainPromptCommand,
+      './setting',
+      expect.any(Function),
+    )
+
+    scene.exitSettings()
+    expect(typeCommandSpy).toHaveBeenCalledWith(
+      (scene as any).settingsPromptCommand,
+      './menu',
+      expect.any(Function),
+    )
+  })
+
+  it('types ./menu when returning from help to menu', () => {
+    const { scene } = setupScene()
+    const typeCommandSpy = vi.spyOn(scene as any, 'typeCommand')
+
+    scene.showHelp()
+    expect(typeCommandSpy).toHaveBeenCalledWith(
+      (scene as any).mainPromptCommand,
+      'help',
+      expect.any(Function),
+    )
+
+    scene.exitHelp()
+    expect(typeCommandSpy).toHaveBeenCalledWith(
+      (scene as any).helpPromptCommand,
+      './menu',
+      expect.any(Function),
+    )
+  })
+
+  it('displays ./setting in settings screen top prompt', () => {
+    const scene = new TitleScene()
+    const textSpy = vi.spyOn(scene.add, 'text')
+    scene.create()
+
+    const topSettingPrompt = textSpy.mock.calls.find(
+      call => call[1] === 70 && call[2] === './setting',
+    )
+    expect(topSettingPrompt).toBeDefined()
+  })
 })

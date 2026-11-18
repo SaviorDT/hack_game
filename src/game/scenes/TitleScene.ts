@@ -129,7 +129,7 @@ export class TitleScene extends Phaser.Scene {
   public showSettings(animated = true): void {
     this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
     this.updateSettingDisplay()
-    this.transitionToSubscreen(this.settingsScreenContainer, 'settings', () => {
+    this.transitionToSubscreen(this.settingsScreenContainer, './setting', () => {
       this.inSettings = true
     }, animated)
   }
@@ -199,7 +199,7 @@ export class TitleScene extends Phaser.Scene {
     }
 
     this.isTransitioning = true
-    this.typeCommand(promptText!, './main', () => {
+    this.typeCommand(promptText!, './menu', () => {
       this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
         this.scrollTransition(sourceContainer, this.mainMenuContainer, () => {
           sourceContainer.setVisible(false).setY(0)

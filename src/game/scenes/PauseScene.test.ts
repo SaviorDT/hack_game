@@ -128,4 +128,36 @@ describe('PauseScene', () => {
     expect(event.preventDefault).toHaveBeenCalled()
     expect(scene.getSelectedChoice()).toBe('RESUME')
   })
+
+  it('types ./setting when entering settings and ./pause when returning to pause menu', () => {
+    const { scene } = setupScene()
+    const mainPrompt = (scene as any).mainPromptCommand
+    const settingsPrompt = (scene as any).settingsPromptCommand
+
+    scene.showSettings(true)
+    expect(mainPrompt.setText).toHaveBeenCalledWith('./setting')
+
+    scene.exitSettings(true)
+    expect(settingsPrompt.setText).toHaveBeenCalledWith('./pause')
+  })
+
+  it('types ./pause when returning from help to pause menu', () => {
+    const { scene } = setupScene()
+    const helpPrompt = (scene as any).helpPromptCommand
+
+    scene.showHelp(true)
+    scene.exitHelp(true)
+    expect(helpPrompt.setText).toHaveBeenCalledWith('./pause')
+  })
+
+  it('displays ./setting in settings screen top prompt', () => {
+    const scene = new PauseScene()
+    const textSpy = vi.spyOn(scene.add, 'text')
+    scene.create()
+
+    const topSettingPrompt = textSpy.mock.calls.find(
+      call => call[1] === 70 && call[2] === './setting',
+    )
+    expect(topSettingPrompt).toBeDefined()
+  })
 })

@@ -218,7 +218,7 @@ export function buildSettingScreen(
   const chrome = buildSubscreenChrome(
     scene,
     container,
-    'settings',
+    './setting',
     '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM',
   )
   const header = scene.add.text(80, 125, '── IN-GAME COMMAND TYPING MODE ──', {

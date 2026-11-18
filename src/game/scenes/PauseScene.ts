@@ -148,7 +148,7 @@ export class PauseScene extends Phaser.Scene {
   public showSettings(animated = true): void {
     this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
     this.updateSettingDisplay()
-    this.transitionToSubscreen(this.settingsScreenContainer, 'settings', () => { this.inSettings = true }, animated)
+    this.transitionToSubscreen(this.settingsScreenContainer, './setting', () => { this.inSettings = true }, animated)
   }
 
   public exitSettings(animated = true): void {
@@ -218,7 +218,7 @@ export class PauseScene extends Phaser.Scene {
       return
     }
     this.isTransitioning = true
-    typeCommand(this, prompt!, './main', () => {
+    typeCommand(this, prompt!, './pause', () => {
       this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
         scrollTransition(this, source, this.mainMenuContainer, () => {
           source.setVisible(false).setY(0)

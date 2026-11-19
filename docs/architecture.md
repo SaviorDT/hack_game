@@ -24,11 +24,11 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 ### Phaser Scene
 
-`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. Transitioning between the main menu and subscreen views (`[HELP]` and `[SETTING]`) plays a shell animation typing commands (`help`, `./setting`, or `./menu` in `TitleScene`, and `help`, `./setting`, or `./pause` in `PauseScene`) into `guest_terminal:~$`, pausing for execution, and performing a rapid linear scroll transition into the target view. The Settings screen features a horizontal mode selector allowing in-place mode toggling before navigating to `[ RETURN ]` to return to the main menu. It persists the active Command Typing Mode (`'hold-shift'`, `'hybrid'` or `'enter-sticky'`, selected on a three-way `[ HOLD SHIFT ] - [ HYBRID ] - [ ENTER + STICKY ]` row; focus order and key navigation live in `settingsFocus.ts`) to `localStorage` (`hack-game.command-typing-mode`), and the Help view dynamically reflects the active mode's control bindings and lists in-game shortcuts (including Esc / Ctrl+P). `createGame` boots with `TitleScene`.
+`TitleScene` (1920×1080 reference space) presents the initial terminal-style monochrome main menu (`'title'`) with navigation for start, setting, and help buttons. Transitioning between the main menu and subscreen views (`[HELP]` and `[SETTING]`) plays a shell animation typing commands (`help`, `./setting`, or `./menu` in `TitleScene`, and `help`, `./setting`, or `./pause` in `PauseScene`) into `guest_terminal:~$`, pausing for execution, and performing a rapid linear scroll transition into the target view. The Settings screen features a horizontal mode selector allowing in-place mode toggling before navigating to `[ RETURN ]` to return to the main menu. It persists the active Command Typing Mode (`'hold-shift'`, `'hybrid'` or `'enter-sticky'`, selected on a three-way `[ HOLD SHIFT ] - [ HYBRID ] - [ ENTER + STICKY ]` row; focus order and key navigation live in `settingsFocus.ts`) to `localStorage` (`hack-game.command-typing-mode`), and the Help view dynamically reflects the active mode's control bindings and lists in-game shortcuts (including Space / P). `createGame` boots with `TitleScene`.
 
 `GameScene` (1920×1080 reference space) mounts Room 1 domain state, session, room/object views, input, feedback, and outcome panels, forwarding Phaser's frame delta to `GameSession`.
 
-`PauseScene` (`'pause'`) is a Phaser overlay launched over `GameScene` by Esc or Ctrl+P (`GameScene.handleKeyDown` routes Esc to `openPause()` unless the Command Editor is open, which Esc closes first, or the game-over menu is active; a Command Mode draft is kept and a Shift-opened prompt becomes Enter-closed). Opening it pauses the GameScene update loop and sets the `SimulationClock` Time Scale to `0`; resuming restores the Input Mode's natural scale through `GameSession.syncTimeScale()`. PauseScene shares terminal subscreen rendering and animations with TitleScene through `pauseSceneHelpers.ts`. Opening expands scene content from the live player position via `expandFromPoint()`, then restores the pause UI's scene-coordinate frame for later subscreen navigation; confirming `[START]` or `[RESUME]` types `./main`, then `shrinkToPoint()` uniformly collapses scene content toward the room1 spawn or live player position. `[RESUME]` closes the overlay and resumes the game; Ctrl+P only opens the pause overlay while the GameScene is active and does nothing while PauseScene is active. The menu provides `[RESUME]`, `[SETTING]`, `[HELP]`, and `[TITLE]`; `create()` resets selection back to `[RESUME]` and clears any confirmation or subscreen state so subsequent pause sessions start clean. Esc in the main menu resumes; Esc in Setting/Help returns to the menu. `[TITLE]` shows an in-menu `[ YES ] [ NO ]` confirmation (default NO, Esc cancels); YES types `./menu`, then `scrollOut()` slides the pause menu off the top before stopping `GameScene` and starting `TitleScene`, abandoning the live run while leaving the Save Slot untouched. It is not registered in the editor hotkey routing.
+`PauseScene` (`'pause'`) is a Phaser overlay launched over `GameScene` by Space or P (`GameScene.handleKeyDown` routes Space and P to `openPause()` in movement mode unless the game-over menu is active; a Command Mode draft is kept and a Shift-opened prompt becomes Enter-closed). Opening it pauses the GameScene update loop and sets the `SimulationClock` Time Scale to `0`; resuming restores the Input Mode's natural scale through `GameSession.syncTimeScale()`. PauseScene shares terminal subscreen rendering and animations with TitleScene through `pauseSceneHelpers.ts`. Opening expands scene content from the live player position via `expandFromPoint()`, then restores the pause UI's scene-coordinate frame for later subscreen navigation; confirming `[START]` or `[RESUME]` types `./main`, then `shrinkToPoint()` uniformly collapses scene content toward the room1 spawn or live player position. `[RESUME]` closes the overlay and resumes the game; Space and P are swallowed while PauseScene is active and do nothing. The menu provides `[RESUME]`, `[SETTING]`, `[HELP]`, and `[TITLE]`; `create()` resets selection back to `[RESUME]` and clears any confirmation or subscreen state so subsequent pause sessions start clean. `[TITLE]` shows an in-menu `[ YES ] [ NO ]` confirmation (default NO); YES types `./menu`, then `scrollOut()` slides the pause menu off the top before stopping `GameScene` and starting `TitleScene`, abandoning the live run while leaving the Save Slot untouched. It is not registered in the editor hotkey routing.
 
 `InlineCommandInputView` renders a single-line command prompt (`$ <command>`) floating directly beneath the Player Character while holding Shift. `PhaserGameHud` owns the main-game room header, editor shortcuts, and the room's hint banner along the top of the room (sized to its text, hidden in rooms without a `hint`). All in-game control hints, live health, and status previously in the lower-left HUD panel have been removed in favor of the main menu's `[HELP]` reference and clean viewport presentation. The main game uses a dark blue background and retains the shared Room coordinates so editor layouts and domain collision remain consistent. HUD objects are destroyed on scene shutdown. No Mana or identity statistics are shown until those systems exist. In Command Mode, the inline prompt accepts printable ASCII, cursor editing, tab completion, and history navigation (`Up`/`Down`); releasing Shift executes the command (Enter also submits). In Movement Mode, it is hidden. `PhaserRoomView` projects world objects to Phaser sprites (orienting characters horizontally based on `facing` via `flipX`, and rendering equipped items in local holder coordinates `WEAPON_HOLD_OFFSET = { x: 20, y: 26 }` mirrored with the holder's facing direction, translating equipped dagger position along the horizontal facing axis during attacks by `DAGGER_ATTACK_DISTANCE` [30 px] over `DAGGER_ATTACK_DURATION_MS` [200 ms]) and overhead labels (`?` for undiscovered objects, object name once revealed, and `hacker` for the player character; equipped items remain visible with label scale shrunk to `ITEM_LABEL_WIDTH_RATIO` [0.75] of item sprite width to avoid overlapping the character); `PhaserGameOutcomePanel` displays Game Over / Congratulations states.
 
@@ -36,14 +36,14 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 | Mode | Time Scale | Player Control | Combat & Actions |
 |---|:---:|---|---|
-| **Movement** | 1.00 | WASD (responsive physics, turning left/right) | Space: attack (auto-pickup on contact) |
+| **Movement** | 1.00 | WASD (responsive physics, turning left/right) | J: attack (auto-pickup on contact), Space / P: pause |
 | **Command** | 0.25 | Disabled (or latched direction) | Ignored |
 
 - **Shell Entry & Exit**:
   - In **Hold Shift mode** (`'hold-shift'`, default): Holding Shift while in Movement Mode opens the inline command prompt (`$ `) under the player. Releasing Shift executes the command (if non-empty) and closes the prompt, returning to Movement Mode. Releasing Shift without typing anything cancels and clears the prompt. Enter also submits.
   - In **Enter + Sticky mode** (`'enter-sticky'`): Shift is disabled. Pressing Enter in Movement Mode opens the inline command prompt. Pressing Enter executes typed commands and closes the prompt; pressing Enter on an empty prompt closes the bar without executing.
 - In **Hybrid mode** (`'hybrid'`): both entries work. Shift opens the prompt and its release submits/cancels; Enter opens it and Enter submits (empty Enter closes). The key that opened the prompt decides how it closes (`GameScene.enteredByShift`); `shiftOpensCommandInput` / `enterOpensCommandInput` in `gameSettings.ts` define which keys open it per mode.
-  - Escape does not close the command prompt in any mode; it opens the pause menu.
+  - Space and P do not close the command prompt in any mode; they type literal characters into the prompt.
 - **Submission**: Commands are submitted and executed when Shift is released (in hold-shift mode) or when Enter is pressed, returning to Movement Mode.
 - **Latched Movement**: Holding Shift while holding movement keys latches velocity until collision, room exit, or release/submission; latched keys are suppressed from typing input.
 - **Prompt**: Displays `$ ` (current room is displayed in the HUD header).
@@ -167,7 +167,7 @@ There are two ways through an open Exit: walking into its zone (`PlayerMovementP
 
 | Room | Teaches | Contents | Exit opens when |
 |---|---|---|---|
-| `tutorial1` | Arrows, pick-up, Space/click attack | dagger, `dummy` (passive, 60 Health) | the dummy is defeated |
+| `tutorial1` | Arrows, pick-up, J/click attack | dagger, `dummy` (passive, 60 Health) | the dummy is defeated |
 | `tutorial2` | `ls`, Discovery, Tab | boulder, dagger, passive guard, all `?` | everything is discovered |
 | `tutorial3` | `mv` throws (and pulling the boulder) | dagger, boulder, `sentry` guard (40 Health, does not walk) | the sentry is defeated |
 | `tutorial4` | Command Mode slows time | dagger, `runner` guard (speed 380 > player 300, 40 Health) | the runner is defeated |
@@ -194,7 +194,7 @@ Room 1 initializes with Player Character (upper-left, named `hacker`), Dagger (l
 - `mv <label1> <label2>` throws `<label1>` towards `<label2>` (an object or room exit) as a Throw (see Throw: it accelerates from rest under `mv_acceleration`, drag and `max_velocity`, ends at its first Collision, and a thrown Weapon hurts Characters it touches); an equipped weapon remains equipped until it exits pickup reach from its holder. If `<label2>` does not exist in the room, it renames `<label1>` to `<label2>` and marks it discovered (labels must not contain uppercase letters; renames with uppercase letters are rejected with `Labels cannot contain uppercase letters.`).
 - `mv <label1> $mouse` (Mouse Target, `isMouseTarget`, case-insensitive, only as `<label2>`): checked before the rename-or-throw decision, so it always throws and never renames, and it wins over an object or exit with the same name. The target is the context's mouse point at submission time (fixed, no tracking); `targetObjectId` is null, so nothing is discovered on arrival. Without a mouse point it is rejected with `Move the mouse over the game first.`. The point is not clamped: outside the room the object flies towards it and the room edge ends the Throw (ADR 0014). As a source `$mouse` is an ordinary name (`Cannot find "$mouse".`); a Wildcard source sends every match to the same point. The feedback is `Threw <names> to $mouse.`; Tab completion of `mv` arguments also offers `$mouse`; usage is `mv <label1> <label2|$mouse>`.
 - `mv` Wildcard source: a `*` in `<label1>` (any run of characters, case-insensitive, any position, repeatable) is matched against the display names of every object in the current room (ignoring Discovery, player included). The typed command is not expanded; `<label2>` is always literal, so names may contain `*`. The target object is excluded from the matches (no same-object error); zero matches rejects with `Cannot find "<pattern>".`. With an existing target all matches are thrown and reported in one popup (`Threw a, b to target.`). With a non-existent target a single match is renamed to the plain target name, while two or more are renamed `<target>_0`, `<target>_1`, … (the counter skips names taken by non-source objects, exit labels or exit target room ids, and continues across sources).
-- The player walks with WASD (turning left or right horizontally when pressing A or D, flipping the sprite and equipped weapon offset in presentation), automatically picks up the Dagger (and any items) on contact/reach, and attacks with Space. Equipped weapons track the holder position in domain state (`dagger.x = holder.x, dagger.y = holder.y`, translating `dagger.x` forward during attack animation) while `PhaserRoomView` handles local coordinate attachment, mirroring, and attack translation animation. Holding Shift opens the inline command prompt under the player.
+- The player walks with WASD (turning left or right horizontally when pressing A or D, flipping the sprite and equipped weapon offset in presentation), automatically picks up the Dagger (and any items) on contact/reach, and attacks with J. Equipped weapons track the holder position in domain state (`dagger.x = holder.x, dagger.y = holder.y`, translating `dagger.x` forward during attack animation) while `PhaserRoomView` handles local coordinate attachment, mirroring, and attack translation animation. Holding Shift opens the inline command prompt under the player.
 - Guard pursues player when player enters room's right half; attacks within Reach.
 - Player reaching 0 Health triggers `game-over`. Defeating guard stops pursuit. Reaching the exit (walking in, or `cd room2` next to it) triggers `congratulations`.
 - The player's collider is 62×94, the visible part of the 125 px player sprite (its 32×32 image has 16×24 opaque pixels).
@@ -267,10 +267,10 @@ classDiagram
   LevelEditorScene --> EditorHistory : manages undo stack
   LevelEditorScene ..> room1Serializer : serializes RoomObjectConfig[]
   SceneManager ..> GameScene : manages transitions & hotkeys
-  SceneManager ..> CommandEditorOverlay : manages F1 toggle & Esc
-  SceneManager ..> LevelEditorScene : manages transitions (F2 toggle / Esc)
-  SceneManager ..> SpeedEditorScene : manages transitions (F3 toggle / Esc)
-  SceneManager ..> BehaviorTreeEditorScene : manages transitions (F4 toggle / Esc)
+  SceneManager ..> CommandEditorOverlay : manages F1 toggle
+  SceneManager ..> LevelEditorScene : manages transitions (F2 toggle)
+  SceneManager ..> SpeedEditorScene : manages transitions (F3 toggle)
+  SceneManager ..> BehaviorTreeEditorScene : manages transitions (F4 toggle)
   CommandEditorOverlay ..> GameScene : overlays gameplay level & reuses live simulation
   SpeedEditorScene ..> room1 : reads & overwrites ROOM1_OBJECTS
   SpeedEditorScene ..> speedEditorSession : wraps GameSession & TickSimulationEngine
@@ -314,7 +314,7 @@ docs/           architecture.md, adr/0001..0013
 
 ## Level Editor
 
-`LevelEditorScene` (`'level-editor'`) provides visual editing of world object positions, sizes, character stats, weapon parameters, and collision shapes across all rooms in the game. Accessible from anywhere via **F2**; pressing **F2** or **Escape** returns to the current active playable scene (`'game'`). When opened via **F2** during gameplay, `SceneManager` reads the player's current room ID from `getWorldState().currentRoomId` and starts the editor focused on that room. When exiting the editor (via **F2**, **Escape**, top-right key hint, or the `PLAY <ROOM> (F2)` button), `SceneManager.exitEditor()` passes `{ startingRoomId }` to `GameScene`, seamlessly launching gameplay right from the currently edited room.
+`LevelEditorScene` (`'level-editor'`) provides visual editing of world object positions, sizes, character stats, weapon parameters, and collision shapes across all rooms in the game. Accessible from anywhere via **F2**; pressing **F2** returns to the current active playable scene (`'game'`). When opened via **F2** during gameplay, `SceneManager` reads the player's current room ID from `getWorldState().currentRoomId` and starts the editor focused on that room. When exiting the editor (via **F2**, top-right key hint, or the `PLAY <ROOM> (F2)` button), `SceneManager.exitEditor()` passes `{ startingRoomId }` to `GameScene`, seamlessly launching gameplay right from the currently edited room.
 
 The editor supports all tutorial rooms (`tutorial1`, `tutorial2`, `tutorial3`, `tutorial4`), home area rooms (`home`, `storage`, `yard`, `lane`, `gate`), and main rooms (`room1`, `room2`) through a unified room registry (`src/game/content/roomRegistry.ts`).
 
@@ -346,11 +346,11 @@ Editable configurations in `room1` export directly to `room1.ts` (`ROOM1_OBJECTS
 | **Weapon Stats** | Edit weapon `attack_dist`, `attack_dur`, `hold_offset_x`, `hold_offset_y` (`+/-` 10, Shift: 50, click value for prompt) |
 | **Physics** | Per-object `drag`, `friction`, `mass`, `max_velocity`, `restitution` values (`+/-`, click value for prompt, `R` resets one to the default; unset values show the global default dimmed). Written to `room1.ts` as top-level fields, only for the fields set |
 | **Test Equip** | `TEST EQUIP` / `TEST UNEQUIP` button toggles preview attachment to player at hold offsets, moving with player |
-| **Test Attack** | `TEST ATTACK` button (or `Space` with weapon selected) runs attack translation animation ($d(t) = \text{round}(\sin(t \cdot \pi) \cdot \text{dist})$) |
+| **Test Attack** | `TEST ATTACK` button (or `J` with weapon selected) runs attack translation animation ($d(t) = \text{round}(\sin(t \cdot \pi) \cdot \text{dist})$) |
 | **Command Editor Access** | **F1** shortcut |
 | **Speed Editor Access** | `OPEN SPEED EDITOR (F3)` button or **F3** shortcut |
 | **AI Editor Access** | `AI EDITOR (F4)` button or **F4** shortcut |
-| **Return to Game** | **F2**, **Escape**, top hint, or `PLAY <ROOM> (F2)` button (plays game directly from currently selected room) |
+| **Return to Game** | **F2**, top hint, or `PLAY <ROOM> (F2)` button (plays game directly from currently selected room) |
 | **Undo / Redo** | `Ctrl+Z` reverses operations via invertible delta stack (move, scale, collider box, character/weapon stats, physics values, spawn/despawn) |
 | **Toggle Panel** | **P** toggles bottom property panel visibility |
 | **Save** | `SAVE TO ROOM1.TS` (for `room1`) overwrites file via `/api/save-room1` and syncs in-memory `ROOM1_OBJECTS` and `GAME_WEAPON_CONFIG`; for other rooms, `SAVE <ROOM>` syncs to in-memory definitions with confirmation toast |
@@ -365,7 +365,7 @@ All weapon constants, animation translation curves, and runtime configurations a
 
 ## Command Editor
 
-`CommandEditorOverlay` provides live in-game command tuning overlaying the gameplay level (`GameScene`). Accessible from anywhere via **F1**; pressing **F1**, **Escape**, or the `CLOSE (F1 / ESC)` button closes the overlay.
+`CommandEditorOverlay` provides live in-game command tuning overlaying the gameplay level (`GameScene`). Accessible from anywhere via **F1**; pressing **F1** or the `CLOSE (F1)` button closes the overlay.
 
 The Command Editor directly overlays the active gameplay level and reuses its live simulation, room view, world state, and command terminal without creating an isolated mock session.
 
@@ -392,7 +392,7 @@ The Command Editor directly overlays the active gameplay level and reuses its li
 - **Step & Direct Input**: `+` / `−` step buttons (Shift for 5x multiplier) or click parameter values for prompt number input. Clamped to safe thresholds.
 - **Save Changes**: `SAVE CHANGES` button writes `mv_acceleration` to `src/game/commands/mvConstants.ts` via `/api/save-mv`, global physics defaults to `src/game/simulation/physicsConstants.ts` via `/api/save-physics`, and Command Mode Slow Down Speed to `src/game/commands/commandModeConstants.ts` via `/api/save-command-mode` (alongside `localStorage` caching), immediately syncing runtime `GAME_MV_CONFIG`, `GAME_PHYSICS_CONFIG`, and `GAME_COMMAND_MODE_CONFIG`.
 - **Reset Defaults**: Restores default values for `mv_acceleration`, the seven global physics parameters, and `commandTimeScale` (`0.25`).
-- **Navigation & Hotkeys**: **F1** toggles the Command Editor from `GameScene` or returns to the active game scene with the overlay open from any other editor. **Escape** closes the overlay.
+- **Navigation & Hotkeys**: **F1** toggles the Command Editor from `GameScene` or returns to the active game scene with the overlay open from any other editor; **F1** or `CLOSE (F1)` closes the overlay.
 
 ## Speed Editor
 
@@ -417,7 +417,7 @@ The Command Editor directly overlays the active gameplay level and reuses its li
 - **Reset Position**: **R** (or `RESET POSITIONS (R)` button) snaps player and dagger back to start coordinates with zero velocity for clean trials.
 - **Reset Defaults**: Restores default player movement physics values.
 - **Save Changes**: `SAVE CHANGES` button writes updated player speed directly to `src/game/content/room1.ts` via `/api/save-room1` (`ROOM1_OBJECTS`).
-- **Navigation**: Accessible from anywhere via **F3**; **Escape** or **F3** exits to the current active playable scene (`'game'`), **F1** opens Command Editor, **F2** opens Level Editor, **F4** opens AI Editor.
+- **Navigation**: Accessible from anywhere via **F3**; **F3** exits to the current active playable scene (`'game'`), **F1** opens Command Editor, **F2** opens Level Editor, **F4** opens AI Editor.
 
 ## Behavior Tree & AI System
 
@@ -462,7 +462,7 @@ Each node evaluates to one of three statuses per simulation tick:
 
 2. **Top Navigation & Simulation Toolbar (`y = 14..62`)**:
    - Organized in a dual-row header preventing UI overlaps:
-     - Row 1 (`y = 14`): Scene title and clean navigation hotkey hints (**R** for reset, **P** for panel toggle, **F1** for Command Editor, **F2** for Level Editor, **F3** for Speed Editor, **F4** / **ESC** for Game).
+     - Row 1 (`y = 14`): Scene title and clean navigation hotkey hints (**R** for reset, **P** for panel toggle, **F1** for Command Editor, **F2** for Level Editor, **F3** for Speed Editor, **F4** for Game).
      - Row 2 (`y = 48`): Preset selector buttons (`STD GUARD`, `PATROL GUARD`, `CYBER BOSS`, `HIT & RUN`, `TANK BOSS`) with active selection highlights on the left; playback controls on the right (`PAUSE (SPC)` / `RESUME (SPC)`, `STEP (T)`, `RESET (R)`).
 
 3. **Bottom Dock Panel (`y = 720..1015`, toggleable with P key)**:
@@ -490,7 +490,7 @@ Each node evaluates to one of three statuses per simulation tick:
 | **Delete Node** | `Delete` / `Backspace` or `DELETE (DEL)` button |
 | **Damage Boss (-25 HP)** | `DMG BOSS (-25)` button |
 | **Heal Boss (+25 HP)** | `HEAL BOSS (+25)` button |
-| **Return to Game** | **F4** or **Escape** |
+| **Return to Game** | **F4** |
 
 ## Framework References
 

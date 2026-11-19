@@ -24,7 +24,7 @@ export const INPUT_BINDINGS: InputBindings = {
   },
   enterCommandMode: ['shift'],
   exitCommandMode: [],
-  attack: { keys: [' ', 'space'], mouseButtons: [] },
+  attack: { keys: ['j'], mouseButtons: [] },
 }
 
 export function isAlphabetKey(event: {

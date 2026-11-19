@@ -375,7 +375,7 @@ export class CommandEditorOverlay {
       .text(
         945,
         314,
-        'Enter / a-z switches to command mode with this time scale.\nEscape returns to full speed (×1.00).',
+        'Enter / a-z switches to command mode with this time scale.\nSubmit or exit returns to full speed (×1.00).',
         {
           fontFamily: FONT_FAMILY,
           fontSize: 8,
@@ -434,7 +434,7 @@ export class CommandEditorOverlay {
     const closeBtn = this.createButton(
       1554,
       200,
-      'CLOSE (F1 / ESC)',
+      'CLOSE (F1)',
       '#263238',
       '#cfd8dc',
       () => this.close(),
@@ -444,7 +444,7 @@ export class CommandEditorOverlay {
     items.push(closeBtn)
 
     const hotkeyHint = this.scene.add
-      .text(1554, 275, 'F1: Toggle Editor\nESC: Close Overlay', {
+      .text(1554, 275, 'F1: Toggle / Close Overlay', {
         fontFamily: FONT_FAMILY,
         fontSize: 10,
         color: DIM_COLOR,

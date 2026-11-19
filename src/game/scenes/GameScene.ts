@@ -222,10 +222,6 @@ export class GameScene extends Phaser.Scene {
 
     // Returns whether the command input should process the key event.
     private readonly handleKeyDown = (event: KeyboardEvent): boolean => {
-        if (event.ctrlKey && event.key.toLowerCase() === 'p') {
-            event.preventDefault()
-            return false
-        }
         if (this.commandEditor?.isModalPromptOpen?.()) {
             return false
         }
@@ -235,20 +231,6 @@ export class GameScene extends Phaser.Scene {
         if (key === 'f1') {
             event.preventDefault()
             this.toggleCommandEditor()
-            return false
-        }
-
-        if (this.commandEditor?.isOpen()) {
-            if (key === 'escape') {
-                event.preventDefault()
-                this.closeCommandEditor()
-                return false
-            }
-        }
-
-        if (key === 'escape' && !this.outcomePanel?.menuActive) {
-            event.preventDefault()
-            if (!event.repeat) this.openPause()
             return false
         }
 
@@ -265,6 +247,14 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (this.session.inputMode === 'movement') {
+            if ((key === ' ' || key === 'space' || key === 'p') && !this.outcomePanel?.menuActive) {
+                event.preventDefault()
+                if (!event.repeat) {
+                    this.openPause()
+                }
+                return false
+            }
+
             if (key === 'shift') {
                 event.preventDefault()
                 if (shiftOpensCommandInput(this.commandTypingMode) && !event.repeat) {

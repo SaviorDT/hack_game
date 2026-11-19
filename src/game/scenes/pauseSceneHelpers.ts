@@ -272,7 +272,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
   return [
     '── MOVEMENT & COMBAT ──',
     '  WASD / ARROW KEYS    Move hacker',
-    '  SPACE                Attack with equipped weapon (auto-pickup on touch)',
+    '  J                    Attack with equipped weapon (auto-pickup on touch)',
     '',
     '── COMMAND LINE ──',
     ...COMMAND_LINE_HELP[mode],
@@ -288,7 +288,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  TAB                  Auto-complete command name or discovered object label',
     '  CTRL+BACKSPACE       Delete previous word in prompt',
     '  UP / DOWN            Browse command history',
-    '  ESC / CTRL+P         Open pause menu',
+    '  SPACE / P            Open pause menu',
   ]
 }
 

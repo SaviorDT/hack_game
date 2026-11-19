@@ -22,8 +22,8 @@ describe('INPUT_BINDINGS', () => {
     expect(allMovementKeys).not.toContain('arrowright')
   })
 
-  it('binds spacebar for attack and no mouse buttons', () => {
-    expect(INPUT_BINDINGS.attack.keys).toContain(' ')
+  it('binds j for attack and no mouse buttons', () => {
+    expect(INPUT_BINDINGS.attack.keys).toContain('j')
     expect(INPUT_BINDINGS.attack.mouseButtons).toEqual([])
   })
 

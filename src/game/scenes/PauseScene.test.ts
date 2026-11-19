@@ -154,27 +154,25 @@ describe('PauseScene', () => {
     expect(scene.getSelectedChoice()).toBe('RESUME')
   })
 
-  describe('Escape and return to title', () => {
+  describe('Confirmation and return to title', () => {
     const key = (name: string) => ({ key: name, preventDefault: vi.fn() }) as unknown as KeyboardEvent
 
     function selectTitle(handleKeyDown: (event: KeyboardEvent) => void) {
       for (let i = 0; i < 3; i += 1) handleKeyDown(key('ArrowDown'))
     }
 
-    it('resumes the game when Escape is pressed in the main menu', () => {
+    it('ignores Escape in the main menu and does not resume', () => {
       const { scene, handleKeyDown } = setupScene()
       const resumeSpy = vi.spyOn(scene, 'resumeGame')
       handleKeyDown(key('Escape'))
-      expect(resumeSpy).toHaveBeenCalled()
+      expect(resumeSpy).not.toHaveBeenCalled()
     })
 
-    it('returns from the settings and help subscreens on Escape', () => {
+    it('returns from the help subscreen on Enter', () => {
       const { scene, handleKeyDown } = setupScene()
-      scene.showSettings(false)
-      handleKeyDown(key('Escape'))
-      expect(scene.isInSettings()).toBe(false)
       scene.showHelp(false)
-      handleKeyDown(key('Escape'))
+      expect(scene.isInHelp()).toBe(true)
+      handleKeyDown(key('Enter'))
       expect(scene.isInHelp()).toBe(false)
     })
 
@@ -189,16 +187,6 @@ describe('PauseScene', () => {
       handleKeyDown(key('Enter'))
       expect(scene.isInTitleConfirm()).toBe(false)
       expect(toTitle).not.toHaveBeenCalled()
-    })
-
-    it('cancels the confirmation with Escape without resuming', () => {
-      const { scene, handleKeyDown } = setupScene()
-      const resumeSpy = vi.spyOn(scene, 'resumeGame')
-      selectTitle(handleKeyDown)
-      handleKeyDown(key('Enter'))
-      handleKeyDown(key('Escape'))
-      expect(scene.isInTitleConfirm()).toBe(false)
-      expect(resumeSpy).not.toHaveBeenCalled()
     })
 
     it('stops the game and starts the title scene when YES is confirmed', () => {
@@ -258,10 +246,12 @@ describe('PauseScene', () => {
     expect(scene.isInHelp()).toBe(true)
   })
 
-  it('does not dismiss the pause scene on Ctrl+P', () => {
+  it('does not dismiss the pause scene on Space or P', () => {
     const { scene, handleKeyDown } = setupScene()
     const resumeSpy = vi.spyOn(scene, 'resumeGame')
-    handleKeyDown({ key: 'p', ctrlKey: true, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown({ key: ' ', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(resumeSpy).not.toHaveBeenCalled()
+    handleKeyDown({ key: 'p', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(resumeSpy).not.toHaveBeenCalled()
   })
 
@@ -274,9 +264,9 @@ describe('PauseScene', () => {
     expect(resumeSpy).toHaveBeenCalled()
   })
 
-  it('displays CTRL+P in help screen', () => {
+  it('displays SPACE / P in help screen', () => {
     const lines = getHelpLines('hold-shift')
-    expect(lines.some((line) => line.includes('CTRL+P') && line.includes('Open pause menu'))).toBe(true)
+    expect(lines.some((line) => line.includes('SPACE / P') && line.includes('Open pause menu'))).toBe(true)
   })
 
   it('suppresses navigation during transitions', () => {

@@ -93,7 +93,7 @@ export class SpeedEditorScene extends Phaser.Scene {
 
     // Top Right Navigation Hints
     this.add
-      .text(ROOM_LAYOUT.right, 26, 'F1: Command · F2: Level · F4: AI Editor · F3 / ESC: Game', {
+      .text(ROOM_LAYOUT.right, 26, 'F1: Command · F2: Level · F4: AI Editor · F3: Game', {
         fontFamily: FONT_FAMILY,
         fontSize: 12,
         color: DIM_COLOR,

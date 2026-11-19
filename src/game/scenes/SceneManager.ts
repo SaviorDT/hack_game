@@ -221,21 +221,6 @@ export class SceneManager {
     const key = event.key.toUpperCase()
     const activeKey = this.getActiveSceneKey()
 
-    if (event.ctrlKey && key === 'P') {
-      if (activeKey === 'pause') {
-        event.preventDefault?.()
-        event.stopImmediatePropagation?.()
-      } else if (activeKey === 'game') {
-        event.preventDefault?.()
-        event.stopImmediatePropagation?.()
-        const gameScene = this.game?.scene.getScene?.('game') as unknown as { openPause?: () => void }
-        gameScene?.openPause?.()
-      } else {
-        return false
-      }
-      return true
-    }
-
     // 0. Check if F1 was pressed (Command Editor overlay toggle)
     if (key === 'F1') {
       event.preventDefault?.()
@@ -268,35 +253,6 @@ export class SceneManager {
         this.openEditor(editorConfig.key, data)
       }
       return true
-    }
-
-    // 2. Check if Escape was pressed
-    if (key === 'ESCAPE') {
-      const activeScene = this.getActiveScene()
-      if (
-        activeScene &&
-        typeof (activeScene as any).isCommandEditorOpen === 'function' &&
-        (activeScene as any).isCommandEditorOpen()
-      ) {
-        event.preventDefault?.()
-        if (typeof event.stopImmediatePropagation === 'function') {
-          event.stopImmediatePropagation()
-        }
-        (activeScene as any).closeCommandEditor()
-        return true
-      }
-
-      if (this.isEditorScene(activeKey)) {
-        // In an editor, Escape exits to active playable scene
-        event.preventDefault?.()
-        if (typeof event.stopImmediatePropagation === 'function') {
-          event.stopImmediatePropagation()
-        }
-        this.exitEditor()
-        return true
-      }
-      // In playable scene, allow scene to process Escape
-      return false
     }
 
     return false

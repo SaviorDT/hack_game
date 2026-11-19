@@ -191,7 +191,7 @@ describe('SceneManager', () => {
     })
   })
 
-  describe('exit by pressing button or Esc to current active playable scene (Requirement 2)', () => {
+  describe('exit by pressing button to current active playable scene (Requirement 2)', () => {
     it('exits LevelEditor when pressing F2 to active playable scene', () => {
       const syncSpy = vi.fn()
       const levelEditorScene = createMockScene('level-editor', {
@@ -227,41 +227,6 @@ describe('SceneManager', () => {
       expect(levelEditorScene.scene.start).toHaveBeenCalledWith('game', { startingRoomId: 'storage' })
     })
 
-    it('exits LevelEditor via Escape passing startingRoomId when scene provides getCurrentRoomId', () => {
-      const syncSpy = vi.fn()
-      const levelEditorScene = createMockScene('level-editor', {
-        syncToRoom1Objects: syncSpy,
-        getCurrentRoomId: () => 'yard',
-      })
-      const mockGame = createMockGame(levelEditorScene)
-      const manager = new SceneManager(mockGame)
-      manager.setActivePlayableScene('game')
-
-      const event = createMockKeyboardEvent('Escape')
-      const handled = manager.handleKeyDown(event)
-
-      expect(handled).toBe(true)
-      expect(syncSpy).toHaveBeenCalled()
-      expect(levelEditorScene.scene.start).toHaveBeenCalledWith('game', { startingRoomId: 'yard' })
-    })
-
-    it('exits LevelEditor when pressing Escape to active playable scene', () => {
-      const syncSpy = vi.fn()
-      const levelEditorScene = createMockScene('level-editor', {
-        syncToRoom1Objects: syncSpy,
-      })
-      const mockGame = createMockGame(levelEditorScene)
-      const manager = new SceneManager(mockGame)
-      manager.setActivePlayableScene('game')
-
-      const event = createMockKeyboardEvent('Escape')
-      const handled = manager.handleKeyDown(event)
-
-      expect(handled).toBe(true)
-      expect(syncSpy).toHaveBeenCalled()
-      expect(levelEditorScene.scene.start).toHaveBeenCalledWith('game')
-    })
-
     it('exits SpeedEditor when pressing F3 to active playable scene', () => {
       const speedEditorScene = createMockScene('speed-editor')
       const mockGame = createMockGame(speedEditorScene)
@@ -269,19 +234,6 @@ describe('SceneManager', () => {
       manager.setActivePlayableScene('game')
 
       const event = createMockKeyboardEvent('F3')
-      const handled = manager.handleKeyDown(event)
-
-      expect(handled).toBe(true)
-      expect(speedEditorScene.scene.start).toHaveBeenCalledWith('game')
-    })
-
-    it('exits SpeedEditor when pressing Escape to active playable scene', () => {
-      const speedEditorScene = createMockScene('speed-editor')
-      const mockGame = createMockGame(speedEditorScene)
-      const manager = new SceneManager(mockGame)
-      manager.setActivePlayableScene('game')
-
-      const event = createMockKeyboardEvent('Escape')
       const handled = manager.handleKeyDown(event)
 
       expect(handled).toBe(true)
@@ -301,31 +253,18 @@ describe('SceneManager', () => {
       expect(aiEditorScene.scene.start).toHaveBeenCalledWith('game')
     })
 
-    it('exits BehaviorTreeEditor when pressing Escape to active playable scene', () => {
-      const aiEditorScene = createMockScene('behavior-tree-editor')
-      const mockGame = createMockGame(aiEditorScene)
-      const manager = new SceneManager(mockGame)
-      manager.setActivePlayableScene('game')
-
-      const event = createMockKeyboardEvent('Escape')
-      const handled = manager.handleKeyDown(event)
-
-      expect(handled).toBe(true)
-      expect(aiEditorScene.scene.start).toHaveBeenCalledWith('game')
-    })
-
     it('preserves custom active playable scene (e.g. room2) when exiting editors', () => {
       const levelEditorScene = createMockScene('level-editor')
       const mockGame = createMockGame(levelEditorScene)
       const manager = new SceneManager(mockGame)
       manager.setActivePlayableScene('room2')
 
-      const event = createMockKeyboardEvent('Escape')
+      const event = createMockKeyboardEvent('F2')
       expect(manager.handleKeyDown(event)).toBe(true)
       expect(levelEditorScene.scene.start).toHaveBeenCalledWith('room2')
     })
 
-    it('does NOT intercept Escape when in a playable scene (passes to scene)', () => {
+    it('does NOT intercept Escape anywhere (Escape has no utility)', () => {
       const gameScene = createMockScene('game')
       const mockGame = createMockGame(gameScene)
       const manager = new SceneManager(mockGame)
@@ -383,23 +322,6 @@ describe('SceneManager', () => {
       expect(levelEditorScene.scene.start).toHaveBeenCalledWith('game', { openCommandEditor: true })
     })
 
-    it('closes Command Editor when Escape is pressed while Command Editor is open in playable scene', () => {
-      const closeSpy = vi.fn()
-      const gameScene = createMockScene('game', {
-        isCommandEditorOpen: () => true,
-        closeCommandEditor: closeSpy,
-      })
-      const mockGame = createMockGame(gameScene)
-      const manager = new SceneManager(mockGame)
-
-      const event = createMockKeyboardEvent('Escape')
-      const handled = manager.handleKeyDown(event)
-
-      expect(handled).toBe(true)
-      expect(event.preventDefault).toHaveBeenCalled()
-      expect(closeSpy).toHaveBeenCalled()
-    })
-
     it('openCommandEditor / closeCommandEditor / toggleCommandEditor helper methods delegate appropriately', () => {
       const openSpy = vi.fn()
       const closeSpy = vi.fn()
@@ -420,42 +342,6 @@ describe('SceneManager', () => {
       expect(closeSpy).toHaveBeenCalled()
       manager.toggleCommandEditor()
       expect(toggleSpy).toHaveBeenCalled()
-    })
-  })
-
-  describe('Pause (Ctrl+P)', () => {
-    it('opens pause from the game scene', () => {
-      const openPause = vi.fn()
-      const gameScene = createMockScene('game', { openPause })
-      const mockGame = createMockGame(gameScene)
-      mockGame.scene.getScene = vi.fn((key: string) => key === 'game' ? gameScene : undefined) as typeof mockGame.scene.getScene
-      const manager = new SceneManager(mockGame)
-      const event = createMockKeyboardEvent('p', true)
-
-      expect(manager.handleKeyDown(event)).toBe(true)
-      expect(openPause).toHaveBeenCalled()
-    })
-
-    it('does nothing with Ctrl+P while pause is active', () => {
-      const resumeGame = vi.fn()
-      const pauseScene = createMockScene('pause', { resumeGame })
-      const mockGame = createMockGame(pauseScene)
-      mockGame.scene.getScene = vi.fn((key: string) => key === 'pause' ? pauseScene : undefined) as typeof mockGame.scene.getScene
-      const manager = new SceneManager(mockGame)
-      const event = createMockKeyboardEvent('P', true)
-
-      expect(manager.handleKeyDown(event)).toBe(true)
-      expect(resumeGame).not.toHaveBeenCalled()
-    })
-
-    it('does not toggle pause outside game or pause scenes', () => {
-      const gameScene = createMockScene('title')
-      const mockGame = createMockGame(gameScene)
-      const manager = new SceneManager(mockGame)
-      const event = createMockKeyboardEvent('p', true)
-
-      expect(manager.handleKeyDown(event)).toBe(false)
-      expect(event.preventDefault).not.toHaveBeenCalled()
     })
   })
 

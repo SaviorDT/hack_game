@@ -180,11 +180,6 @@ export class InlineCommandInputView {
       return
     }
 
-    // Escape does NOT close the command utility (closed only via Shift release)
-    if (event.key === 'Escape') {
-      return
-    }
-
     if (event.key === 'Tab') {
       event.preventDefault()
       this.completeCurrentToken()

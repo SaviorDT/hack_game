@@ -197,7 +197,7 @@ export class BehaviorTreeEditorScene extends Phaser.Scene {
       .setDepth(50)
 
     this.add
-      .text(1880, 14, 'R: Reset · P: Panel · F1: Command · F2: Level · F3: Speed · F4 / ESC: Game', {
+      .text(1880, 14, 'R: Reset · P: Panel · F1: Command · F2: Level · F3: Speed · F4: Game', {
         fontFamily: FONT_FAMILY,
         fontSize: 12,
         color: DIM_COLOR,

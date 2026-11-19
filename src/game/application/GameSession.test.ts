@@ -496,8 +496,8 @@ describe('input bindings and mode switching', () => {
     expect(allMovementKeys).not.toContain('arrowright')
   })
 
-  it('INPUT_BINDINGS attack includes space and no mouse buttons', () => {
-    expect(INPUT_BINDINGS.attack.keys).toContain(' ')
+  it('INPUT_BINDINGS attack includes j and no mouse buttons', () => {
+    expect(INPUT_BINDINGS.attack.keys).toContain('j')
     expect(INPUT_BINDINGS.attack.mouseButtons).toEqual([])
   })
 

@@ -207,10 +207,7 @@ export class PauseScene extends Phaser.Scene {
   }
 
   private handleConfirmKey(key: string, event: KeyboardEvent): void {
-    if (key === 'ESCAPE') {
-      event.preventDefault()
-      this.cancelTitleConfirm()
-    } else if (key === 'ARROWLEFT' || key === 'A' || key === 'ARROWRIGHT' || key === 'D') {
+    if (key === 'ARROWLEFT' || key === 'A' || key === 'ARROWRIGHT' || key === 'D') {
       event.preventDefault()
       this.confirmIndex = this.confirmIndex === 0 ? 1 : 0
       this.updateConfirmSelection()
@@ -381,8 +378,12 @@ export class PauseScene extends Phaser.Scene {
       return
     }
     const key = event.key.toUpperCase()
+    if (key === ' ' || key === 'SPACE' || key === 'P') {
+      event.preventDefault()
+      return
+    }
     if (this.inHelp) {
-      if (key === 'ENTER' || key === 'ESCAPE') {
+      if (key === 'ENTER') {
         event.preventDefault()
         this.exitHelp()
       }
@@ -396,10 +397,7 @@ export class PauseScene extends Phaser.Scene {
       this.handleConfirmKey(key, event)
       return
     }
-    if (key === 'ESCAPE') {
-      event.preventDefault()
-      this.resumeWithAnimation()
-    } else if (key === 'ARROWUP' || key === 'W') this.moveSelection(-1)
+    if (key === 'ARROWUP' || key === 'W') this.moveSelection(-1)
     else if (key === 'ARROWDOWN' || key === 'S') this.moveSelection(1)
     else if (key === 'ENTER') {
       event.preventDefault()
@@ -408,11 +406,6 @@ export class PauseScene extends Phaser.Scene {
   }
 
   private handleSettingsKey(key: string, event: KeyboardEvent): void {
-    if (key === 'ESCAPE') {
-      event.preventDefault()
-      this.exitSettings()
-      return
-    }
     const nextFocus = nextSettingFocus(this.settingFocusIndex, this.currentTypingMode, key)
     if (nextFocus !== undefined) {
       event.preventDefault()

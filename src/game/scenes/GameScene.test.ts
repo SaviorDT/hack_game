@@ -160,30 +160,61 @@ describe('GameScene key handling', () => {
     expect(result).toBe(true)
   })
 
-  it('opens the pause menu on Escape and keeps the command draft', () => {
-    const { scene, session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+  it('opens the pause menu on Space in movement mode', () => {
+    const { scene, handleKeyDown } = setupScene()
     const openPause = vi.spyOn(scene, 'openPause').mockImplementation(() => {})
-    session.enterCommandMode()
-
     const preventDefault = vi.fn()
-    const result = handleKeyDown({
-      key: 'Escape',
-      repeat: false,
-      preventDefault,
-    } as unknown as KeyboardEvent)
-
+    const result = handleKeyDown({ key: ' ', repeat: false, preventDefault } as unknown as KeyboardEvent)
     expect(openPause).toHaveBeenCalledTimes(1)
-    expect(session.inputMode).toBe('command')
-    expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
-    expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
+    expect(preventDefault).toHaveBeenCalled()
     expect(result).toBe(false)
   })
 
-  it('opens the pause menu on Escape in movement mode', () => {
+  it('opens the pause menu on P in movement mode', () => {
     const { scene, handleKeyDown } = setupScene()
     const openPause = vi.spyOn(scene, 'openPause').mockImplementation(() => {})
-    handleKeyDown({ key: 'Escape', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    const preventDefault = vi.fn()
+    const result = handleKeyDown({ key: 'p', repeat: false, preventDefault } as unknown as KeyboardEvent)
     expect(openPause).toHaveBeenCalledTimes(1)
+    expect(preventDefault).toHaveBeenCalled()
+    expect(result).toBe(false)
+  })
+
+  it('allows Space to pass through to command input when in command mode', () => {
+    const { scene, session, handleKeyDown } = setupScene()
+    const openPause = vi.spyOn(scene, 'openPause').mockImplementation(() => {})
+    session.enterCommandMode()
+    const result = handleKeyDown({ key: ' ', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(openPause).not.toHaveBeenCalled()
+    expect(result).toBe(true)
+  })
+
+  it('allows P to pass through to command input when in command mode', () => {
+    const { scene, session, handleKeyDown } = setupScene()
+    const openPause = vi.spyOn(scene, 'openPause').mockImplementation(() => {})
+    session.enterCommandMode()
+    const result = handleKeyDown({ key: 'p', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(openPause).not.toHaveBeenCalled()
+    expect(result).toBe(true)
+  })
+
+  it('attacks with J in movement mode', () => {
+    const { session, handleKeyDown } = setupScene()
+    const attackSpy = vi.spyOn(session, 'attack').mockImplementation(() => ({} as any))
+    const preventDefault = vi.fn()
+    const result = handleKeyDown({ key: 'j', repeat: false, preventDefault } as unknown as KeyboardEvent)
+    expect(attackSpy).toHaveBeenCalledTimes(1)
+    expect(preventDefault).toHaveBeenCalled()
+    expect(result).toBe(false)
+  })
+
+  it('does not attack with J in command mode and allows typing j', () => {
+    const { session, handleKeyDown } = setupScene()
+    const attackSpy = vi.spyOn(session, 'attack').mockImplementation(() => ({} as any))
+    session.enterCommandMode()
+    const result = handleKeyDown({ key: 'j', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(attackSpy).not.toHaveBeenCalled()
+    expect(result).toBe(true)
   })
 
   it('exits command mode when Shift is released if entered by Shift with empty draft', () => {
@@ -408,25 +439,6 @@ describe('GameScene key handling', () => {
       expect(preventDefault).toHaveBeenCalled()
       expect(toggleSpy).toHaveBeenCalled()
       expect(mockCommandEditor.toggle).toHaveBeenCalled()
-      expect(result).toBe(false)
-    })
-
-    it('closes command editor when Escape is pressed while command editor is open', () => {
-      const { scene, mockCommandEditor, handleKeyDown, mockInlineCommandInputView } = setupScene()
-      mockCommandEditor.isOpen.mockReturnValue(true)
-      const closeSpy = vi.spyOn(scene, 'closeCommandEditor')
-
-      const preventDefault = vi.fn()
-      const result = handleKeyDown({
-        key: 'Escape',
-        repeat: false,
-        preventDefault,
-      } as unknown as KeyboardEvent)
-
-      expect(preventDefault).toHaveBeenCalled()
-      expect(closeSpy).toHaveBeenCalled()
-      expect(mockCommandEditor.close).toHaveBeenCalled()
-      expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
       expect(result).toBe(false)
     })
 

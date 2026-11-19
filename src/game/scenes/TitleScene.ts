@@ -70,6 +70,10 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.selectedIndex = 0
+    this.inHelp = false
+    this.inSettings = false
+    this.isTransitioning = false
     this.cameras.main.setBackgroundColor('#000000')
 
     this.currentTypingMode = loadCommandTypingMode()

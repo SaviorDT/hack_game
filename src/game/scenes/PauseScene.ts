@@ -61,6 +61,11 @@ export class PauseScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.selectedIndex = 0
+    this.inConfirm = false
+    this.confirmIndex = 1
+    this.inHelp = false
+    this.inSettings = false
     this.isTransitioning = true
     this.cameras.main.setBackgroundColor('#000000')
     this.currentTypingMode = loadCommandTypingMode()

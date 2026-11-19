@@ -226,6 +226,23 @@ describe('PauseScene', () => {
       expect(scene.scene.stop).toHaveBeenCalledWith('game')
       expect(scene.scene.start).toHaveBeenCalledWith('title')
     })
+
+    it('resets selection and confirmation state when re-created after returning to title', () => {
+      const { scene, handleKeyDown } = setupScene()
+      selectTitle(handleKeyDown)
+      handleKeyDown(key('Enter'))
+      handleKeyDown(key('ArrowLeft'))
+      handleKeyDown(key('Enter'))
+
+      scene.create()
+
+      expect(scene.getSelectedIndex()).toBe(0)
+      expect(scene.getSelectedChoice()).toBe('RESUME')
+      expect(scene.isInTitleConfirm()).toBe(false)
+
+      handleKeyDown(key('ArrowDown'))
+      expect(scene.getSelectedChoice()).toBe('SETTING')
+    })
   })
 
   it('opens setting and help subscreens', () => {

@@ -211,6 +211,21 @@ describe('PauseScene', () => {
       expect(scene.scene.stop).toHaveBeenCalledWith('game')
       expect(scene.scene.start).toHaveBeenCalledWith('title')
     })
+
+    it('plays a scroll-out animation before switching to the title scene', () => {
+      const { scene, handleKeyDown } = setupScene()
+      selectTitle(handleKeyDown)
+      handleKeyDown(key('Enter'))
+      handleKeyDown(key('ArrowLeft'))
+      handleKeyDown(key('Enter'))
+
+      expect(scene.tweens.add).toHaveBeenCalledWith(expect.objectContaining({
+        y: '-=850',
+        ease: 'Linear',
+      }))
+      expect(scene.scene.stop).toHaveBeenCalledWith('game')
+      expect(scene.scene.start).toHaveBeenCalledWith('title')
+    })
   })
 
   it('opens setting and help subscreens', () => {

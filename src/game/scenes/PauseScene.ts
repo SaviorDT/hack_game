@@ -21,6 +21,7 @@ import {
   EXECUTION_PAUSE_MS,
   getHelpLines,
   scrollTransition,
+  scrollOut,
   shrinkToPoint,
   TERMINAL_FONT,
   typeCommand,
@@ -221,9 +222,10 @@ export class PauseScene extends Phaser.Scene {
     this.isTransitioning = true
     typeCommand(this, this.mainPromptCommand, './menu', () => {
       this.time.delayedCall(EXECUTION_PAUSE_MS, () => {
-        this.isTransitioning = false
-        this.scene.stop('game')
-        this.scene.start('title')
+        scrollOut(this, this.mainMenuContainer, () => {
+          this.scene.stop('game')
+          this.scene.start('title')
+        })
       })
     })
   }

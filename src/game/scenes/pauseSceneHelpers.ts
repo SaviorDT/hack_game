@@ -82,6 +82,26 @@ export function scrollTransition(
   }
 }
 
+/** Scrolls a single container off the top of the screen and calls onComplete. */
+export function scrollOut(
+  scene: Phaser.Scene,
+  container: Phaser.GameObjects.Container,
+  onComplete: () => void,
+): void {
+  if (scene.tweens?.add) {
+    scene.tweens.add({
+      targets: container,
+      y: '-=850',
+      duration: SCROLL_SPEED_MS,
+      ease: 'Linear',
+      onComplete,
+    })
+  } else {
+    container.setY(-850)
+    onComplete()
+  }
+}
+
 export function shrinkToPoint(
   scene: Phaser.Scene,
   targetX: number,

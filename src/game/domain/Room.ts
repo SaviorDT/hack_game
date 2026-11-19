@@ -42,7 +42,7 @@ export interface Room {
   readonly bounds?: Bounds
   /** Where the Player Character appears when entering this room. */
   readonly entry?: { readonly x: number; readonly y: number }
-  /** Teaching text shown on screen in this room and by `help`. */
+  /** Teaching text shown on screen in this room. */
   readonly hint?: string
   /** One-line objective shown in the HUD; for a locked Exit, what unlocks it. */
   readonly goal?: string

@@ -106,8 +106,8 @@ describe('InlineCommandInputView', () => {
 
     view.setVisible(true)
     // Browser sends uppercase event.key with shiftKey: true when typing while holding Shift
-    dispatchKeydown({ key: 'C', shiftKey: true })
-    dispatchKeydown({ key: 'D', shiftKey: true })
+    dispatchKeydown({ key: 'M', shiftKey: true })
+    dispatchKeydown({ key: 'V', shiftKey: true })
     dispatchKeydown({ key: ' ', shiftKey: true })
     dispatchKeydown({ key: 'R', shiftKey: true })
     dispatchKeydown({ key: 'O', shiftKey: true })
@@ -115,9 +115,9 @@ describe('InlineCommandInputView', () => {
     dispatchKeydown({ key: 'M', shiftKey: true })
     dispatchKeydown({ key: '2', shiftKey: true })
 
-    expect(view.getValue()).toBe('cd room2')
+    expect(view.getValue()).toBe('mv room2')
     view.submit()
-    expect(onSubmit).toHaveBeenCalledWith('cd room2')
+    expect(onSubmit).toHaveBeenCalledWith('mv room2')
   })
 
   it('exposes getValue and submit for external triggers such as shift release', () => {

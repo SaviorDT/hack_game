@@ -8,9 +8,6 @@ import type { WorldState } from './WorldState.ts'
 /** The area in front of an Exit that the Player Character walks into to go through it. */
 export const EXIT_ZONE_SIZE = { width: 60, height: 160 } as const
 
-/** How far from an Exit's zone the Player Character may stand and still `cd` through it. */
-export const CD_REACH = 120
-
 const collision = new ShapeCollisionWorld()
 
 function stateOf<T>(worldObject: WorldObject): T {

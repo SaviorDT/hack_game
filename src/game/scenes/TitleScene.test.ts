@@ -444,7 +444,7 @@ describe('TitleScene', () => {
     const helpDescObj = (scene as any).helpDescText
     expect(helpDescObj.setText).toHaveBeenCalled()
     const descArg = (helpDescObj.setText as any).mock.calls[0][0]
-    expect(descArg.some((line: string) => line.includes('WASD / ARROW KEYS'))).toBe(true)
+    expect(descArg.some((line: string) => line.includes('WASD'))).toBe(true)
     expect(descArg.some((line: string) => line.includes('SPACE / P'))).toBe(true)
     expect(descArg.some((line: string) => line.includes('── MOVEMENT & COMBAT ──'))).toBe(false)
   })

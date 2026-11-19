@@ -121,16 +121,11 @@ describe('tutorial rooms', () => {
     expect(session.getWorldState().worldObjects.find((o) => o.id === 'tutorial1dagger')!.roomId).toBe(TUTORIAL_ROOM_IDS.move)
     expect(body(session, 'tutorial1dagger').equippedBy).toBeNull()
 
-    // tutorial2: ls reveals everything and opens the exit; cd works only next to it.
+    // tutorial2: ls reveals everything and opens the exit; walk through the exit zone.
     expect(exitOpen(session)).toBe(false)
-    expect(session.submitCommand('cd tutorial3').status).toBe('rejected')
     expect(session.submitCommand('ls').status).toBe('success')
     expect(exitOpen(session)).toBe(true)
-    const farAway = session.submitCommand('cd tutorial3')
-    expect(farAway.status).toBe('rejected')
-    walk(session, { x: 700, y: 640 }, { x: 1600, y: 640 }, { x: EXIT.x - 160, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.discover)
-    expect(session.submitCommand('cd tutorial3/').status).toBe('success')
+    walk(session, { x: 700, y: 640 }, { x: 1600, y: 640 }, { x: EXIT.x - 160, y: EXIT.y }, { x: EXIT.x, y: EXIT.y })
     expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.throw)
 
     // tutorial3: pick up the dagger and throw it at the sentry from a distance.
@@ -166,26 +161,6 @@ describe('tutorial rooms', () => {
     expect(body(session, 'player').health).toBe(body(session, 'player').maxHealth)
     expect(state.rooms.find((candidate) => candidate.id === 'home')!.objectIds).toContain('player')
     expect(state.rooms.find((candidate) => candidate.id === TUTORIAL_ROOM_IDS.slowTime)!.objectIds).not.toContain('player')
-  })
-
-  it('shows the current room tip in help', () => {
-    const session = newGame()
-    const result = session.submitCommand('help')
-    expect(result.status).toBe('success')
-    const text = result.status === 'success' ? result.feedback.map((feedback) => feedback.text).join('\n') : ''
-    expect(text).toContain('cd')
-    expect(text).toContain('Tip for tutorial1')
-    expect(text).toContain('WASD')
-  })
-
-  it('explains why cd is refused at a locked exit', () => {
-    const session = newGame()
-    walk(session, { x: 700, y: 640 }, { x: EXIT.x - 150, y: 640 }, { x: EXIT.x - 150, y: EXIT.y })
-    const result = session.submitCommand('cd tutorial2')
-    expect(result.status).toBe('rejected')
-    expect(result.status === 'rejected' && result.feedback.text).toContain('locked')
-    expect(session.submitCommand('cd room1').status).toBe('rejected') // exists, but not next door
-    expect(session.submitCommand('cd nowhere').status).toBe('rejected')
   })
 
   it('keeps room1 on its own as before for the editors and older tests', () => {

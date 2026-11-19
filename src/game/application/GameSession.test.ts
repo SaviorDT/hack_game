@@ -252,10 +252,15 @@ describe('guard', () => {
 })
 
 describe('commands', () => {
-  it('no longer knows the cd command', () => {
-    const result = newSession().submitCommand('cd room2/')
-
-    expect(result).toMatchObject({ status: 'rejected' })
+  it('rejects unknown commands like cd and help', () => {
+    expect(newSession().submitCommand('cd room2/')).toMatchObject({
+      status: 'rejected',
+      feedback: { text: 'Unknown command: cd' },
+    })
+    expect(newSession().submitCommand('help')).toMatchObject({
+      status: 'rejected',
+      feedback: { text: 'Unknown command: help' },
+    })
   })
 
   it('returns to movement mode after a command, even a rejected one', () => {
@@ -309,15 +314,6 @@ describe('commands', () => {
     expect(guard3.discovered).toBe(true)
   })
 
-  it('lists mv in help output', () => {
-    const session = newSession()
-    const result = session.submitCommand('help')
-    expect(result.status).toBe('success')
-    if (result.status === 'success') {
-      expect(result.feedback[0].text).toContain('mv')
-    }
-  })
-
   it('renames an object when target does not exist and reflects the new name in ls and autocomplete', () => {
     const session = newSession()
     const daggerObj = session.getWorldState().worldObjects.find((o) => o.id === 'dagger')!
@@ -348,11 +344,9 @@ describe('commands', () => {
     // hacker should be tab-completable when typing arguments to mv
     const argCandidates = session.getCommandCompletionCandidates('mv dagger h', 11)
     expect(argCandidates).toContain('hacker')
-    expect(argCandidates).not.toContain('help')
 
     const mvCandidates = session.getCommandCompletionCandidates('mv h', 4)
     expect(mvCandidates).toContain('hacker')
-    expect(mvCandidates).not.toContain('help')
   })
 
   it('does not list player label "hacker" in ls output', () => {
@@ -449,7 +443,7 @@ describe('commands', () => {
     const session = newSession()
     // Thrown characters are blocked by solid objects, so clear the path first.
     for (const id of ['guard', 'guard2', 'guard3', 'boulder']) {
-      ;(stateOf(session, id) as unknown as { alive: boolean }).alive = false
+      ; (stateOf(session, id) as unknown as { alive: boolean }).alive = false
     }
     const result = session.submitCommand('mv hacker room2')
     expect(result.status).toBe('success')

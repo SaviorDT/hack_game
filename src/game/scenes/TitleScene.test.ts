@@ -97,11 +97,6 @@ vi.mock('phaser', () => {
 import {
   TitleScene,
   TITLE_MENU_ITEMS,
-  TYPING_SPEED_MS,
-  SCROLL_SPEED_MS,
-  PAUSE_DURATION_MS,
-  EXECUTION_PAUSE_MS,
-  SHRINK_MS,
 } from './TitleScene.ts'
 
 describe('TitleScene', () => {
@@ -386,14 +381,6 @@ describe('TitleScene', () => {
     handleKeyDown(enterEvent)
     expect(enterEvent.preventDefault).toHaveBeenCalled()
     expect(scene.isInHelp()).toBe(false)
-  })
-
-  it('exports shell animation timing constants', () => {
-    expect(TYPING_SPEED_MS).toBe(15)
-    expect(SCROLL_SPEED_MS).toBe(27)
-    expect(PAUSE_DURATION_MS).toBe(150)
-    expect(EXECUTION_PAUSE_MS).toBe(150)
-    expect(SHRINK_MS).toBe(220)
   })
 
   it('types ./main and starts the game when confirming START', () => {

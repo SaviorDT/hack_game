@@ -34,3 +34,10 @@ Before finishing any multi-file edit, run:
 npm run check:dry
 ```
 If it fails, refactor the duplicated block into a shared module before presenting the diff.
+
+## Test Authoring Rules
+
+- **Never assert exact values of exported animation or timing constants** (e.g. `TYPING_SPEED_MS`, `SHRINK_MS`, `PAUSE_DURATION_MS`).
+  These are intentionally tunable and have no behavioral invariant worth pinning.
+  Acceptable: test that the constant is *used* (e.g. passed as a tween duration), or that it is a positive number.
+  Unacceptable: `expect(SHRINK_MS).toBe(220)`.

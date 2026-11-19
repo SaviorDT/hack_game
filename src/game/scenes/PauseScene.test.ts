@@ -103,7 +103,7 @@ function setupScene() {
 describe('PauseScene', () => {
   it('starts with RESUME selected', () => {
     const { scene } = setupScene()
-    expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'SETTING', 'HELP'])
+    expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'SETTING', 'HELP', 'TITLE'])
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('RESUME')
   })
@@ -149,7 +149,68 @@ describe('PauseScene', () => {
     handleKeyDown({ key: 's', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('HELP')
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('TITLE')
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('RESUME')
+  })
+
+  describe('Escape and return to title', () => {
+    const key = (name: string) => ({ key: name, preventDefault: vi.fn() }) as unknown as KeyboardEvent
+
+    function selectTitle(handleKeyDown: (event: KeyboardEvent) => void) {
+      for (let i = 0; i < 3; i += 1) handleKeyDown(key('ArrowDown'))
+    }
+
+    it('resumes the game when Escape is pressed in the main menu', () => {
+      const { scene, handleKeyDown } = setupScene()
+      const resumeSpy = vi.spyOn(scene, 'resumeGame')
+      handleKeyDown(key('Escape'))
+      expect(resumeSpy).toHaveBeenCalled()
+    })
+
+    it('returns from the settings and help subscreens on Escape', () => {
+      const { scene, handleKeyDown } = setupScene()
+      scene.showSettings(false)
+      handleKeyDown(key('Escape'))
+      expect(scene.isInSettings()).toBe(false)
+      scene.showHelp(false)
+      handleKeyDown(key('Escape'))
+      expect(scene.isInHelp()).toBe(false)
+    })
+
+    it('asks for confirmation before leaving, defaulting to NO', () => {
+      const { scene, handleKeyDown } = setupScene()
+      const toTitle = vi.spyOn(scene, 'returnToTitle')
+      selectTitle(handleKeyDown)
+      handleKeyDown(key('Enter'))
+      expect(scene.isInTitleConfirm()).toBe(true)
+      expect(scene.getConfirmChoice()).toBe('NO')
+
+      handleKeyDown(key('Enter'))
+      expect(scene.isInTitleConfirm()).toBe(false)
+      expect(toTitle).not.toHaveBeenCalled()
+    })
+
+    it('cancels the confirmation with Escape without resuming', () => {
+      const { scene, handleKeyDown } = setupScene()
+      const resumeSpy = vi.spyOn(scene, 'resumeGame')
+      selectTitle(handleKeyDown)
+      handleKeyDown(key('Enter'))
+      handleKeyDown(key('Escape'))
+      expect(scene.isInTitleConfirm()).toBe(false)
+      expect(resumeSpy).not.toHaveBeenCalled()
+    })
+
+    it('stops the game and starts the title scene when YES is confirmed', () => {
+      const { scene, handleKeyDown } = setupScene()
+      selectTitle(handleKeyDown)
+      handleKeyDown(key('Enter'))
+      handleKeyDown(key('ArrowLeft'))
+      expect(scene.getConfirmChoice()).toBe('YES')
+      handleKeyDown(key('Enter'))
+      expect(scene.scene.stop).toHaveBeenCalledWith('game')
+      expect(scene.scene.start).toHaveBeenCalledWith('title')
+    })
   })
 
   it('opens setting and help subscreens', () => {

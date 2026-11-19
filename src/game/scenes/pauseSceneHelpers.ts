@@ -1,5 +1,6 @@
 import type Phaser from 'phaser'
-import type { CommandTypingMode } from '../application/gameSettings.ts'
+import { COMMAND_TYPING_MODES, type CommandTypingMode } from '../application/gameSettings.ts'
+import { focusForMode, SETTING_RETURN_FOCUS, type SettingFocus } from './settingsFocus.ts'
 
 export const TERMINAL_FONT = '"Press Start 2P", monospace'
 export const COLOR_WHITE = '#ffffff'
@@ -30,9 +31,9 @@ export interface HelpScreenRefs {
 export interface SettingScreenRefs {
   promptCommand: Phaser.GameObjects.Text
   returnBtn: Phaser.GameObjects.Text
-  shiftText: Phaser.GameObjects.Text
-  separatorText: Phaser.GameObjects.Text
-  stickyText: Phaser.GameObjects.Text
+  /** One selector label per entry of `COMMAND_TYPING_MODES`, in order. */
+  modeTexts: Phaser.GameObjects.Text[]
+  separators: Phaser.GameObjects.Text[]
   descText: Phaser.GameObjects.Text
 }
 
@@ -232,24 +233,29 @@ export function buildSubscreenChrome(
   return { bottomCommandText, returnBtn }
 }
 
-export function getHelpLines(mode: CommandTypingMode): string[] {
-  const commandLineBindings = mode === 'hold-shift'
-    ? [
-      '  HOLD SHIFT           Open command prompt beneath hacker (slows time to 0.25x)',
-      '  RELEASE SHIFT        Execute typed command (empty input cancels & closes)',
-    ]
-    : [
-      '  ENTER                Open command prompt (slows time to 0.25x)',
-      '  ENTER on empty bar   Close command prompt without executing',
-    ]
+const HOLD_SHIFT_HELP = [
+  '  HOLD SHIFT           Open command prompt beneath hacker (slows time to 0.25x)',
+  '  RELEASE SHIFT        Execute typed command (empty input cancels & closes)',
+]
+const ENTER_STICKY_HELP = [
+  '  ENTER                Open command prompt (slows time to 0.25x)',
+  '  ENTER on empty bar   Close command prompt without executing',
+]
 
+const COMMAND_LINE_HELP: Record<CommandTypingMode, string[]> = {
+  'hold-shift': HOLD_SHIFT_HELP,
+  'enter-sticky': ENTER_STICKY_HELP,
+  hybrid: [...HOLD_SHIFT_HELP, ...ENTER_STICKY_HELP],
+}
+
+export function getHelpLines(mode: CommandTypingMode): string[] {
   return [
     '── MOVEMENT & COMBAT ──',
     '  WASD / ARROW KEYS    Move hacker',
     '  SPACE                Attack with equipped weapon (auto-pickup on touch)',
     '',
     '── COMMAND LINE ──',
-    ...commandLineBindings,
+    ...COMMAND_LINE_HELP[mode],
     '',
     '── VIRTUAL COMMANDS ──',
     '  help                 Print available commands and current room objective',
@@ -261,7 +267,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  TAB                  Auto-complete command name or discovered object label',
     '  CTRL+BACKSPACE       Delete previous word in prompt',
     '  UP / DOWN            Browse command history',
-    '  CTRL+P               Open pause menu',
+    '  ESC / CTRL+P         Open pause menu',
   ]
 }
 
@@ -297,6 +303,21 @@ export function buildHelpScreen(
   return { promptCommand: chrome.bottomCommandText, manualText, descText }
 }
 
+const MODE_LABELS: Record<CommandTypingMode, string> = {
+  'hold-shift': 'HOLD SHIFT',
+  hybrid: 'HYBRID',
+  'enter-sticky': 'ENTER + STICKY',
+}
+
+const MODE_DESCRIPTIONS: Record<CommandTypingMode, string> = {
+  'hold-shift': 'Hold Shift to type commands; release Shift to submit or cancel.',
+  hybrid: 'Hold Shift (release submits) or press Enter (Enter submits) to type commands.',
+  'enter-sticky': 'Press Enter to open/submit; Enter on empty bar closes; Shift disabled.',
+}
+
+/** Left edge of each mode label; widths differ, so positions are fixed per slot. */
+const MODE_LABEL_X = [110, 460, 750]
+
 export function buildSettingScreen(
   scene: Phaser.Scene,
   container: Phaser.GameObjects.Container,
@@ -313,81 +334,61 @@ export function buildSettingScreen(
     fontSize: '15px',
     color: COLOR_PROMPT,
   })
-  const shiftText = scene.add.text(110, 165, '', {
-    fontFamily: TERMINAL_FONT,
-    fontSize: '15px',
-    color: COLOR_WHITE,
-  })
-  const separatorText = scene.add.text(435, 165, '-', {
-    fontFamily: TERMINAL_FONT,
-    fontSize: '15px',
-    color: COLOR_DIM,
-  })
-  const stickyText = scene.add.text(475, 165, '', {
-    fontFamily: TERMINAL_FONT,
-    fontSize: '15px',
-    color: LEGACY_DIM,
-  })
+  const modeTexts = COMMAND_TYPING_MODES.map((_mode, index) =>
+    scene.add.text(MODE_LABEL_X[index], 165, '', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '15px',
+      color: LEGACY_DIM,
+    }))
+  const separators = MODE_LABEL_X.slice(1).map((x) =>
+    scene.add.text(x - 35, 165, '-', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '15px',
+      color: COLOR_DIM,
+    }))
   const descText = scene.add.text(110, 210, '', {
     fontFamily: TERMINAL_FONT,
     fontSize: '14px',
     color: COLOR_DIM,
   })
 
-  container.add([header, shiftText, separatorText, stickyText, descText])
+  container.add([header, ...modeTexts, ...separators, descText])
   updateSettingDisplay({
     typingMode,
-    focusIndex: typingMode === 'hold-shift' ? 0 : 1,
+    focusIndex: focusForMode(typingMode),
     returnBtn: chrome.returnBtn,
-    shiftText,
-    stickyText,
+    modeTexts,
     descText,
   })
 
-  return {
-    promptCommand: chrome.bottomCommandText,
-    returnBtn: chrome.returnBtn,
-    shiftText,
-    separatorText,
-    stickyText,
-    descText,
-  }
+  return { promptCommand: chrome.bottomCommandText, returnBtn: chrome.returnBtn, modeTexts, separators, descText }
 }
 
 export function updateSettingDisplay({
   typingMode,
   focusIndex,
   returnBtn,
-  shiftText,
-  stickyText,
+  modeTexts,
   descText,
 }: {
   typingMode: CommandTypingMode
-  focusIndex: 0 | 1 | 2
+  focusIndex: SettingFocus
   returnBtn: Phaser.GameObjects.Text
-  shiftText: Phaser.GameObjects.Text
-  stickyText: Phaser.GameObjects.Text
+  modeTexts: Phaser.GameObjects.Text[]
   descText: Phaser.GameObjects.Text
 }): void {
-  const isShiftSelected = typingMode === 'hold-shift'
-  const shiftTag = isShiftSelected ? '* HOLD SHIFT *' : '  HOLD SHIFT  '
-  shiftText.setText(focusIndex === 0 ? `> [${shiftTag}] <` : `  [${shiftTag}]  `)
-  shiftText.setColor(focusIndex === 0 ? COLOR_WHITE : LEGACY_DIM)
+  COMMAND_TYPING_MODES.forEach((mode, index) => {
+    const text = modeTexts[index]
+    if (!text) return
+    const tag = `${mode === typingMode ? '* ' : '  '}${MODE_LABELS[mode]}${mode === typingMode ? ' *' : '  '}`
+    const focused = focusIndex === index
+    text.setText(focused ? `> [${tag}] <` : `  [${tag}]  `)
+    text.setColor(focused ? COLOR_WHITE : LEGACY_DIM)
+  })
 
-  const stickyTag = !isShiftSelected ? '* ENTER + STICKY *' : '  ENTER + STICKY  '
-  stickyText.setText(focusIndex === 1 ? `> [${stickyTag}] <` : `  [${stickyTag}]  `)
-  stickyText.setColor(focusIndex === 1 ? COLOR_WHITE : LEGACY_DIM)
+  descText.setText(MODE_DESCRIPTIONS[COMMAND_TYPING_MODES[focusIndex] ?? typingMode])
 
-  const activeForDesc = focusIndex === 0
-    ? 'hold-shift'
-    : focusIndex === 1
-      ? 'enter-sticky'
-      : typingMode
-  descText.setText(activeForDesc === 'hold-shift'
-    ? 'Hold Shift to type commands; release Shift to submit or cancel.'
-    : 'Press Enter to open/submit; Enter on empty bar closes; Shift disabled.')
-
-  const isReturnFocused = focusIndex === 2
+  const isReturnFocused = focusIndex === SETTING_RETURN_FOCUS
   returnBtn.setText(isReturnFocused ? '> [ RETURN ] <' : '  [ RETURN ]  ')
   returnBtn.setColor(isReturnFocused ? COLOR_WHITE : COLOR_DIM)
 }

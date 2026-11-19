@@ -10,7 +10,9 @@ import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/Phase
 import { InlineCommandInputView } from '../presentation/InlineCommandInputView.ts'
 import { CommandEditorOverlay } from './CommandEditorOverlay.ts'
 import {
+    enterOpensCommandInput,
     loadCommandTypingMode,
+    shiftOpensCommandInput,
     type CommandTypingMode,
 } from '../application/gameSettings.ts'
 
@@ -196,6 +198,8 @@ export class GameScene extends Phaser.Scene {
     public openPause(): void {
         if (this.scene.isActive('pause')) return
         this.session.releaseAllKeys()
+        // Shift is no longer tracked while paused, so a Shift-opened prompt stays open until Enter.
+        this.enteredByShift = false
         ;(this.session as unknown as {
             dependencies: { simulationClock: { setTimeScale: (scale: number) => void } }
         }).dependencies.simulationClock.setTimeScale(0)
@@ -234,6 +238,12 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
+        if (key === 'escape' && !this.outcomePanel?.menuActive) {
+            event.preventDefault()
+            if (!event.repeat) this.openPause()
+            return false
+        }
+
         if (this.outcomePanel?.menuActive) {
             event.preventDefault()
             if (key === 'arrowleft') {
@@ -247,35 +257,20 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (this.session.inputMode === 'movement') {
-            if (this.commandTypingMode === 'enter-sticky') {
-                if (key === 'shift') {
-                    event.preventDefault()
-                    return false
+            if (key === 'shift') {
+                event.preventDefault()
+                if (shiftOpensCommandInput(this.commandTypingMode) && !event.repeat) {
+                    this.openCommandInput(true)
                 }
+                return false
+            }
 
-                if (key === 'enter') {
-                    event.preventDefault()
-                    if (!event.repeat) {
-                        this.session.enterCommandMode()
-                        this.inlineCommandInputView?.setVisible(true)
-                    }
-                    return false
+            if (key === 'enter') {
+                event.preventDefault()
+                if (enterOpensCommandInput(this.commandTypingMode) && !event.repeat) {
+                    this.openCommandInput(false)
                 }
-            } else {
-                if (key === 'shift') {
-                    event.preventDefault()
-                    if (!event.repeat) {
-                        this.session.enterCommandMode()
-                        this.inlineCommandInputView?.setVisible(true)
-                        this.enteredByShift = true
-                    }
-                    return false
-                }
-
-                if (key === 'enter') {
-                    event.preventDefault()
-                    return false
-                }
+                return false
             }
 
             if (INPUT_BINDINGS.attack.keys.includes(key)) {
@@ -299,11 +294,17 @@ export class GameScene extends Phaser.Scene {
         return typeable
     }
 
+    private openCommandInput(byShift: boolean): void {
+        this.session.enterCommandMode()
+        this.inlineCommandInputView?.setVisible(true)
+        this.enteredByShift = byShift
+    }
+
     private readonly handleKeyUp = (event: KeyboardEvent): void => {
         const key = event.key.toLowerCase()
         this.session.keyUp(key)
 
-        if (this.commandTypingMode === 'hold-shift' && key === 'shift' && this.enteredByShift && this.session.inputMode === 'command') {
+        if (key === 'shift' && this.enteredByShift && this.session.inputMode === 'command') {
             if (this.inlineCommandInputView && this.inlineCommandInputView.getValue().trim().length > 0) {
                 this.inlineCommandInputView.submit()
             } else {
@@ -311,13 +312,13 @@ export class GameScene extends Phaser.Scene {
                 this.inlineCommandInputView?.clearInput()
                 this.inlineCommandInputView?.setVisible(false)
             }
-            this.enteredByShift = false
         }
+        if (key === 'shift') this.enteredByShift = false
     }
 
     private readonly handleBlur = (): void => {
         this.session.releaseAllKeys()
-        if (this.commandTypingMode === 'hold-shift' && this.enteredByShift && this.session.inputMode === 'command') {
+        if (this.enteredByShift && this.session.inputMode === 'command') {
             this.session.enterMovementMode()
             this.inlineCommandInputView?.clearInput()
             this.inlineCommandInputView?.setVisible(false)

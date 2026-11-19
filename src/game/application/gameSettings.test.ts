@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   COMMAND_TYPING_MODE_KEY,
+  COMMAND_TYPING_MODES,
+  enterOpensCommandInput,
+  shiftOpensCommandInput,
   DEFAULT_COMMAND_TYPING_MODE,
   loadCommandTypingMode,
   saveCommandTypingMode,
@@ -73,5 +76,20 @@ describe('gameSettings', () => {
 
     expect(loadCommandTypingMode(throwingStorage)).toBe('hold-shift')
     expect(() => saveCommandTypingMode('enter-sticky', throwingStorage)).not.toThrow()
+  })
+
+  it('round-trips hybrid and lists modes in selector order', () => {
+    const storage = createMockStorage()
+    saveCommandTypingMode('hybrid', storage)
+    expect(loadCommandTypingMode(storage)).toBe('hybrid')
+    expect(COMMAND_TYPING_MODES).toEqual(['hold-shift', 'hybrid', 'enter-sticky'])
+  })
+
+  it('maps each mode to the keys that open the Command Input', () => {
+    expect(COMMAND_TYPING_MODES.map((m) => [shiftOpensCommandInput(m), enterOpensCommandInput(m)])).toEqual([
+      [true, false],
+      [true, true],
+      [false, true],
+    ])
   })
 })

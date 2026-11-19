@@ -217,22 +217,32 @@ describe('TitleScene', () => {
 
     // Arrow keys (ArrowRight, ArrowLeft, D, A) change focus but do not change the current mode value
     handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    expect(scene.getSettingFocusIndex()).toBe(1)
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(2)
     expect(scene.getSettingSelectedIndex()).toBe(0)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
-    expect((scene as any).settingStickyText.setText).toHaveBeenCalledWith('> [  ENTER + STICKY  ] <')
-    expect((scene as any).settingStickyText.setColor).toHaveBeenCalledWith('#ffffff')
-    expect((scene as any).settingShiftText.setText).toHaveBeenCalledWith('  [* HOLD SHIFT *]  ')
-    expect((scene as any).settingShiftText.setColor).toHaveBeenCalledWith('#555555')
+    const [shiftText, hybridText, stickyText] = (scene as any).settingModeTexts
+    expect(stickyText.setText).toHaveBeenCalledWith('> [  ENTER + STICKY  ] <')
+    expect(stickyText.setColor).toHaveBeenCalledWith('#ffffff')
+    expect(shiftText.setText).toHaveBeenCalledWith('  [* HOLD SHIFT *]  ')
+    expect(shiftText.setColor).toHaveBeenCalledWith('#555555')
+    expect(hybridText.setText).toHaveBeenCalledWith('  [  HYBRID  ]  ')
 
+    // Focus is clamped at the last mode
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(2)
+    handleKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSettingFocusIndex()).toBe(1)
+
+    handleKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     handleKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSettingFocusIndex()).toBe(0)
     expect(scene.getSettingSelectedIndex()).toBe(0)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
-    expect((scene as any).settingShiftText.setText).toHaveBeenCalledWith('> [* HOLD SHIFT *] <')
-    expect((scene as any).settingShiftText.setColor).toHaveBeenCalledWith('#ffffff')
-    expect((scene as any).settingStickyText.setText).toHaveBeenCalledWith('  [  ENTER + STICKY  ]  ')
-    expect((scene as any).settingStickyText.setColor).toHaveBeenCalledWith('#555555')
+    expect(shiftText.setText).toHaveBeenCalledWith('> [* HOLD SHIFT *] <')
+    expect(shiftText.setColor).toHaveBeenCalledWith('#ffffff')
+    expect(stickyText.setText).toHaveBeenCalledWith('  [  ENTER + STICKY  ]  ')
+    expect(stickyText.setColor).toHaveBeenCalledWith('#555555')
 
     handleKeyDown({ key: 'd', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSettingFocusIndex()).toBe(1)
@@ -249,17 +259,23 @@ describe('TitleScene', () => {
     expect(scene.getSettingSelectedIndex()).toBe(0)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
 
-    // Move focus to enter-sticky and select it using Enter
+    // Move focus to hybrid and select it using Enter
     handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSettingFocusIndex()).toBe(1)
     expect(scene.getSettingSelectedIndex()).toBe(0)
     handleKeyDown(enterEvent)
     expect(scene.getSettingSelectedIndex()).toBe(1)
+    expect(scene.getCurrentTypingMode()).toBe('hybrid')
+
+    // Move focus to enter-sticky and select it using Enter
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown(enterEvent)
+    expect(scene.getSettingSelectedIndex()).toBe(2)
     expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
 
     // Pressing Enter again while focused on [* ENTER + STICKY *] keeps it selected
     handleKeyDown(enterEvent)
-    expect(scene.getSettingSelectedIndex()).toBe(1)
+    expect(scene.getSettingSelectedIndex()).toBe(2)
     expect(scene.getCurrentTypingMode()).toBe('enter-sticky')
 
     // Move focus down to [ RETURN ] button (focus row 1)
@@ -295,11 +311,18 @@ describe('TitleScene', () => {
     expect(linesSticky.some((line: string) => line.includes('HOLD SHIFT'))).toBe(false)
     expect(linesSticky.some((line: string) => line.includes('ENTER on empty bar'))).toBe(true)
     expect(linesSticky.some((line: string) => line.includes('CTRL+P'))).toBe(true)
+    expect(linesSticky.some((line: string) => line.includes('ESC'))).toBe(true)
+
+    // In hybrid mode both bindings are listed
+    const linesHybrid = (scene as any).getHelpLines('hybrid')
+    expect(linesHybrid.some((line: string) => line.includes('HOLD SHIFT'))).toBe(true)
+    expect(linesHybrid.some((line: string) => line.includes('ENTER on empty bar'))).toBe(true)
 
     // Changing mode updates the help manual text
     const setTextSpy = vi.spyOn(helpTextObj, 'setText')
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select SETTING
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // open SETTING
+    handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent) // focus hybrid
     handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent) // focus enter-sticky
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select enter-sticky
 

@@ -156,6 +156,14 @@ _Avoid_: Walk mode, game mode
 The input state in which the Command Input accepts text and the Player Character cannot move. Time in the game world runs slower than in Movement Mode.
 _Avoid_: Typing mode, terminal mode
 
+**Command Typing Mode**:
+The player's setting for how Command Mode is entered and left: Hold Shift, Enter + Sticky, or Hybrid (both ways available at once, where the key that opened the Command Input decides how it closes).
+_Avoid_: Input mode (that names Movement Mode and Command Mode)
+
+**Pause Menu**:
+The overlay that suspends the game world and offers Resume, Setting, Help and Title. Choosing Title abandons the current run but leaves the Save Slot untouched.
+_Avoid_: Esc menu, game menu
+
 **Time Scale**:
 The speed at which game-world time runs relative to real time, determined by the current input state.
 _Avoid_: Frame rate (when referring to the speed of game-world time)

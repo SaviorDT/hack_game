@@ -2,8 +2,16 @@ import Phaser from 'phaser'
 import {
   loadCommandTypingMode,
   saveCommandTypingMode,
+  COMMAND_TYPING_MODES,
   type CommandTypingMode,
 } from '../application/gameSettings.ts'
+import {
+  focusForMode,
+  nextSettingFocus,
+  SETTING_RETURN_FOCUS,
+  settingChoiceAt,
+  type SettingFocus,
+} from './settingsFocus.ts'
 import {
   buildHelpScreen,
   buildSettingScreen,
@@ -31,7 +39,7 @@ export {
 export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
 export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number]
 
-export const TYPING_MODES: readonly CommandTypingMode[] = ['hold-shift', 'enter-sticky']
+export const TYPING_MODES: readonly CommandTypingMode[] = COMMAND_TYPING_MODES
 
 
 export class TitleScene extends Phaser.Scene {
@@ -44,14 +52,13 @@ export class TitleScene extends Phaser.Scene {
   private helpPromptCommand!: Phaser.GameObjects.Text
   private settingsPromptCommand!: Phaser.GameObjects.Text
   private settingsReturnBtn?: Phaser.GameObjects.Text
-  private settingShiftText?: Phaser.GameObjects.Text
-  private settingSeparatorText?: Phaser.GameObjects.Text
-  private settingStickyText?: Phaser.GameObjects.Text
+  private settingModeTexts: Phaser.GameObjects.Text[] = []
+  private settingSeparators: Phaser.GameObjects.Text[] = []
   private settingDescText?: Phaser.GameObjects.Text
   private helpManualText?: Phaser.GameObjects.Text
   private helpDescText?: Phaser.GameObjects.Text
   private currentTypingMode: CommandTypingMode = 'hold-shift'
-  private settingFocusIndex: 0 | 1 | 2 = 0
+  private settingFocusIndex: SettingFocus = 0
   private inHelp = false
   private inSettings = false
   private isTransitioning = false
@@ -66,7 +73,7 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000000')
 
     this.currentTypingMode = loadCommandTypingMode()
-    this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
+    this.settingFocusIndex = focusForMode(this.currentTypingMode)
 
     this.mainMenuContainer = this.add.container(0, 0)
     this.helpScreenContainer = this.add.container(0, 0).setVisible(false)
@@ -103,11 +110,11 @@ export class TitleScene extends Phaser.Scene {
   }
 
   public getSettingSelectedIndex(): number {
-    return this.currentTypingMode === 'hold-shift' ? 0 : 1
+    return focusForMode(this.currentTypingMode)
   }
 
   public getSettingFocusRow(): number {
-    return this.settingFocusIndex === 2 ? 1 : 0
+    return this.settingFocusIndex === SETTING_RETURN_FOCUS ? 1 : 0
   }
 
   public getSettingFocusIndex(): number {
@@ -131,7 +138,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   public showSettings(animated = true): void {
-    this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
+    this.settingFocusIndex = focusForMode(this.currentTypingMode)
     this.updateSettingDisplay()
     this.transitionToSubscreen(this.settingsScreenContainer, './setting', () => {
       this.inSettings = true
@@ -365,21 +372,19 @@ export class TitleScene extends Phaser.Scene {
     const refs = buildSettingScreen(this, this.settingsScreenContainer, this.currentTypingMode)
     this.settingsPromptCommand = refs.promptCommand
     this.settingsReturnBtn = refs.returnBtn
-    this.settingShiftText = refs.shiftText
-    this.settingSeparatorText = refs.separatorText
-    this.settingStickyText = refs.stickyText
+    this.settingModeTexts = refs.modeTexts
+    this.settingSeparators = refs.separators
     this.settingDescText = refs.descText
     this.updateSettingDisplay()
   }
 
   private updateSettingDisplay(): void {
-    if (!this.settingsReturnBtn || !this.settingShiftText || !this.settingStickyText || !this.settingDescText) return
+    if (!this.settingsReturnBtn || !this.settingDescText) return
     updateSettingDisplay({
       typingMode: this.currentTypingMode,
       focusIndex: this.settingFocusIndex,
       returnBtn: this.settingsReturnBtn,
-      shiftText: this.settingShiftText,
-      stickyText: this.settingStickyText,
+      modeTexts: this.settingModeTexts,
       descText: this.settingDescText,
     })
   }
@@ -422,62 +427,27 @@ export class TitleScene extends Phaser.Scene {
     }
 
     if (this.inSettings) {
-      if (key === 'ARROWLEFT' || key === 'A') {
+      const nextFocus = nextSettingFocus(this.settingFocusIndex, this.currentTypingMode, key)
+      if (nextFocus !== undefined) {
         event.preventDefault()
-        if (this.settingFocusIndex !== 0) {
-          this.settingFocusIndex = 0
+        if (nextFocus !== this.settingFocusIndex) {
+          this.settingFocusIndex = nextFocus
           this.updateSettingDisplay()
         }
-        return
-      }
-
-      if (key === 'ARROWRIGHT' || key === 'D') {
-        event.preventDefault()
-        if (this.settingFocusIndex !== 1) {
-          this.settingFocusIndex = 1
-          this.updateSettingDisplay()
-        }
-        return
-      }
-
-      if (key === 'ARROWDOWN' || key === 'S') {
-        event.preventDefault()
-        if (this.settingFocusIndex === 0 || this.settingFocusIndex === 1) {
-          this.settingFocusIndex = 2
-        } else {
-          this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
-        }
-        this.updateSettingDisplay()
-        return
-      }
-
-      if (key === 'ARROWUP' || key === 'W') {
-        event.preventDefault()
-        if (this.settingFocusIndex === 2) {
-          this.settingFocusIndex = this.currentTypingMode === 'hold-shift' ? 0 : 1
-        } else {
-          this.settingFocusIndex = 2
-        }
-        this.updateSettingDisplay()
         return
       }
 
       if (key === 'ENTER') {
         event.preventDefault()
-        if (this.settingFocusIndex === 0) {
-          this.currentTypingMode = 'hold-shift'
-          saveCommandTypingMode(this.currentTypingMode)
-          this.updateSettingDisplay()
-          this.updateHelpText()
-        } else if (this.settingFocusIndex === 1) {
-          this.currentTypingMode = 'enter-sticky'
-          saveCommandTypingMode(this.currentTypingMode)
-          this.updateSettingDisplay()
-          this.updateHelpText()
-        } else if (this.settingFocusIndex === 2) {
+        const choice = settingChoiceAt(this.settingFocusIndex)
+        if (choice === 'return') {
           this.exitSettings()
+        } else {
+          this.currentTypingMode = choice
+          saveCommandTypingMode(this.currentTypingMode)
+          this.updateSettingDisplay()
+          this.updateHelpText()
         }
-        return
       }
       return
     }
@@ -502,10 +472,9 @@ export class TitleScene extends Phaser.Scene {
       keyboard?.off('keydown', this.handleKeyDown)
       this.menuTexts = []
       this.settingsReturnBtn = undefined
-      this.settingShiftText = undefined
-      this.settingSeparatorText?.destroy?.()
-      this.settingSeparatorText = undefined
-      this.settingStickyText = undefined
+      this.settingModeTexts = []
+      this.settingSeparators.forEach((text) => text.destroy?.())
+      this.settingSeparators = []
       this.settingDescText = undefined
       this.helpManualText = undefined
       this.helpDescText?.destroy?.()

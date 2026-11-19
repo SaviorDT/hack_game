@@ -160,8 +160,9 @@ describe('GameScene key handling', () => {
     expect(result).toBe(true)
   })
 
-  it('does not exit command mode when Escape is pressed in command mode', () => {
-    const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+  it('opens the pause menu on Escape and keeps the command draft', () => {
+    const { scene, session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+    const openPause = vi.spyOn(scene, 'openPause').mockImplementation(() => {})
     session.enterCommandMode()
 
     const preventDefault = vi.fn()
@@ -171,10 +172,18 @@ describe('GameScene key handling', () => {
       preventDefault,
     } as unknown as KeyboardEvent)
 
+    expect(openPause).toHaveBeenCalledTimes(1)
     expect(session.inputMode).toBe('command')
     expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
     expect(mockInlineCommandInputView.setVisible).not.toHaveBeenCalled()
-    expect(result).toBe(true)
+    expect(result).toBe(false)
+  })
+
+  it('opens the pause menu on Escape in movement mode', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const openPause = vi.spyOn(scene, 'openPause').mockImplementation(() => {})
+    handleKeyDown({ key: 'Escape', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(openPause).toHaveBeenCalledTimes(1)
   })
 
   it('exits command mode when Shift is released if entered by Shift with empty draft', () => {
@@ -327,6 +336,60 @@ describe('GameScene key handling', () => {
       expect(session.inputMode).toBe('movement')
       expect(mockInlineCommandInputView.setVisible).toHaveBeenCalledWith(false)
       expect(submitCommandSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('hybrid typing mode', () => {
+    const key = (name: string, repeat = false) =>
+      ({ key: name, repeat, preventDefault: vi.fn() }) as unknown as KeyboardEvent
+
+    it('opens the prompt with Shift and closes it on Shift release', () => {
+      const { scene, session, mockInlineCommandInputView, handleKeyDown, handleKeyUp } = setupScene()
+      scene.setCommandTypingMode('hybrid')
+
+      handleKeyDown(key('Shift'))
+      expect(session.inputMode).toBe('command')
+      expect((scene as any).enteredByShift).toBe(true)
+
+      handleKeyUp(key('Shift'))
+      expect(session.inputMode).toBe('movement')
+      expect(mockInlineCommandInputView.setVisible).toHaveBeenLastCalledWith(false)
+    })
+
+    it('opens the prompt with Enter and ignores Shift release', () => {
+      const { scene, session, mockInlineCommandInputView, handleKeyDown, handleKeyUp } = setupScene()
+      scene.setCommandTypingMode('hybrid')
+
+      handleKeyDown(key('Enter'))
+      expect(session.inputMode).toBe('command')
+      expect((scene as any).enteredByShift).toBe(false)
+
+      handleKeyUp(key('Shift'))
+      expect(session.inputMode).toBe('command')
+      expect(mockInlineCommandInputView.clearInput).not.toHaveBeenCalled()
+    })
+
+    it('does not treat an Enter-opened prompt as Shift-opened after a Shift-opened one was submitted', () => {
+      const { scene, session, handleKeyDown, handleKeyUp } = setupScene()
+      scene.setCommandTypingMode('hybrid')
+
+      handleKeyDown(key('Shift'))
+      session.enterMovementMode() // submitted with Enter while Shift is still held
+      handleKeyUp(key('Shift'))
+      expect((scene as any).enteredByShift).toBe(false)
+
+      handleKeyDown(key('Enter'))
+      handleKeyUp(key('Shift'))
+      expect(session.inputMode).toBe('command')
+    })
+  })
+
+  describe('hold-shift typing mode', () => {
+    it('ignores Enter in movement mode', () => {
+      const { scene, session, handleKeyDown } = setupScene()
+      scene.setCommandTypingMode('hold-shift')
+      handleKeyDown({ key: 'Enter', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+      expect(session.inputMode).toBe('movement')
     })
   })
 

@@ -13,12 +13,12 @@ describe('MvCommandExecutor', () => {
     const state = createInitialWorldState()
     expect(executor.execute({ name: 'mv', arguments: [], options: [] }, state)).toEqual({
       status: 'rejected',
-      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2>' },
+      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2|$mouse>' },
     })
 
     expect(executor.execute({ name: 'mv', arguments: ['dagger'], options: [] }, state)).toEqual({
       status: 'rejected',
-      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2>' },
+      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2|$mouse>' },
     })
   })
 
@@ -85,14 +85,14 @@ describe('MvCommandExecutor', () => {
       executor.execute({ name: 'mv', arguments: ['dagger', 'guard', 'extra'], options: [] }, state),
     ).toEqual({
       status: 'rejected',
-      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2>' },
+      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2|$mouse>' },
     })
 
     expect(
       executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: ['--speed=500'] }, state),
     ).toEqual({
       status: 'rejected',
-      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2>' },
+      feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2|$mouse>' },
     })
   })
 
@@ -347,6 +347,51 @@ describe('MvCommandExecutor', () => {
       expect(stateOf(state, WORLD_OBJECT_IDS.guard).thrown).toMatchObject({
         targetObjectId: WORLD_OBJECT_IDS.dagger,
       })
+    })
+  })
+
+  describe('$mouse target', () => {
+    it('throws towards the mouse point without renaming or discovering anything', () => {
+      const state = createInitialWorldState()
+      const result = executor.execute(
+        { name: 'mv', arguments: ['dagger', '$mouse'], options: [] },
+        state,
+        { mouse: { x: 123, y: 234 } },
+      )
+      expect(result).toEqual({ status: 'success', feedback: [{ kind: 'popup', text: 'Threw dagger to $mouse.' }] })
+      const dagger = state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!
+      const thrown = getMutableWorldObjectState<MutableWorldObjectState>(dagger).thrown as {
+        targetX: number
+        targetY: number
+        targetObjectId: string | null
+      }
+      expect(thrown).toMatchObject({ targetX: 123, targetY: 234, targetObjectId: null })
+      expect(dagger.metadata.name).not.toBe('$mouse')
+    })
+
+    it('is case-insensitive', () => {
+      const state = createInitialWorldState()
+      const result = executor.execute(
+        { name: 'mv', arguments: ['dagger', '$MOUSE'], options: [] },
+        state,
+        { mouse: { x: 1, y: 2 } },
+      )
+      expect(result.status).toBe('success')
+    })
+
+    it('rejects when there is no mouse point', () => {
+      const state = createInitialWorldState()
+      expect(executor.execute({ name: 'mv', arguments: ['dagger', '$mouse'], options: [] }, state)).toEqual({
+        status: 'rejected',
+        feedback: { kind: 'popup', text: 'Move the mouse over the game first.' },
+      })
+    })
+
+    it('has no special meaning as a source', () => {
+      const state = createInitialWorldState()
+      expect(
+        executor.execute({ name: 'mv', arguments: ['$mouse', 'dagger'], options: [] }, state, { mouse: { x: 1, y: 2 } }),
+      ).toEqual({ status: 'rejected', feedback: { kind: 'popup', text: 'Cannot find "$mouse".' } })
     })
   })
 })

@@ -1,3 +1,4 @@
+import type { CommandContext } from '../commands/CommandContext.ts'
 import type { CommandSubmissionService } from '../commands/CommandSubmissionService.ts'
 import type { CommandResult } from '../commands/CommandResult.ts'
 import type { SaveRepository } from '../persistence/SaveRepository.ts'
@@ -125,9 +126,9 @@ export class GameSession {
     return this.dependencies.worldState
   }
 
-  submitCommand(rawText: string): CommandResult {
+  submitCommand(rawText: string, context?: CommandContext): CommandResult {
     this.dependencies.worldState.commandHistory.push(rawText)
-    const result = this.dependencies.commandSubmission.submit(rawText, this.dependencies.worldState)
+    const result = this.dependencies.commandSubmission.submit(rawText, this.dependencies.worldState, context)
     this.dependencies.inputMode.finishCommand(result.inputAfter)
     this.syncTimeScale()
     return result

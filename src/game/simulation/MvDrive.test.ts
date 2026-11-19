@@ -257,4 +257,17 @@ describe('MvDrive and the room', () => {
       bottom: ROOM_LAYOUT.bottom,
     })
   })
+
+  it('ends a Throw whose target lies outside the room once the room edge stops the object', () => {
+    const { body, tick } = setup()
+    const dagger = body(WORLD_OBJECT_IDS.dagger)
+    dagger.x = ROOM_LAYOUT.right - 100
+    dagger.y = (ROOM_LAYOUT.top + ROOM_LAYOUT.bottom) / 2
+    throwTo(dagger, ROOM_LAYOUT.right + 500, dagger.y)
+    for (let i = 0; i < 600 && dagger.thrown; i++) {
+      tick()
+    }
+    expect(dagger.thrown).toBeNull()
+    expect(dagger.x).toBeLessThanOrEqual(ROOM_LAYOUT.right)
+  })
 })

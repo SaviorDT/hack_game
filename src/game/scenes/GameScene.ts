@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { PhaserGameHud } from '../presentation/PhaserGameHud.ts'
+import type { MousePoint } from '../commands/CommandContext.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import { createRoom1Session } from '../content/createRoom1Session.ts'
 import { ROOM1_OBJECTS } from '../content/room1.ts'
@@ -30,6 +31,8 @@ export class GameScene extends Phaser.Scene {
     private commandTypingMode: CommandTypingMode = 'hold-shift'
     private customCommandTypingMode?: CommandTypingMode
     private enteredByShift = false
+    /** The cursor in Room coordinates, once it has been over the game; the source of the Mouse Target. */
+    private mousePoint: MousePoint | undefined
     /** The room the player was in last frame; entering a different one is a Save Point. */
     private lastRoomId: string | null = null
 
@@ -82,6 +85,11 @@ export class GameScene extends Phaser.Scene {
                 }),
         )
 
+        this.mousePoint = undefined
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            this.mousePoint = { x: pointer.worldX, y: pointer.worldY }
+        })
+
         const inlineCommandInputView = new InlineCommandInputView()
         this.inlineCommandInputView = inlineCommandInputView
         inlineCommandInputView.mount(
@@ -93,7 +101,7 @@ export class GameScene extends Phaser.Scene {
                     this.enteredByShift = false
                     return
                 }
-                this.session.submitCommand(rawText)
+                this.session.submitCommand(rawText, { mouse: this.mousePoint })
                 inlineCommandInputView.setVisible(false)
                 this.enteredByShift = false
             },

@@ -84,6 +84,10 @@ _Avoid_: File path, filesystem path (when referring to the host computer)
 The flight of a World Object from where it is towards a target after the player moves it with `mv`. It ends when the object arrives at the target or at its first Collision; an object that would Collide on the way never reaches the target.
 _Avoid_: Shot, launch
 
+**Mouse Target**:
+The special `mv` target `$mouse`, which stands for the point in the Room under the cursor at the moment the command is submitted. It is a point, not a World Object, so it is never discovered or renamed to. Because `$mouse` always means this point, no World Object can be named `$mouse`.
+_Avoid_: Cursor object, pointer target
+
 **Collider Tag**:
 A typed label on a World Object that says what kind of thing it is when it touches another object, such as Weapon, Character or Obstacle. What happens on contact, and whether two objects Collide at all, depends only on the tags of the two objects.
 _Avoid_: Hitbox, collision type

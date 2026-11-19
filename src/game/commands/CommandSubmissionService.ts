@@ -3,6 +3,8 @@ import type { CommandRegistry } from './CommandRegistry.ts'
 import type { CommandRequirementChecker } from './CommandRequirementChecker.ts'
 import type { CommandResult } from './CommandResult.ts'
 import type { WorldState } from '../domain/WorldState.ts'
+import { MOUSE_TARGET } from './CommandContext.ts'
+import type { CommandContext } from './CommandContext.ts'
 import { getRoomDirectoryEntries } from './RoomDirectory.ts'
 
 export class CommandSubmissionService {
@@ -20,7 +22,7 @@ export class CommandSubmissionService {
     this.requirementChecker = requirementChecker
   }
 
-  submit(rawText: string, state: WorldState): CommandResult {
+  submit(rawText: string, state: WorldState, context: CommandContext = {}): CommandResult {
     const parseResult = this.parser.parse(rawText)
     if (!parseResult.ok) {
       return { status: 'rejected', feedback: { kind: 'popup', text: parseResult.reason } }
@@ -43,7 +45,7 @@ export class CommandSubmissionService {
       return { status: 'rejected', feedback: { kind: 'popup', text: requirementResult.reason } }
     }
 
-    return registeredCommand.executor.execute(parseResult.command, state)
+    return registeredCommand.executor.execute(parseResult.command, state, context)
   }
 
   getCompletionCandidates(rawText: string, cursorIndex: number, state: WorldState): readonly string[] {
@@ -65,7 +67,8 @@ export class CommandSubmissionService {
     const isCompletingArgument = Boolean(commandMatch && /\s/.test(textAfterCommand))
 
     if (isCompletingArgument) {
-      return [...new Set(roomEntries)]
+      const isMv = commandMatch?.[1] === 'mv'
+      return [...new Set(isMv ? [...roomEntries, MOUSE_TARGET] : roomEntries)]
     }
 
     return [...new Set([...this.registry.names(), ...roomEntries])]

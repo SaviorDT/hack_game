@@ -203,13 +203,16 @@ export class PhysicsWorld {
       bounds,
     )
 
+    let hitBounds = false
     if (bounds) {
       const clamped = this.collision.clampToBounds(next, bounds)
       if (clamped.x !== next.x) {
         state.vx = 0
+        hitBounds = true
       }
       if (clamped.y !== next.y) {
         state.vy = 0
+        hitBounds = true
       }
     }
     state.x = resolved.x
@@ -230,7 +233,7 @@ export class PhysicsWorld {
         hitWall = true
       }
     }
-    if (hitWall) {
+    if (hitWall || hitBounds) {
       for (const listener of this.wallListeners) {
         listener(body.object)
       }

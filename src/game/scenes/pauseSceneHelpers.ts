@@ -261,6 +261,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  help                 Print available commands and current room objective',
     '  ls                   Discover and reveal hidden objects in current room',
     '  mv <src> <target>    Throw object towards target, or rename object',
+    '  mv <src> $mouse      Throw object towards the mouse cursor',
     '  cd <room>            Pass through exit doorway into adjacent room',
     '',
     '── SHORTCUTS ──',

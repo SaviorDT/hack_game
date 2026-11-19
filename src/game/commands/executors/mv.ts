@@ -5,6 +5,7 @@ import type { CommandExecutor } from './base.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { WorldObject } from '../../domain/WorldObject.ts'
 import { hasUppercase } from '../../domain/label.ts'
+import { isMouseTarget, MOUSE_TARGET, type CommandContext } from '../CommandContext.ts'
 
 export function findObjectInRoom(state: WorldState, label: string): WorldObject | undefined {
   const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
@@ -67,13 +68,13 @@ function nextFreeName(base: string, taken: Set<string>, counter: { next: number 
 }
 
 export class MvCommandExecutor implements CommandExecutor {
-  execute(command: ParsedCommand, state: WorldState): CommandResult {
+  execute(command: ParsedCommand, state: WorldState, context: CommandContext = {}): CommandResult {
     if (state.outcome !== 'playing') {
       return { status: 'rejected', feedback: { kind: 'popup', text: 'This game has ended.' } }
     }
 
     if (command.arguments.length !== 2 || command.options.length > 0) {
-      return { status: 'rejected', feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2>' } }
+      return { status: 'rejected', feedback: { kind: 'popup', text: 'Usage: mv <label1> <label2|$mouse>' } }
     }
 
     const currentRoom = state.rooms.find((room) => room.id === state.currentRoomId)
@@ -84,9 +85,15 @@ export class MvCommandExecutor implements CommandExecutor {
     const label1 = command.arguments[0]
     const label2 = command.arguments[1]
 
-    const targetObject = findObjectInRoom(state, label2)
+    // The Mouse Target is a point and wins over any object or exit that happens to share its name.
+    const toMouse = isMouseTarget(label2)
+    if (toMouse && !context.mouse) {
+      return { status: 'rejected', feedback: { kind: 'popup', text: 'Move the mouse over the game first.' } }
+    }
+
+    const targetObject = toMouse ? undefined : findObjectInRoom(state, label2)
     const norm2 = label2.trim().toLowerCase().replace(/\/$/, '')
-    const targetExit = currentRoom.exits.find(
+    const targetExit = toMouse ? undefined : currentRoom.exits.find(
       (exit) => exit.label.toLowerCase() === norm2 || exit.targetRoomId.toLowerCase() === norm2,
     )
 
@@ -113,7 +120,7 @@ export class MvCommandExecutor implements CommandExecutor {
     }
 
     // If target does not exist, rename sources as target
-    if (!targetObject && !targetExit) {
+    if (!toMouse && !targetObject && !targetExit) {
       if (hasUppercase(label2)) {
         return { status: 'rejected', feedback: { kind: 'popup', text: 'Labels cannot contain uppercase letters.' } }
       }
@@ -164,7 +171,11 @@ export class MvCommandExecutor implements CommandExecutor {
     let targetObjectId: string | undefined
     let targetName = label2
 
-    if (targetObject) {
+    if (toMouse && context.mouse) {
+      targetX = context.mouse.x
+      targetY = context.mouse.y
+      targetName = MOUSE_TARGET
+    } else if (targetObject) {
       const targetState = getMutableWorldObjectState<{ x: number; y: number }>(targetObject)
       targetX = targetState.x
       targetY = targetState.y

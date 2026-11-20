@@ -122,7 +122,7 @@ export class PauseScene extends Phaser.Scene {
     this.buildTitleConfirm()
 
     this.mainMenuContainer.add(this.add.text(960, 860,
-      '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM', {
+      '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM    <SPACE/P> RESUME', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
       color: COLOR_MUTED,
@@ -391,10 +391,6 @@ export class PauseScene extends Phaser.Scene {
       return
     }
     const key = event.key.toUpperCase()
-    if (key === ' ' || key === 'SPACE' || key === 'P') {
-      event.preventDefault()
-      return
-    }
     if (this.inHelp) {
       if (key === 'ENTER') {
         event.preventDefault()
@@ -408,6 +404,13 @@ export class PauseScene extends Phaser.Scene {
     }
     if (this.inConfirm) {
       this.handleConfirmKey(key, event)
+      return
+    }
+    if (key === ' ' || key === 'SPACE' || key === 'P') {
+      event.preventDefault()
+      if (!event.repeat) {
+        this.resumeWithAnimation()
+      }
       return
     }
     if (key === 'ARROWUP' || key === 'W') this.moveSelection(-1)

@@ -283,13 +283,77 @@ describe('PauseScene', () => {
     expect(scene.isInHelp()).toBe(true)
   })
 
-  it('does not dismiss the pause scene on Space or P', () => {
+  it('resumes the game when pressing Space or P in the pause menu', () => {
     const { scene, handleKeyDown } = setupScene()
     const resumeSpy = vi.spyOn(scene, 'resumeGame')
+    const preventDefault1 = vi.fn()
+    handleKeyDown({ key: ' ', preventDefault: preventDefault1 } as unknown as KeyboardEvent)
+    expect(resumeSpy).toHaveBeenCalledTimes(1)
+    expect(preventDefault1).toHaveBeenCalled()
+
+    const { scene: scene2, handleKeyDown: handleKeyDown2 } = setupScene()
+    const resumeSpy2 = vi.spyOn(scene2, 'resumeGame')
+    const preventDefault2 = vi.fn()
+    handleKeyDown2({ key: 'p', preventDefault: preventDefault2 } as unknown as KeyboardEvent)
+    expect(resumeSpy2).toHaveBeenCalledTimes(1)
+    expect(preventDefault2).toHaveBeenCalled()
+
+    const { scene: scene3, handleKeyDown: handleKeyDown3 } = setupScene()
+    const resumeSpy3 = vi.spyOn(scene3, 'resumeGame')
+    const preventDefault3 = vi.fn()
+    handleKeyDown3({ key: 'P', preventDefault: preventDefault3 } as unknown as KeyboardEvent)
+    expect(resumeSpy3).toHaveBeenCalledTimes(1)
+    expect(preventDefault3).toHaveBeenCalled()
+  })
+
+  it('resumes on Space or P even when a non-RESUME item is selected', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const resumeSpy = vi.spyOn(scene, 'resumeGame')
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('SETTING')
+    handleKeyDown({ key: 'p', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(resumeSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores repeat key events for Space and P', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const resumeSpy = vi.spyOn(scene, 'resumeGame')
+    handleKeyDown({ key: ' ', repeat: true, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(resumeSpy).not.toHaveBeenCalled()
+    handleKeyDown({ key: 'p', repeat: true, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(resumeSpy).not.toHaveBeenCalled()
+  })
+
+  it('does not resume on Space or P while in subscreens or confirmation', () => {
+    const { scene, handleKeyDown } = setupScene()
+    const resumeSpy = vi.spyOn(scene, 'resumeGame')
+    scene.showHelp(false)
+    handleKeyDown({ key: 'p', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     handleKeyDown({ key: ' ', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(resumeSpy).not.toHaveBeenCalled()
+
+    scene.exitHelp(false)
+    scene.showSettings(false)
     handleKeyDown({ key: 'p', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown({ key: ' ', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(resumeSpy).not.toHaveBeenCalled()
+
+    scene.exitSettings(false)
+    scene.showTitleConfirm()
+    handleKeyDown({ key: 'p', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown({ key: ' ', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(resumeSpy).not.toHaveBeenCalled()
+  })
+
+  it('displays navigation hint including SPACE/P RESUME in main menu', () => {
+    const scene = new PauseScene()
+    const textSpy = vi.spyOn(scene.add, 'text')
+    scene.create()
+
+    const navPrompt = textSpy.mock.calls.find(
+      call => call[1] === 860 && typeof call[2] === 'string' && call[2].includes('<SPACE/P> RESUME'),
+    )
+    expect(navPrompt).toBeDefined()
   })
 
   it('types ./main and resumes after confirming RESUME', () => {

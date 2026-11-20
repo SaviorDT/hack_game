@@ -45,6 +45,7 @@ describe('GameScene key handling', () => {
     const mockInlineCommandInputView = {
       setVisible: vi.fn(),
       clearInput: vi.fn(),
+      setValue: vi.fn(),
       setPlayerPosition: vi.fn(),
       getValue: vi.fn(() => ''),
       submit: vi.fn(),
@@ -60,8 +61,23 @@ describe('GameScene key handling', () => {
       destroy: vi.fn(),
     }
 
+    const delayedCalls: { delay: number; callback: () => void }[] = []
+    const mockTime = {
+      delayedCall: vi.fn((delay: number, callback: () => void) => {
+        const item = { delay, callback }
+        delayedCalls.push(item)
+        return {
+          remove: vi.fn(() => {
+            const idx = delayedCalls.indexOf(item)
+            if (idx !== -1) delayedCalls.splice(idx, 1)
+          }),
+        }
+      }),
+    }
+
     Object.assign(scene, {
       session,
+      time: mockTime,
       inlineCommandInputView: mockInlineCommandInputView,
       commandEditor: mockCommandEditor,
     })
@@ -69,7 +85,15 @@ describe('GameScene key handling', () => {
     const handleKeyDown = (scene as unknown as { handleKeyDown: (event: KeyboardEvent) => boolean }).handleKeyDown
     const handleKeyUp = (scene as unknown as { handleKeyUp: (event: KeyboardEvent) => void }).handleKeyUp
 
-    return { scene, session, mockInlineCommandInputView, mockCommandEditor, handleKeyDown, handleKeyUp }
+    return {
+      scene,
+      session,
+      mockInlineCommandInputView,
+      mockCommandEditor,
+      delayedCalls,
+      handleKeyDown,
+      handleKeyUp,
+    }
   }
 
   it('moves player with WASD in movement mode', () => {
@@ -446,6 +470,71 @@ describe('GameScene key handling', () => {
       const scene = new GameScene()
       scene.init({ openCommandEditor: true })
       expect((scene as any).initialOpenCommandEditor).toBe(true)
+    })
+  })
+
+  describe('recorded commands (8, 9, 0)', () => {
+    it('records last command when held for the hold duration in movement mode', () => {
+      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      session.submitCommand('ls')
+
+      const preventDefault = vi.fn()
+      handleKeyDown({
+        key: '8',
+        repeat: false,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(delayedCalls.length).toBe(1)
+
+      // Hold duration passes -> trigger hold callback
+      delayedCalls[0].callback()
+      expect(session.getCommandSlot(8)).toBe('ls')
+
+      // Key release after hold does not execute command
+      const historyLength = session.getWorldState().commandHistory.length
+      handleKeyUp({ key: '8' } as unknown as KeyboardEvent)
+      expect(session.getWorldState().commandHistory.length).toBe(historyLength)
+      expect(session.inputMode).toBe('movement')
+    })
+
+    it('taps slot key (releases before hold duration) to execute command directly in movement mode', () => {
+      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      session.setCommandSlot(8, 'mv dagger $mouse')
+
+      const preventDefault = vi.fn()
+      handleKeyDown({
+        key: '8',
+        repeat: false,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(preventDefault).toHaveBeenCalled()
+      expect(delayedCalls.length).toBe(1)
+      expect(session.inputMode).toBe('movement')
+
+      // Released before hold timer finishes
+      handleKeyUp({ key: '8' } as unknown as KeyboardEvent)
+      expect(delayedCalls.length).toBe(0) // Timer removed
+      expect(session.getWorldState().commandHistory).toContain('mv dagger $mouse')
+      expect(session.inputMode).toBe('movement')
+    })
+
+    it('taps an empty slot key without executing or changing input mode', () => {
+      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+
+      const preventDefault = vi.fn()
+      handleKeyDown({
+        key: '9',
+        repeat: false,
+        preventDefault,
+      } as unknown as KeyboardEvent)
+
+      expect(session.inputMode).toBe('movement')
+      handleKeyUp({ key: '9' } as unknown as KeyboardEvent)
+      expect(delayedCalls.length).toBe(0)
+      expect(session.inputMode).toBe('movement')
     })
   })
 })

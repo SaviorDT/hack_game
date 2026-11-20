@@ -286,6 +286,8 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  TAB                  Auto-complete command name or discovered object label',
     '  CTRL+BACKSPACE       Delete previous word in prompt',
     '  UP / DOWN            Browse command history',
+    '  8, 9, 0              Execute recorded command',
+    '  HOLD 8, 9, 0         Record last executed command to slot (0.5s)',
     '  SPACE / P            Open pause menu',
   ]
 }

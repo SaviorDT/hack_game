@@ -12,6 +12,11 @@ import { getMutableWorldObjectState, type MutableWorldObjectState } from '../dom
 import type { WorldState } from '../domain/WorldState.ts'
 import { startDaggerAttackAnimation } from '../content/weaponConstants.ts'
 import type { InputMode, InputModeController } from './InputModeController.ts'
+import {
+  saveCommandSlots,
+  type CommandSlot,
+  type CommandSlotMap,
+} from './commandSlots.ts'
 
 const SAVE_SCHEMA_VERSION = 3
 
@@ -140,6 +145,32 @@ export class GameSession {
       cursorIndex,
       this.dependencies.worldState,
     )
+  }
+
+  getCommandSlots(): Readonly<CommandSlotMap> {
+    return this.dependencies.worldState.commandSlots ?? {}
+  }
+
+  getCommandSlot(slot: CommandSlot): string | undefined {
+    return this.dependencies.worldState.commandSlots?.[slot]
+  }
+
+  setCommandSlot(slot: CommandSlot, command: string): void {
+    if (!this.dependencies.worldState.commandSlots) {
+      this.dependencies.worldState.commandSlots = {}
+    }
+    this.dependencies.worldState.commandSlots[slot] = command
+    saveCommandSlots(this.dependencies.worldState.commandSlots)
+  }
+
+  recordLastCommandToSlot(slot: CommandSlot): { success: boolean; command?: string } {
+    const history = this.dependencies.worldState.commandHistory
+    if (history.length === 0) {
+      return { success: false }
+    }
+    const lastCommand = history[history.length - 1]
+    this.setCommandSlot(slot, lastCommand)
+    return { success: true, command: lastCommand }
   }
 
   saveCurrentState(): void {

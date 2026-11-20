@@ -320,6 +320,8 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
   )
 }
 
+import { loadCommandSlots } from '../application/commandSlots.ts'
+
 export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJECTS): WorldState {
   const worldObjects = createRoomObjects(objects, ROOM_IDS.first)
 
@@ -348,6 +350,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
     processInstances: [],
     currentRoomId: ROOM_IDS.first,
     commandHistory: [],
+    commandSlots: loadCommandSlots(),
     simulationTick: 0,
     outcome: 'playing',
   }

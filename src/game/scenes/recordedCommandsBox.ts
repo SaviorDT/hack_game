@@ -1,0 +1,53 @@
+import type Phaser from 'phaser'
+import { VALID_COMMAND_SLOTS, type CommandSlotMap } from '../application/commandSlots.ts'
+import {
+  COLOR_DIM,
+  COLOR_MUTED,
+  COLOR_PROMPT,
+  COLOR_WHITE,
+  TERMINAL_FONT,
+} from './pauseSceneHelpers.ts'
+
+export function buildRecordedCommandsBox(
+  scene: Phaser.Scene,
+  container: Phaser.GameObjects.Container,
+  slots: CommandSlotMap = {},
+): Phaser.GameObjects.Container {
+  const boxContainer = scene.add.container(0, 0)
+  const box = scene.add.graphics()
+  box.lineStyle(2, 0x333333, 1)
+  box.strokeRect(1260, 380, 520, 290)
+  boxContainer.add(box)
+
+  const header = scene.add.text(1280, 405, '── RECORDED COMMANDS ──', {
+    fontFamily: TERMINAL_FONT,
+    fontSize: '15px',
+    color: COLOR_PROMPT,
+  })
+  boxContainer.add(header)
+
+  VALID_COMMAND_SLOTS.forEach((slot, index) => {
+    const cmd = slots[slot]
+    const label = cmd
+      ? `${slot}: ${cmd.length > 24 ? cmd.slice(0, 21) + '...' : cmd}`
+      : `${slot}: (empty)`
+    const text = scene.add.text(1280, 455 + index * 45, label, {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '15px',
+      color: cmd ? COLOR_WHITE : COLOR_DIM,
+    })
+    boxContainer.add(text)
+  })
+
+  const footer = scene.add
+    .text(1520, 625, '8,9,0: EXEC    HOLD 8,9,0: RECORD', {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '12px',
+      color: COLOR_MUTED,
+    })
+    .setOrigin(0.5, 0.5)
+  boxContainer.add(footer)
+
+  container.add(boxContainer)
+  return boxContainer
+}

@@ -127,6 +127,15 @@ export class InlineCommandInputView {
     this.render()
   }
 
+  setValue(text: string): void {
+    this.value = text
+    this.cursorIndex = Array.from(text).length
+    this.historyIndex = undefined
+    this.historyDraft = ''
+    this.cursorVisible = true
+    this.render()
+  }
+
   getValue(): string {
     return this.value
   }

@@ -27,6 +27,8 @@ import {
   typeCommand,
   updateSettingDisplay,
 } from './pauseSceneHelpers.ts'
+import { buildRecordedCommandsBox } from './recordedCommandsBox.ts'
+import { loadCommandSlots } from '../application/commandSlots.ts'
 
 export const PAUSE_OVERLAY_ALPHA = 0.7
 export const PAUSE_MENU_ITEMS = ['RESUME', 'SETTING', 'HELP', 'TITLE'] as const
@@ -37,6 +39,7 @@ export class PauseScene extends Phaser.Scene {
   private selectedIndex = 0
   private menuTexts: Phaser.GameObjects.Text[] = []
   private mainMenuContainer!: Phaser.GameObjects.Container
+  private recordedCommandsBox?: Phaser.GameObjects.Container
   private helpScreenContainer!: Phaser.GameObjects.Container
   private settingsScreenContainer!: Phaser.GameObjects.Container
   private mainPromptCommand!: Phaser.GameObjects.Text
@@ -107,6 +110,14 @@ export class PauseScene extends Phaser.Scene {
       this.mainMenuContainer.add(text)
       return text
     })
+
+    const gameSceneRef = this.scene.get('game') as unknown as {
+      session?: {
+        getCommandSlots?: () => Record<number, string>
+      }
+    }
+    const currentSlots = gameSceneRef?.session?.getCommandSlots?.() ?? loadCommandSlots()
+    this.recordedCommandsBox = buildRecordedCommandsBox(this, this.mainMenuContainer, currentSlots)
 
     this.buildTitleConfirm()
 
@@ -184,6 +195,7 @@ export class PauseScene extends Phaser.Scene {
     this.inConfirm = true
     this.confirmIndex = 1
     this.menuTexts.forEach((text) => text.setVisible(false))
+    this.recordedCommandsBox?.setVisible(false)
     this.confirmQuestion?.setVisible(true)
     this.confirmTexts.forEach((text) => text.setVisible(true))
     this.updateConfirmSelection()
@@ -194,6 +206,7 @@ export class PauseScene extends Phaser.Scene {
     this.confirmQuestion?.setVisible(false)
     this.confirmTexts.forEach((text) => text.setVisible(false))
     this.menuTexts.forEach((text) => text.setVisible(true))
+    this.recordedCommandsBox?.setVisible(true)
     this.updateSelection()
   }
 

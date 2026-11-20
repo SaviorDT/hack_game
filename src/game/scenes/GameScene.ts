@@ -9,6 +9,12 @@ import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.ts'
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
 import { InlineCommandInputView } from '../presentation/InlineCommandInputView.ts'
+import { MacroIndicatorView } from '../presentation/MacroIndicatorView.ts'
+import {
+    isValidCommandSlot,
+    RECORD_HOLD_DURATION_MS,
+    type CommandSlot,
+} from '../application/commandSlots.ts'
 import { CommandEditorOverlay } from './CommandEditorOverlay.ts'
 import {
     enterOpensCommandInput,
@@ -31,6 +37,10 @@ export class GameScene extends Phaser.Scene {
     private commandTypingMode: CommandTypingMode = 'hold-shift'
     private customCommandTypingMode?: CommandTypingMode
     private enteredByShift = false
+    private slotHoldTimer?: Phaser.Time.TimerEvent
+    private heldSlotKey?: string
+    private slotHoldRecorded = false
+    private readonly macroIndicatorView = new MacroIndicatorView()
     /** The cursor in Room coordinates, once it has been over the game; the source of the Mouse Target. */
     private mousePoint: MousePoint | undefined
     /** The room the player was in last frame; entering a different one is a Save Point. */
@@ -113,6 +123,7 @@ export class GameScene extends Phaser.Scene {
 
         this.commandEditor = new CommandEditorOverlay(this, this.session)
         this.commandEditor.mount()
+        this.macroIndicatorView.mount(this)
         if (this.initialOpenCommandEditor) {
             this.commandEditor.open()
         }
@@ -126,6 +137,9 @@ export class GameScene extends Phaser.Scene {
             this.game.events.off(Phaser.Core.Events.BLUR, this.handleBlur)
             this.commandEditor?.destroy()
             this.commandEditor = undefined
+            this.slotHoldTimer?.remove()
+            this.slotHoldTimer = undefined
+            this.macroIndicatorView.destroy()
             inlineCommandInputView.destroy()
             this.roomView.destroy()
             this.hud?.destroy()
@@ -158,6 +172,7 @@ export class GameScene extends Phaser.Scene {
             const py = pos?.y ?? (player.state as Record<string, unknown> | undefined)?.y
             if (typeof px === 'number' && typeof py === 'number') {
                 this.inlineCommandInputView?.setPlayerPosition(px, py)
+                this.macroIndicatorView.setPlayerPosition(px, py)
             }
         }
 
@@ -166,11 +181,17 @@ export class GameScene extends Phaser.Scene {
         this.hud?.update(worldState, this.session.inputMode)
         this.commandEditor?.update(delta)
 
-        if (worldState.outcome === 'game-over' && this.session.inputMode === 'command') {
-            this.session.enterMovementMode()
-            this.inlineCommandInputView?.clearInput()
-            this.inlineCommandInputView?.setVisible(false)
-            this.enteredByShift = false
+        if (worldState.outcome === 'game-over') {
+            this.slotHoldTimer?.remove()
+            this.slotHoldTimer = undefined
+            this.heldSlotKey = undefined
+            this.slotHoldRecorded = false
+            if (this.session.inputMode === 'command') {
+                this.session.enterMovementMode()
+                this.inlineCommandInputView?.clearInput()
+                this.inlineCommandInputView?.setVisible(false)
+                this.enteredByShift = false
+            }
         }
     }
 
@@ -208,6 +229,10 @@ export class GameScene extends Phaser.Scene {
         this.session.releaseAllKeys()
         // Shift is no longer tracked while paused, so a Shift-opened prompt stays open until Enter.
         this.enteredByShift = false
+        this.slotHoldTimer?.remove()
+        this.slotHoldTimer = undefined
+        this.heldSlotKey = undefined
+        this.slotHoldRecorded = false
         ;(this.session as unknown as {
             dependencies: { simulationClock: { setTimeScale: (scale: number) => void } }
         }).dependencies.simulationClock.setTimeScale(0)
@@ -279,6 +304,27 @@ export class GameScene extends Phaser.Scene {
                 return false
             }
 
+            if (isValidCommandSlot(key)) {
+                event.preventDefault()
+                if (event.repeat || this.heldSlotKey === key) {
+                    return false
+                }
+                const slot = Number(key) as CommandSlot
+                this.heldSlotKey = key
+                this.slotHoldRecorded = false
+                this.slotHoldTimer?.remove()
+                this.slotHoldTimer = this.time.delayedCall(RECORD_HOLD_DURATION_MS, () => {
+                    this.slotHoldRecorded = true
+                    const result = this.session.recordLastCommandToSlot(slot)
+                    if (result.success && result.command) {
+                        this.macroIndicatorView.showRecordSuccess(slot, result.command)
+                    } else {
+                        this.macroIndicatorView.showRecordEmpty()
+                    }
+                })
+                return false
+            }
+
             this.session.keyDown(key)
             event.preventDefault()
             return false
@@ -312,10 +358,31 @@ export class GameScene extends Phaser.Scene {
             }
         }
         if (key === 'shift') this.enteredByShift = false
+
+        if (this.heldSlotKey && key === this.heldSlotKey) {
+            this.slotHoldTimer?.remove()
+            this.slotHoldTimer = undefined
+            if (!this.slotHoldRecorded && this.session.inputMode === 'movement') {
+                const slot = Number(key) as CommandSlot
+                const command = this.session.getCommandSlot(slot)
+                if (command) {
+                    this.session.submitCommand(command, { mouse: this.mousePoint })
+                    this.macroIndicatorView.showExecutedCommand(slot, command)
+                } else {
+                    this.macroIndicatorView.showSlotEmpty(slot)
+                }
+            }
+            this.heldSlotKey = undefined
+            this.slotHoldRecorded = false
+        }
     }
 
     private readonly handleBlur = (): void => {
         this.session.releaseAllKeys()
+        this.slotHoldTimer?.remove()
+        this.slotHoldTimer = undefined
+        this.heldSlotKey = undefined
+        this.slotHoldRecorded = false
         if (this.enteredByShift && this.session.inputMode === 'command') {
             this.session.enterMovementMode()
             this.inlineCommandInputView?.clearInput()

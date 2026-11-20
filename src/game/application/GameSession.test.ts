@@ -695,4 +695,23 @@ describe('player facing and turning', () => {
     runFor(session, 100)
     expect(dagger.x).toBe(player.x)
   })
+
+  it('manages and records command slots', () => {
+    const session = newSession()
+    expect(session.getCommandSlots()).toEqual({})
+
+    // Empty history cannot record
+    expect(session.recordLastCommandToSlot(8)).toEqual({ success: false })
+
+    // Submit a command to history
+    session.submitCommand('ls')
+    expect(session.recordLastCommandToSlot(8)).toEqual({ success: true, command: 'ls' })
+    expect(session.getCommandSlot(8)).toBe('ls')
+    expect(session.getCommandSlots()).toEqual({ 8: 'ls' })
+
+    // Set slot directly
+    session.setCommandSlot(9, 'mv dagger $mouse')
+    expect(session.getCommandSlot(9)).toBe('mv dagger $mouse')
+    expect(session.getCommandSlots()).toEqual({ 8: 'ls', 9: 'mv dagger $mouse' })
+  })
 })

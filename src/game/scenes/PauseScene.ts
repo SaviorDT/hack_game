@@ -73,17 +73,17 @@ export class PauseScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000000')
     this.currentTypingMode = loadCommandTypingMode()
     this.settingFocusIndex = focusForMode(this.currentTypingMode)
-    this.mainMenuContainer = this.add.container(0, 0)
-    this.helpScreenContainer = this.add.container(0, 0).setVisible(false)
-    this.settingsScreenContainer = this.add.container(0, 0).setVisible(false)
 
     const overlay = this.add.graphics()
     overlay.fillStyle(0x000000, PAUSE_OVERLAY_ALPHA)
     overlay.fillRect(0, 0, 1920, 1080)
+    this.mainMenuContainer = this.add.container(0, 0)
+    this.helpScreenContainer = this.add.container(0, 0).setVisible(false)
+    this.settingsScreenContainer = this.add.container(0, 0).setVisible(false)
+
     const border = this.add.graphics()
     border.lineStyle(2, 0x333333, 1)
     border.strokeRect(40, 40, 1840, 1000)
-    this.mainMenuContainer.add([overlay, border])
 
     const title = this.add.text(960, 260, 'P A U S E D', {
       fontFamily: TERMINAL_FONT,

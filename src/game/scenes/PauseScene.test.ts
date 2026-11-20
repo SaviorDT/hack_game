@@ -42,13 +42,17 @@ vi.mock('phaser', () => {
         this.children.list.push(container)
         return container
       }),
-      graphics: vi.fn(() => ({
-        fillStyle: vi.fn().mockReturnThis(),
-        fillRect: vi.fn().mockReturnThis(),
-        lineStyle: vi.fn().mockReturnThis(),
-        strokeRect: vi.fn().mockReturnThis(),
-        lineBetween: vi.fn().mockReturnThis(),
-      })),
+      graphics: vi.fn(() => {
+        const graphics = {
+          fillStyle: vi.fn().mockReturnThis(),
+          fillRect: vi.fn().mockReturnThis(),
+          lineStyle: vi.fn().mockReturnThis(),
+          strokeRect: vi.fn().mockReturnThis(),
+          lineBetween: vi.fn().mockReturnThis(),
+        }
+        this.children.list.push(graphics)
+        return graphics
+      }),
       text: vi.fn((_x: number, _y: number, _text: string | string[], _style?: Record<string, unknown>) => ({
         width: 304,
         setOrigin: vi.fn().mockReturnThis(),
@@ -106,6 +110,39 @@ describe('PauseScene', () => {
     expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'SETTING', 'HELP', 'TITLE'])
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('RESUME')
+  })
+
+  it('draws the pause overlay behind UI and the outer border above it across subscreens', () => {
+    const scene = new PauseScene()
+    scene.create()
+
+    const graphicsObjects = (scene.add.graphics as ReturnType<typeof vi.fn>).mock.results
+      .map(({ value }) => value as {
+        fillRect: ReturnType<typeof vi.fn>
+        strokeRect: ReturnType<typeof vi.fn>
+      })
+    const overlay = graphicsObjects[0]
+    const border = graphicsObjects[1]
+    const [mainMenu, helpScreen, settingsScreen] =
+      (scene.add.container as ReturnType<typeof vi.fn>).mock.results
+        .slice(0, 3)
+        .map(({ value }) => value)
+    const pivot = scene.children.list[0] as unknown as { list: unknown[] }
+
+    expect(overlay.fillRect).toHaveBeenCalledWith(0, 0, 1920, 1080)
+    expect(border.strokeRect).toHaveBeenCalledWith(40, 40, 1840, 1000)
+    expect(pivot.list.indexOf(overlay)).toBeLessThan(pivot.list.indexOf(mainMenu))
+    expect(pivot.list.indexOf(mainMenu)).toBeLessThan(pivot.list.indexOf(helpScreen))
+    expect(pivot.list.indexOf(helpScreen)).toBeLessThan(pivot.list.indexOf(settingsScreen))
+    expect(pivot.list.indexOf(border)).toBeGreaterThan(pivot.list.indexOf(settingsScreen))
+
+    scene.showSettings(false)
+    expect(pivot.list).toContain(overlay)
+    expect(pivot.list).toContain(border)
+    scene.exitSettings(false)
+    scene.showHelp(false)
+    expect(pivot.list).toContain(overlay)
+    expect(pivot.list).toContain(border)
   })
 
   it('expands from the live player position when created', () => {
@@ -267,6 +304,15 @@ describe('PauseScene', () => {
   it('displays SPACE / P in help screen', () => {
     const lines = getHelpLines('hold-shift')
     expect(lines.some((line) => line.includes('SPACE / P') && line.includes('Open pause menu'))).toBe(true)
+  })
+
+  it('separates typing tips from general shortcuts in help screen', () => {
+    const lines = getHelpLines('hold-shift')
+    expect(lines).toContain('── TYPEING TIPS ──')
+    expect(lines.some((line) => line.includes('TAB'))).toBe(true)
+    expect(lines.some((line) => line.includes('CTRL+BACKSPACE'))).toBe(true)
+    expect(lines.some((line) => line.includes('UP / DOWN'))).toBe(true)
+    expect(lines).toContain('── SHORTCUTS ──')
   })
 
   it('suppresses navigation during transitions', () => {

@@ -41,3 +41,10 @@ If it fails, refactor the duplicated block into a shared module before presentin
   These are intentionally tunable and have no behavioral invariant worth pinning.
   Acceptable: test that the constant is *used* (e.g. passed as a tween duration), or that it is a positive number.
   Unacceptable: `expect(SHRINK_MS).toBe(220)`.
+
+## UI & Color Palette Discipline
+
+- Never use pure white text (`#ffffff` or `COLOR_WHITE`) for standard content, list items, or secondary panel text.
+- Pure white is reserved for active cursor/selection indicators and main hero titles.
+- Standard content must use `COLOR_PROMPT` (`#9f9f9f`) or `TEXT_COLOR` (`#d6d6d6`).
+- Inactive, empty, or unselected items must use `COLOR_DIM` (`#606060` or `#888888`).

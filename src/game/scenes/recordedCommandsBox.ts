@@ -4,7 +4,6 @@ import {
   COLOR_DIM,
   COLOR_MUTED,
   COLOR_PROMPT,
-  COLOR_WHITE,
   TERMINAL_FONT,
 } from './pauseSceneHelpers.ts'
 
@@ -34,7 +33,7 @@ export function buildRecordedCommandsBox(
     const text = scene.add.text(1280, 455 + index * 45, label, {
       fontFamily: TERMINAL_FONT,
       fontSize: '15px',
-      color: cmd ? COLOR_WHITE : COLOR_DIM,
+      color: cmd ? COLOR_PROMPT : COLOR_DIM,
     })
     boxContainer.add(text)
   })

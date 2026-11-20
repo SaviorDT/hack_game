@@ -325,6 +325,15 @@ describe('TitleScene', () => {
     expect(lastCallArg).toEqual(linesSticky)
   })
 
+  it('includes typing tips in the help screen', () => {
+    const { scene } = setupScene()
+    const lines = (scene as any).getHelpLines('hold-shift')
+    expect(lines).toContain('── TYPEING TIPS ──')
+    expect(lines.some((line: string) => line.includes('TAB'))).toBe(true)
+    expect(lines.some((line: string) => line.includes('CTRL+BACKSPACE'))).toBe(true)
+    expect(lines.some((line: string) => line.includes('UP / DOWN'))).toBe(true)
+  })
+
   it('ignores other keys like Space', () => {
     const { scene, handleKeyDown } = setupScene()
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { })

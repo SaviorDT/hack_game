@@ -3,6 +3,7 @@ import { COMMAND_TYPING_MODES, type CommandTypingMode } from '../application/gam
 import { focusForMode, SETTING_RETURN_FOCUS, type SettingFocus } from './settingsFocus.ts'
 
 export const TERMINAL_FONT = '"Press Start 2P", monospace'
+/** Reserved for active selections and hero titles, never standard content or list items. */
 export const COLOR_WHITE = '#ffffff'
 export const COLOR_DIM = '#606060'
 export const COLOR_MUTED = '#202020'
@@ -282,10 +283,12 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  mv <src> <target>    Throw object towards target, or rename object',
     '  mv <src> $mouse      Throw object towards the mouse cursor',
     '',
-    '── SHORTCUTS ──',
+    '── TYPEING TIPS ──',
     '  TAB                  Auto-complete command name or discovered object label',
     '  CTRL+BACKSPACE       Delete previous word in prompt',
     '  UP / DOWN            Browse command history',
+    '',
+    '── SHORTCUTS ──',
     '  8, 9, 0              Execute recorded command',
     '  HOLD 8, 9, 0         Record last executed command to slot (0.5s)',
     '  SPACE / P            Open pause menu',

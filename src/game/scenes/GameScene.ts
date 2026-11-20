@@ -13,6 +13,7 @@ import { MacroIndicatorView } from '../presentation/MacroIndicatorView.ts'
 import {
     isValidCommandSlot,
     RECORD_HOLD_DURATION_MS,
+    RECORD_HOLD_SHOW_DELAY_MS,
     type CommandSlot,
 } from '../application/commandSlots.ts'
 import { CommandEditorOverlay } from './CommandEditorOverlay.ts'
@@ -186,6 +187,7 @@ export class GameScene extends Phaser.Scene {
             this.slotHoldTimer = undefined
             this.heldSlotKey = undefined
             this.slotHoldRecorded = false
+            this.macroIndicatorView.cancelHoldProgress()
             if (this.session.inputMode === 'command') {
                 this.session.enterMovementMode()
                 this.inlineCommandInputView?.clearInput()
@@ -233,6 +235,7 @@ export class GameScene extends Phaser.Scene {
         this.slotHoldTimer = undefined
         this.heldSlotKey = undefined
         this.slotHoldRecorded = false
+        this.macroIndicatorView.cancelHoldProgress()
         ;(this.session as unknown as {
             dependencies: { simulationClock: { setTimeScale: (scale: number) => void } }
         }).dependencies.simulationClock.setTimeScale(0)
@@ -306,12 +309,17 @@ export class GameScene extends Phaser.Scene {
 
             if (isValidCommandSlot(key)) {
                 event.preventDefault()
-                if (event.repeat || this.heldSlotKey === key) {
+                if (event.repeat || this.heldSlotKey !== undefined) {
                     return false
                 }
                 const slot = Number(key) as CommandSlot
                 this.heldSlotKey = key
                 this.slotHoldRecorded = false
+                this.macroIndicatorView.startHoldProgress(
+                    slot,
+                    RECORD_HOLD_DURATION_MS,
+                    RECORD_HOLD_SHOW_DELAY_MS,
+                )
                 this.slotHoldTimer?.remove()
                 this.slotHoldTimer = this.time.delayedCall(RECORD_HOLD_DURATION_MS, () => {
                     this.slotHoldRecorded = true
@@ -362,14 +370,17 @@ export class GameScene extends Phaser.Scene {
         if (this.heldSlotKey && key === this.heldSlotKey) {
             this.slotHoldTimer?.remove()
             this.slotHoldTimer = undefined
-            if (!this.slotHoldRecorded && this.session.inputMode === 'movement') {
-                const slot = Number(key) as CommandSlot
-                const command = this.session.getCommandSlot(slot)
-                if (command) {
-                    this.session.submitCommand(command, { mouse: this.mousePoint })
-                    this.macroIndicatorView.showExecutedCommand(slot, command)
-                } else {
-                    this.macroIndicatorView.showSlotEmpty(slot)
+            if (!this.slotHoldRecorded) {
+                this.macroIndicatorView.cancelHoldProgress()
+                if (this.session.inputMode === 'movement') {
+                    const slot = Number(key) as CommandSlot
+                    const command = this.session.getCommandSlot(slot)
+                    if (command) {
+                        this.session.submitCommand(command, { mouse: this.mousePoint })
+                        this.macroIndicatorView.showExecutedCommand(slot, command)
+                    } else {
+                        this.macroIndicatorView.showSlotEmpty(slot)
+                    }
                 }
             }
             this.heldSlotKey = undefined
@@ -383,6 +394,7 @@ export class GameScene extends Phaser.Scene {
         this.slotHoldTimer = undefined
         this.heldSlotKey = undefined
         this.slotHoldRecorded = false
+        this.macroIndicatorView.cancelHoldProgress()
         if (this.enteredByShift && this.session.inputMode === 'command') {
             this.session.enterMovementMode()
             this.inlineCommandInputView?.clearInput()

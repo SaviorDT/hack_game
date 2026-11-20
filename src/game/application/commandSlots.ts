@@ -4,6 +4,7 @@ export type CommandSlotMap = Partial<Record<CommandSlot, string>>
 
 export const DEFAULT_RECORD_HOLD_DURATION_MS = 250
 export const RECORD_HOLD_DURATION_MS = DEFAULT_RECORD_HOLD_DURATION_MS
+export const RECORD_HOLD_SHOW_DELAY_MS = RECORD_HOLD_DURATION_MS / 2
 
 export const COMMAND_SLOTS_STORAGE_KEY = 'hack-game.command-slots'
 

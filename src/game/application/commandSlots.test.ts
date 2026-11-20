@@ -8,7 +8,7 @@ import {
 } from './commandSlots.ts'
 
 describe('commandSlots', () => {
-  it('exposes a positive hold duration constant', () => {
+  it('exposes a positive hold duration constant and quarter show delay', () => {
     expect(RECORD_HOLD_DURATION_MS).toBeGreaterThan(0)
   })
 

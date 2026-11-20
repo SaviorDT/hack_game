@@ -7,13 +7,27 @@ describe('MacroIndicatorView', () => {
       setText: vi.fn().mockReturnThis(),
       setColor: vi.fn().mockReturnThis(),
       setOrigin: vi.fn().mockReturnThis(),
+      setPosition: vi.fn().mockReturnThis(),
       width: 150,
     }
-    const pillBg = {
-      setSize: vi.fn().mockReturnThis(),
-      setStrokeStyle: vi.fn().mockReturnThis(),
-      setOrigin: vi.fn().mockReturnThis(),
+
+    function createMockRect() {
+      return {
+        setSize: vi.fn().mockReturnThis(),
+        setStrokeStyle: vi.fn().mockReturnThis(),
+        setOrigin: vi.fn().mockReturnThis(),
+        setPosition: vi.fn().mockReturnThis(),
+        setVisible: vi.fn().mockReturnThis(),
+        setScale: vi.fn().mockReturnThis(),
+      }
     }
+
+    const pillBg = createMockRect()
+    const progressTrack = createMockRect()
+    const progressFill = createMockRect()
+    const rects = [pillBg, progressTrack, progressFill]
+    let rectIndex = 0
+
     const container = {
       setDepth: vi.fn().mockReturnThis(),
       setVisible: vi.fn().mockReturnThis(),
@@ -27,7 +41,11 @@ describe('MacroIndicatorView', () => {
     const mockScene = {
       add: {
         container: vi.fn(() => container),
-        rectangle: vi.fn(() => pillBg),
+        rectangle: vi.fn(() => {
+          const r = rects[rectIndex] ?? createMockRect()
+          rectIndex++
+          return r
+        }),
         text: vi.fn(() => textObj),
       },
       time: {
@@ -44,7 +62,7 @@ describe('MacroIndicatorView', () => {
       },
     } as any
 
-    return { mockScene, container, pillBg, textObj, delayedCalls }
+    return { mockScene, container, pillBg, progressTrack, progressFill, textObj, delayedCalls }
   }
 
   it('mounts and displays success message', () => {
@@ -83,6 +101,112 @@ describe('MacroIndicatorView', () => {
 
     view.showSlotEmpty(9)
     expect(textObj.setText).toHaveBeenCalledWith('[SLOT 9 EMPTY (HOLD TO RECORD)]')
+
+    view.destroy()
+  })
+
+  it('starts, updates, and cancels hold progress', () => {
+    const { mockScene, container, progressTrack, progressFill, textObj, delayedCalls } = setupMockScene()
+    const view = new MacroIndicatorView()
+    view.mount(mockScene)
+
+    view.startHoldProgress(8, 250)
+    expect(textObj.setText).toHaveBeenCalledWith('[RECORDING SLOT 8]')
+    expect(textObj.setPosition).toHaveBeenCalledWith(0, -6)
+    expect(progressTrack.setVisible).toHaveBeenCalledWith(true)
+    expect(progressFill.setVisible).toHaveBeenCalledWith(true)
+    expect(container.setVisible).toHaveBeenCalledWith(false)
+
+    // Trigger show delay callback (> durationMs / 4)
+    expect(delayedCalls.length).toBe(1)
+    delayedCalls[0]()
+    expect(container.setVisible).toHaveBeenCalledWith(true)
+    expect(progressFill.setScale).toHaveBeenCalledWith(0, 1)
+
+    expect(mockScene.tweens.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: progressFill,
+        scaleX: 1,
+        duration: 187.5,
+      }),
+    )
+
+    view.setHoldProgress(0.5)
+    expect(progressFill.setScale).toHaveBeenCalledWith(0.5, 1)
+
+    view.cancelHoldProgress()
+    expect(progressTrack.setVisible).toHaveBeenCalledWith(false)
+    expect(progressFill.setVisible).toHaveBeenCalledWith(false)
+    expect(container.setVisible).toHaveBeenCalledWith(false)
+
+    // Second cancel when not holding does nothing
+    container.setVisible.mockClear()
+    view.cancelHoldProgress()
+    expect(container.setVisible).not.toHaveBeenCalled()
+
+    view.destroy()
+  })
+
+  it('only shows progress bar UI when hold time exceeds show delay threshold and starts fill from 0', () => {
+    const { mockScene, container, progressFill, delayedCalls } = setupMockScene()
+    const view = new MacroIndicatorView()
+    view.mount(mockScene)
+
+    view.startHoldProgress(8, 250)
+    expect(container.setVisible).toHaveBeenCalledWith(false)
+    expect(delayedCalls.length).toBe(1)
+
+    // Not visible yet and tween not started
+    expect(container.setVisible).not.toHaveBeenCalledWith(true)
+    expect(mockScene.tweens.add).not.toHaveBeenCalled()
+
+    // Delay callback triggers (durationMs / 4)
+    delayedCalls[0]()
+    expect(container.setVisible).toHaveBeenCalledWith(true)
+    expect(progressFill.setScale).toHaveBeenCalledWith(0, 1)
+    expect(mockScene.tweens.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: progressFill,
+        scaleX: 1,
+        duration: 187.5,
+      }),
+    )
+
+    view.destroy()
+  })
+
+  it('suppresses progress bar UI if cancelled before show delay threshold', () => {
+    const { mockScene, container } = setupMockScene()
+    const view = new MacroIndicatorView()
+    view.mount(mockScene)
+
+    view.startHoldProgress(8, 250)
+    expect(container.setVisible).toHaveBeenCalledWith(false)
+
+    // Cancel before delay callback triggers (e.g. quick tap)
+    view.cancelHoldProgress()
+    expect(container.setVisible).toHaveBeenCalledWith(false)
+    expect(container.setVisible).not.toHaveBeenCalledWith(true)
+
+    view.destroy()
+  })
+
+  it('transitions cleanly from hold progress to record success', () => {
+    const { mockScene, container, progressTrack, progressFill, textObj, delayedCalls } = setupMockScene()
+    const view = new MacroIndicatorView()
+    view.mount(mockScene)
+
+    view.startHoldProgress(0, 250)
+    expect(delayedCalls.length).toBe(1)
+    delayedCalls[0]()
+    expect(container.setVisible).toHaveBeenCalledWith(true)
+
+    // Complete hold into success
+    view.showRecordSuccess(0, 'mv dagger $mouse')
+    expect(progressTrack.setVisible).toHaveBeenCalledWith(false)
+    expect(progressFill.setVisible).toHaveBeenCalledWith(false)
+    expect(textObj.setText).toHaveBeenCalledWith('[SLOT 0 RECORDED: mv dagger $mouse]')
+    expect(textObj.setPosition).toHaveBeenCalledWith(0, 0)
 
     view.destroy()
   })

@@ -475,9 +475,10 @@ describe('GameScene key handling', () => {
 
   describe('recorded commands (8, 9, 0)', () => {
     it('records last command when held for the hold duration in movement mode', () => {
-      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
       session.submitCommand('ls')
 
+      const startSpy = vi.spyOn((scene as any).macroIndicatorView, 'startHoldProgress')
       const preventDefault = vi.fn()
       handleKeyDown({
         key: '8',
@@ -486,6 +487,7 @@ describe('GameScene key handling', () => {
       } as unknown as KeyboardEvent)
 
       expect(preventDefault).toHaveBeenCalled()
+      expect(startSpy).toHaveBeenCalledWith(8, expect.any(Number), expect.any(Number))
       expect(delayedCalls.length).toBe(1)
 
       // Hold duration passes -> trigger hold callback
@@ -500,9 +502,10 @@ describe('GameScene key handling', () => {
     })
 
     it('taps slot key (releases before hold duration) to execute command directly in movement mode', () => {
-      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
       session.setCommandSlot(8, 'mv dagger $mouse')
 
+      const cancelSpy = vi.spyOn((scene as any).macroIndicatorView, 'cancelHoldProgress')
       const preventDefault = vi.fn()
       handleKeyDown({
         key: '8',
@@ -516,13 +519,15 @@ describe('GameScene key handling', () => {
 
       // Released before hold timer finishes
       handleKeyUp({ key: '8' } as unknown as KeyboardEvent)
+      expect(cancelSpy).toHaveBeenCalled()
       expect(delayedCalls.length).toBe(0) // Timer removed
       expect(session.getWorldState().commandHistory).toContain('mv dagger $mouse')
       expect(session.inputMode).toBe('movement')
     })
 
     it('taps an empty slot key without executing or changing input mode', () => {
-      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      const cancelSpy = vi.spyOn((scene as any).macroIndicatorView, 'cancelHoldProgress')
 
       const preventDefault = vi.fn()
       handleKeyDown({
@@ -533,8 +538,57 @@ describe('GameScene key handling', () => {
 
       expect(session.inputMode).toBe('movement')
       handleKeyUp({ key: '9' } as unknown as KeyboardEvent)
+      expect(cancelSpy).toHaveBeenCalled()
       expect(delayedCalls.length).toBe(0)
       expect(session.inputMode).toBe('movement')
+    })
+
+    it('cancels hold progress when opening pause menu while holding slot key', () => {
+      const { scene, handleKeyDown } = setupScene()
+      Object.assign((scene as any).scene, {
+        isActive: vi.fn(() => false),
+        launch: vi.fn(),
+        pause: vi.fn(),
+      })
+      const cancelSpy = vi.spyOn((scene as any).macroIndicatorView, 'cancelHoldProgress')
+
+      handleKeyDown({
+        key: '0',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+
+      scene.openPause()
+      expect(cancelSpy).toHaveBeenCalled()
+    })
+
+    it('cancels hold progress on blur while holding slot key', () => {
+      const { scene, handleKeyDown } = setupScene()
+      const cancelSpy = vi.spyOn((scene as any).macroIndicatorView, 'cancelHoldProgress')
+
+      handleKeyDown({
+        key: '8',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+
+      ;(scene as any).handleBlur()
+      expect(cancelSpy).toHaveBeenCalled()
+    })
+
+    it('cancels hold progress on game over outcome while holding slot key', () => {
+      const { scene, session, handleKeyDown } = setupScene()
+      const cancelSpy = vi.spyOn((scene as any).macroIndicatorView, 'cancelHoldProgress')
+
+      handleKeyDown({
+        key: '8',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+
+      session.getWorldState().outcome = 'game-over'
+      scene.update(0, 16)
+      expect(cancelSpy).toHaveBeenCalled()
     })
   })
 })

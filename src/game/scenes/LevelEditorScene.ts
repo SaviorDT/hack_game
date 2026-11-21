@@ -50,6 +50,8 @@ import {
   setPhysicsAttrValue,
 } from './levelEditorHistory.ts'
 import { SceneManager } from './SceneManager.ts'
+import { PrefabModeController } from './prefabModeController.ts'
+import { inferPrefabId } from '../domain/Prefab.ts'
 import {
   FONT_FAMILY,
   TEXT_COLOR,
@@ -126,6 +128,8 @@ export class LevelEditorScene extends Phaser.Scene {
   private objectListButtons: Phaser.GameObjects.Text[] = []
   private objectListTitle: Phaser.GameObjects.Text | undefined
   private deleteButton: Phaser.GameObjects.Text | undefined
+  private editPrefabButton: Phaser.GameObjects.Text | undefined
+  public prefabModeController?: PrefabModeController
   private statsElements: Phaser.GameObjects.Text[] = []
   private guardStatsElements: Phaser.GameObjects.Text[] = []
   private playerStatsElements: Phaser.GameObjects.Text[] = []
@@ -212,7 +216,10 @@ export class LevelEditorScene extends Phaser.Scene {
     this.objectListButtons = []
     this.objectListTitle = undefined
     this.deleteButton = undefined
+    this.editPrefabButton = undefined
     this.history.clear()
+
+    this.prefabModeController = new PrefabModeController(this)
 
     this.roomSelectorButtons.clear()
 
@@ -311,6 +318,24 @@ export class LevelEditorScene extends Phaser.Scene {
     this.nextRoomBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       pointer.event?.stopPropagation?.()
       this.selectNextRoom()
+    })
+
+    const prefabsBtn = this.add
+      .text(currX + 35, 44, 'PREFABS', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 10,
+        color: '#ffffff',
+        backgroundColor: '#00838f',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0, 0)
+      .setDepth(50)
+      .setInteractive({ useHandCursor: true })
+    prefabsBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      const sel = this.getSelected()
+      const prefabId = sel ? inferPrefabId(sel) : 'guard'
+      this.prefabModeController?.enterPrefabMode(prefabId)
     })
 
     // Draw room frame (same as PhaserRoomView)
@@ -787,6 +812,27 @@ export class LevelEditorScene extends Phaser.Scene {
     })
 
     items.push(spawnGuardBtn, spawnDaggerBtn, spawnCrateBtn, spawnBoulderBtn)
+
+    // Edit prefab button
+    this.editPrefabButton = this.add
+      .text(140, 216, 'EDIT PREFAB', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 10,
+        color: '#ffffff',
+        backgroundColor: '#00838f',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+      .setVisible(false)
+    this.editPrefabButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      const sel = this.getSelected()
+      if (sel) {
+        this.prefabModeController?.enterPrefabMode(inferPrefabId(sel))
+      }
+    })
+    items.push(this.editPrefabButton)
 
     // Remove selected object button
     this.deleteButton = this.add
@@ -1368,7 +1414,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.updatePropertyPanel()
   }
 
-  private updatePropertyPanel(): void {
+  public updatePropertyPanel(): void {
     const selected = this.getSelected()
     const setField = (key: string, value: string) => {
       const text = this.panelFields.get(`val_${key}`)
@@ -2310,6 +2356,9 @@ export class LevelEditorScene extends Phaser.Scene {
       selected.scaleX = candScaleX
       selected.scaleY = candScaleY
       this.updateObjectVisuals(selected)
+      if (this.prefabModeController?.isPrefabModeActive) {
+        this.prefabModeController.onHandleDragged(selected)
+      }
       this.updatePropertyPanel()
     }
 
@@ -2339,6 +2388,9 @@ export class LevelEditorScene extends Phaser.Scene {
         selected.colliderWidth = candW
         selected.colliderHeight = candH
         this.updateObjectVisuals(selected)
+        if (this.prefabModeController?.isPrefabModeActive) {
+          this.prefabModeController.onHandleDragged(selected)
+        }
         this.updatePropertyPanel()
       }
     }
@@ -3207,6 +3259,24 @@ export class LevelEditorScene extends Phaser.Scene {
     if (!this.deleteButton) return
     const canDelete = this.selectedId !== null && this.selectedId !== WORLD_OBJECT_IDS.player
     this.deleteButton.setVisible(canDelete)
+    if (this.editPrefabButton) {
+      const selected = this.getSelected()
+      if (selected) {
+        const prefabId = inferPrefabId(selected)
+        this.editPrefabButton.setText(`PREFAB: ${prefabId.toUpperCase()}`)
+        this.editPrefabButton.setVisible(true)
+      } else {
+        this.editPrefabButton.setVisible(false)
+      }
+    }
+  }
+
+  public getEditorObjects(): EditorObject[] {
+    return this.editorObjects
+  }
+
+  public refreshObjectVisuals(obj: EditorObject): void {
+    this.updateObjectVisuals(obj)
   }
 
   private createSnapshot(obj: EditorObject): ScalableMovableObject {

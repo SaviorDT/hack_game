@@ -42,6 +42,8 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   passive?: boolean
   /** A special object: a pushable `crate`, a pressure `plate`, or an `archer` enemy. */
   kind?: 'crate' | 'plate' | 'archer'
+  /** The prefab template ID this object was instantiated from. */
+  prefabId?: string
 }
 
 export const ROOM1_OBJECTS: RoomObjectConfig[] = [

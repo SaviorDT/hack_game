@@ -163,6 +163,15 @@ Every world object, weapons included, has a domain-owned `collisionBox` (`width`
 - In `LevelEditorScene`, each non-weapon world object displays a visual green collider matching its physical dimensions: a rectangle for boxes, a circle (`Phaser.GameObjects.Ellipse`) for circle colliders. Non-weapon collisionboxes are directly editable via handle dragging (green handle at bottom-right of the collider box), inspector panel dimension controls (`box_w`, `box_h`), scale buttons (`BOX +` / `BOX -`), and hotkeys (`[` / `]`). Dragging, nudging, scaling, collider resizing, and spawning refuse positions where two objects that collide physically (`rolesCollide`) would overlap, using the same shape-aware overlap as the game (`wouldOverlapAnyEditorObject`), so a Dagger can sit over a Guard but not over the boulder. A circle collider's width and height are one diameter: `box_w`, `box_h`, the prompts, `BOX +`/`BOX -`, `[`/`]` and the handle drag change both together. `SAVE TO ROOM1.TS` writes `colliderShape` for circles, and undoing a despawn restores the shape. When the collider is about as large as the sprite, the yellow scale handle overlaps the green collider handle and takes the drag. Weapon collider boxes are not editable in the editor yet.
 - In `room1.ts`, all starting world object positions are arranged without overlap of objects that collide.
 
+### Prefabs and In-Level Prefab Mode
+
+The Prefab system (`domain/Prefab.ts`, `content/prefabRegistry.ts`, `scenes/prefabModeController.ts`) models Unity's prefab workflow: master template assets (`guard`, `dagger`, `boulder`, `crate`, `plate`, `archer`, `player`) whose modifications propagate to all instantiated instances across game rooms.
+
+- **In-Level Preview**: Prefab Mode operates directly within `LevelEditorScene`. Instead of an isolated stage, the active open room remains fully visible as the preview canvas.
+- **Instance Synchronization**: Modifying any template property (dimensions, collider dimensions, collider shape, health, speed, physics attributes) or dragging the scale/collider handle on any instance in the room simultaneously updates all sibling instances of that prefab in the open room in real time.
+- **Cross-Room Propagation**: `propagatePrefabChanges` updates matching instances across all rooms in `roomRegistry` (`room1`, `tutorialRooms`, `homeArea`), preserving individual instance coordinates (`x`, `y`), `id`, `roomId`, and custom names.
+- **Access via Buttons**: Entered from `LevelEditorScene` via the `[PREFABS]` toolbar button or the `[PREFAB: <NAME>]` button in the inspector when an instance is selected; exited via `[EXIT PREFAB]`.
+
 ### Rooms, Exits and Tutorial
 
 The game (`createGameWorldState`, `content/tutorialRooms.ts`) is a chain of rooms: `tutorial1` → `tutorial2` → `tutorial3` → `tutorial4` → `home` → `storage` → `yard` → `lane` → `gate` → `room1` → `room2` (the ending). `content/roomPieces.ts` holds the object presets (`dagger`, `boulder`, `guard`, `crate`, `plate`, `archer`) and `buildRooms`, which turns `RoomDefinition`s (id, optional `hint`, `goal`, `objects`, optional `walls`, `exit`) into Rooms. `GameScene` plays this world; `createInitialWorldState` still builds room1 on its own, which the editors, editor sessions and most tests use, and `createRoom1Session` takes an optional `worldState`. The Player Character exists once, starts in `tutorial1` with room1's player configuration, and every object id is unique across rooms (objects show their `name`, so each room can have its own `dagger` or `guard`).
@@ -271,6 +280,9 @@ classDiagram
 
   LevelEditorScene ..> room1 : reads & overwrites ROOM1_OBJECTS
   LevelEditorScene --> EditorHistory : manages undo stack
+  LevelEditorScene --> PrefabModeController : manages in-level prefab mode
+  PrefabModeController ..> prefabRegistry : reads & updates PrefabDefinition
+  prefabRegistry ..> roomRegistry : propagates template changes across rooms
   LevelEditorScene ..> room1Serializer : serializes RoomObjectConfig[]
   SceneManager ..> GameScene : manages transitions & hotkeys
   SceneManager ..> CommandEditorOverlay : manages F1 toggle
@@ -294,9 +306,9 @@ src/
   main.ts, createGame.ts
   application/  GameSession.ts, InputModeController.ts, editorStorage.ts
   ai/           behaviorTree/{BehaviorTreeTypes.ts, BehaviorTreeEvaluator.ts, BehaviorTreePresets.ts, BehaviorTreeProcess.ts, BehaviorTreeModel.ts}
-  content/      room1.ts, room1Constants.ts, weaponConstants.ts, archerConstants.ts, room1Commands.ts, room1Serializer.ts, room1WorldState.ts, createRoom1Session.ts, roomPieces.ts, tutorialRooms.ts, homeArea.ts
-  scenes/       TitleScene.ts, GameScene.ts, SceneManager.ts, CommandEditorOverlay.ts, LevelEditorScene.ts, levelEditorHistory.ts, SpeedEditorScene.ts, speedEditorSession.ts, BehaviorTreeEditorScene.ts, aiEditorSession.ts, editorTheme.ts
-  domain/       WorldState.ts, Room.ts, WorldObject.ts, BasicWorldObject.ts, CharacterState.ts, CollisionWorld.ts, CollisionResponse.ts, ColliderTag.ts, PhysicsAttr.ts, PlayerDefeat.ts, RoomTravel.ts, PressurePlate.ts, CombatService.ts, PickUpService.ts, WeaponDefinition.ts, ids.ts, JsonValue.ts, WorldPath.ts, WorldPathResolver.ts, VirtualWorldPathResolver.ts
+  content/      room1.ts, room1Constants.ts, weaponConstants.ts, archerConstants.ts, room1Commands.ts, room1Serializer.ts, room1WorldState.ts, createRoom1Session.ts, roomPieces.ts, tutorialRooms.ts, homeArea.ts, prefabRegistry.ts
+  scenes/       TitleScene.ts, GameScene.ts, SceneManager.ts, CommandEditorOverlay.ts, LevelEditorScene.ts, levelEditorHistory.ts, SpeedEditorScene.ts, speedEditorSession.ts, BehaviorTreeEditorScene.ts, aiEditorSession.ts, editorTheme.ts, prefabModeController.ts
+  domain/       WorldState.ts, Room.ts, WorldObject.ts, BasicWorldObject.ts, CharacterState.ts, CollisionWorld.ts, CollisionResponse.ts, ColliderTag.ts, PhysicsAttr.ts, PlayerDefeat.ts, RoomTravel.ts, PressurePlate.ts, CombatService.ts, PickUpService.ts, WeaponDefinition.ts, ids.ts, JsonValue.ts, WorldPath.ts, WorldPathResolver.ts, VirtualWorldPathResolver.ts, Prefab.ts
   processes/    BehaviorRule.ts, ProcessDefinition.ts, ProcessInstance.ts
   commands/     mvConstants.ts, mvSerializer.ts, CommandSubmissionService.ts, CommandRegistry.ts, RegisteredCommandRegistry.ts, CommandParser.ts, VirtualCommandParser.ts, CommandRequirement.ts, CommandRequirementChecker.ts, EveryCommandRequirementChecker.ts, ParsedCommand.ts, CommandHistory.ts, CommandFeedback.ts, CommandResult.ts, executors/{base.ts, ls.ts, mv.ts}
   simulation/   SimulationClock.ts, SimulationEngine.ts, RealtimeSimulationClock.ts, TickSimulationEngine.ts, PhysicsWorld.ts, Drive.ts, MvDrive.ts, physicsConstants.ts, physicsSerializer.ts, ContactResolver.ts, room1/{Room1Processes.ts, RangedProcesses.ts}

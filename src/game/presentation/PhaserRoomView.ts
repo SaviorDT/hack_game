@@ -22,12 +22,12 @@ import { WORLD_OBJECT_IDS, ROOM_LAYOUT, ROOM_NAMES } from '../content/room1Const
 import { isExitOpen } from '../domain/RoomTravel.ts'
 import { isPlatePressed } from '../domain/PressurePlate.ts'
 import { WorldObjectViewRegistry } from './WorldObjectViewRegistry.ts'
+import { TEXT_COLOR } from './uiTheme.ts'
 
 export const PLAYER_TEXTURE_KEY = 'player-idle'
 export const GUARD_TEXTURE_KEY = 'guard-idle'
 export const DAGGER_TEXTURE_KEY = 'dagger'
 export const BOULDER_TEXTURE_KEY = 'boulder'
-export const ITEM_LABEL_WIDTH_RATIO = 0.75
 
 export {
   WEAPON_HOLD_OFFSET,
@@ -86,7 +86,6 @@ interface DisplayState {
   angle?: unknown
 }
 
-const TEXT_COLOR = '#d6d6d6'
 const HEALTH_BAR_WIDTH = 110
 const HEALTH_BAR_HEIGHT = 12
 const HEALTH_BAR_OFFSET_Y = 100
@@ -324,27 +323,58 @@ export class PhaserRoomView {
         const objectName = typeof worldObject.metadata.name === 'string'
           ? worldObject.metadata.name
           : worldObject.id
-        const labelText = objectName
-
-        label.setText(labelText)
         const isItem = isWeapon || worldObject.metadata.role === 'item'
 
         if (isItem && equipped) {
-          const targetWidth = sprite.displayWidth * ITEM_LABEL_WIDTH_RATIO
-          const scale = label.width > 0 ? targetWidth / label.width : 1
-          label.setScale(scale)
-          label.setAlpha(0.9)
-        } else if (isItem && label.width > sprite.displayWidth * ITEM_LABEL_WIDTH_RATIO) {
-          const targetWidth = sprite.displayWidth * ITEM_LABEL_WIDTH_RATIO
-          const scale = label.width > 0 ? targetWidth / label.width : 1
-          label.setScale(scale)
-          label.setAlpha(1)
-        } else {
-          label.setScale(1)
-          label.setAlpha(1)
+          const holderObj = state.worldObjects.find((o) => o.id === objectState.equippedBy)
+          if (holderObj) {
+            const holderState = displayState(holderObj)
+            const holderRendered = positionOf(holderObj.id)
+            const holderX = holderRendered?.x ?? (typeof holderState.x === 'number' ? holderState.x : x)
+            const holderY = holderRendered?.y ?? (typeof holderState.y === 'number' ? holderState.y : y)
+            const holderName = typeof holderObj.metadata.name === 'string'
+              ? holderObj.metadata.name
+              : holderObj.id
+            const holderLabel = this.labelById.get(holderObj.id)
+            const holderOffsetY = typeof holderState.maxHealth === 'number' && typeof holderState.health === 'number'
+              ? (typeof holderState.height === 'number' ? holderState.height / 2 + 20 : HEALTH_BAR_OFFSET_Y) + 4
+              : (typeof holderState.displayHeight === 'number'
+                ? holderState.displayHeight
+                : holderObj.metadata.role === 'weapon' ? 72 : 176) / 2 + 4
+
+            if (holderLabel) {
+              holderLabel
+                .setText(holderName)
+                .setOrigin(0.5, 1)
+                .setPosition(holderX, holderY - holderOffsetY)
+                .setScale(1)
+                .setAlpha(1)
+                .setColor(TEXT_COLOR)
+            }
+
+            label
+              .setText(`,${objectName}`)
+              .setOrigin(0, 1)
+              .setPosition(
+                holderX + (holderLabel?.width ?? 0) / 2,
+                holderY - holderOffsetY,
+              )
+              .setScale(1)
+              .setAlpha(1)
+              .setColor(TEXT_COLOR)
+              .setVisible(visible && worldObject.metadata.hidden !== true)
+            continue
+          }
         }
-        label.setPosition(renderX, renderY - labelOffsetY)
-        label.setVisible(visible && worldObject.metadata.hidden !== true)
+
+        label
+          .setText(objectName)
+          .setOrigin(0.5, 1)
+          .setPosition(renderX, renderY - labelOffsetY)
+          .setScale(1)
+          .setAlpha(1)
+          .setColor(TEXT_COLOR)
+          .setVisible(visible && worldObject.metadata.hidden !== true)
       }
     }
   }

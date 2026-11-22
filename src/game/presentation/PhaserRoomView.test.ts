@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type Phaser from 'phaser'
 import {
   PhaserRoomView,
-  ITEM_LABEL_WIDTH_RATIO,
   DAGGER_ATTACK_DISTANCE,
   DAGGER_ATTACK_DURATION_MS,
   computeDaggerAttackTranslation,
@@ -23,6 +22,7 @@ interface MockText {
   stroke: string
   strokeThickness: number
   alpha: number
+  color: string
   scaleX: number
   scaleY: number
   setOrigin(x: number, y?: number): MockText
@@ -34,6 +34,7 @@ interface MockText {
   setStroke(color: string, thickness: number): MockText
   setAlpha(alpha: number): MockText
   setScale(x: number, y?: number): MockText
+  setColor(color: string): MockText
   destroy(): void
 }
 
@@ -111,6 +112,7 @@ function createMockScene() {
           stroke: '#000000',
           strokeThickness: 3,
           alpha: 1,
+          color: '#d6d6d6',
           scaleX: 1,
           scaleY: 1,
           get width() { return Math.max(1, t.text.length * 14) },
@@ -124,6 +126,7 @@ function createMockScene() {
           setStroke(color: string, thickness: number) { t.stroke = color; t.strokeThickness = thickness; return t },
           setAlpha(alpha: number) { t.alpha = alpha; return t },
           setScale(sx: number, sy: number = sx) { t.scaleX = sx; t.scaleY = sy; return t },
+          setColor(color: string) { t.color = color; return t },
           destroy() { },
         }
         texts.push(t)
@@ -249,27 +252,43 @@ describe('PhaserRoomView', () => {
     expect(texts.some((t) => t.text === 'sword')).toBe(true)
   })
 
-  it('keeps item label visible when equipped by a character and shrinks text width to ratio of item sprite', () => {
+  it('appends an equipped weapon label to the holder name at full scale', () => {
     const view = new PhaserRoomView()
-    const { mockScene, images, texts } = createMockScene()
+    const { mockScene, texts } = createMockScene()
     const worldState = createInitialWorldState()
 
     view.mount(mockScene, worldState)
 
+    const player = worldState.worldObjects.find((o) => o.id === 'player')!
     const dagger = worldState.worldObjects.find((o) => o.id === 'dagger')!
       ; (dagger.state as Record<string, unknown>).discovered = true
       ; (dagger.state as Record<string, unknown>).equippedBy = 'player'
 
     view.update(worldState)
 
-    const daggerText = texts.find((t) => t.text === 'dagger')
-    const daggerImage = images[worldState.worldObjects.indexOf(dagger)]!
+    const playerText = texts.find((t) => t.text === 'hacker')!
+    const daggerText = texts.find((t) => t.text === ',dagger')!
     expect(daggerText).toBeDefined()
-    // Does not hide equipped item's label
     expect(daggerText?.visible).toBe(true)
+    expect(playerText?.text).toBe('hacker')
+    expect(playerText?.x).toBe((player.state as Record<string, unknown>).x)
+    expect(daggerText?.x).toBe(playerText.x + playerText.width / 2)
+    expect(daggerText?.y).toBe(playerText.y)
+    expect(daggerText?.scaleX).toBe(1)
+  })
 
-    // Total text width is ITEM_LABEL_WIDTH_RATIO * the rendered sprite width
-    expect(daggerText?.displayWidth).toBeCloseTo(daggerImage.displayWidth * ITEM_LABEL_WIDTH_RATIO, 1)
+  it('renders an unequipped item with its bare name at full scale', () => {
+    const view = new PhaserRoomView()
+    const { mockScene, texts } = createMockScene()
+    const worldState = createInitialWorldState()
+
+    view.mount(mockScene, worldState)
+
+    const daggerText = texts.find((t) => t.text === 'dagger')!
+    expect(daggerText).toBeDefined()
+    expect(daggerText.text).toBe('dagger')
+    expect(daggerText.scaleX).toBe(1)
+    expect(daggerText.originX).toBe(0.5)
   })
 
   it('updates overhead label when object is renamed', () => {

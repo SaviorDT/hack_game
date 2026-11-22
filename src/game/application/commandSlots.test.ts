@@ -40,8 +40,8 @@ describe('commandSlots', () => {
 
     expect(loadCommandSlots(storage)).toEqual({})
 
-    saveCommandSlots({ 8: 'mv dagger $mouse', 9: 'ls' }, storage)
-    expect(loadCommandSlots(storage)).toEqual({ 8: 'mv dagger $mouse', 9: 'ls' })
+    saveCommandSlots({ 8: 'acc dagger $mouse', 9: 'ls' }, storage)
+    expect(loadCommandSlots(storage)).toEqual({ 8: 'acc dagger $mouse', 9: 'ls' })
   })
 
   it('handles invalid json or corrupt storage gracefully', () => {

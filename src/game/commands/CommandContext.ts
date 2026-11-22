@@ -10,7 +10,7 @@ export interface CommandContext {
   readonly mouse?: MousePoint
 }
 
-/** The `mv` target that stands for the cursor point; it can never be a World Object name. */
+/** The `acc` target that stands for the cursor point; it can never be a World Object name. */
 export const MOUSE_TARGET = '$mouse'
 
 export function isMouseTarget(label: string): boolean {

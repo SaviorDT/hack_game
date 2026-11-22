@@ -124,7 +124,7 @@ describe('tutorial rooms', () => {
     // tutorial2: pick up the dagger and throw it at the sentry from a distance.
     walk(session, { x: 420, y: 560 })
     expect(body(session, 'tutorial2dagger').equippedBy).toBe('player')
-    expect(session.submitCommand('mv dagger guard').status).toBe('success')
+    expect(session.submitCommand('acc dagger guard').status).toBe('success')
     runFor(session, 2000)
     expect(body(session, 'sentry').alive).toBe(false)
     // The sentry never reached the player (a throw from the hand may graze its thrower for a few points).
@@ -143,7 +143,7 @@ describe('tutorial rooms', () => {
     expect(session.inputMode).toBe('command')
     runFor(session, 400)
     expect(body(session, 'player').alive).not.toBe(false)
-    expect(session.submitCommand('mv dagger guard').status).toBe('success')
+    expect(session.submitCommand('acc dagger guard').status).toBe('success')
     runFor(session, 2000)
     expect(body(session, 'runner').alive).toBe(false)
     walk(session, { x: EXIT.x, y: EXIT.y })

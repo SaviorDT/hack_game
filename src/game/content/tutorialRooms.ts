@@ -36,13 +36,13 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   {
     id: TUTORIAL_ROOM_IDS.throw,
     hint:
-      'mv <thing> <target> throws a thing at a target. This guard hits hard up close, so pick up the dagger and ' +
-      'throw it from a distance: mv dagger guard. mv boulder hacker pulls the boulder over to you.',
-    goal: 'Defeat the guard. Try throwing the dagger with mv.',
+      'acc <thing> <target> throws a thing at a target. This guard hits hard up close, so pick up the dagger and ' +
+      'throw it from a distance: acc dagger guard. acc boulder hacker pulls the boulder over to you.',
+    goal: 'Defeat the guard. Try throwing the dagger with acc.',
     objects: [
       dagger('tutorial2dagger', 420, 600),
       boulder('tutorial2boulder', 760, 300),
-      guard('sentry', 1500, 420, { speed: 0, maxHealth: 40, mass: STANDS_FIRM }),
+      guard('sentry', 1500, 420, { speed: 0, maxHealth: 30, mass: STANDS_FIRM }),
     ],
     exit: {
       targetRoomId: TUTORIAL_ROOM_IDS.slowTime,
@@ -54,11 +54,11 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     id: TUTORIAL_ROOM_IDS.slowTime,
     hint:
       'Typing a command slows time, but it never stops. This guard is faster than you and charges once ' +
-      'you cross the middle of the room. Grab the dagger, and when the guard comes, type mv dagger guard.',
+      'you cross the middle of the room. Grab the dagger, and when the guard comes, type acc dagger guard.',
     goal: 'Defeat the fast guard.',
     objects: [
       dagger('tutorial3dagger', 430, 600),
-      guard('runner', 1550, 420, { speed: 380, maxHealth: 40 }),
+      guard('runner', 1550, 420, { speed: 380, maxHealth: 30 }),
     ],
     exit: {
       targetRoomId: HOME_AREA_IDS.home,
@@ -69,7 +69,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
 ]
 
 export const ROOM1_HINT =
-  'The real thing: guards rush you once you cross the middle of the room. Use mv and your dagger to reach room2.'
+  'The real thing: guards rush you once you cross the middle of the room. Use acc and your dagger to reach room2.'
 
 /**
  * The whole game: the tutorial rooms, the home area, room1, then room2 (whose Hidden Exit to room3 ends the

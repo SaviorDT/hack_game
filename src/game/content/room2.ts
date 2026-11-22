@@ -17,7 +17,10 @@ export const ROOM2_DEFINITION: RoomDefinition = {
   id: ROOM_IDS.second,
   hint: ROOM2_HINT,
   goal: 'Defeat the dummy, then walk into the exit.',
-  objects: [dagger('room2dagger', 614, 611), targetDummy(ROOM2_DUMMY.id, ROOM2_DUMMY.x, ROOM2_DUMMY.y)],
+  objects: [
+    dagger('room2dagger', 614, 611),
+    targetDummy(ROOM2_DUMMY.id, ROOM2_DUMMY.x, ROOM2_DUMMY.y),
+  ],
   exit: {
     targetRoomId: ROOM3_ID,
     label: ROOM3_ID,

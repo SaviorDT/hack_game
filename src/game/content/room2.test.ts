@@ -12,7 +12,7 @@ import { SIMULATION_TICK_MS } from '../simulation/TickSimulationEngine.ts'
 const bindings = { up: ['arrowup'], down: ['arrowdown'], left: ['arrowleft'], right: ['arrowright'] }
 const memoryStorage = { getItem: () => null, setItem: () => undefined } as unknown as Storage
 
-type Body = { x: number; y: number; vx?: number; vy?: number; health?: number; maxHealth?: number; alive?: boolean }
+type Body = { x: number; y: number; vx?: number; vy?: number; health?: number; maxHealth?: number; alive?: boolean; mvLimit?: number }
 
 function room2Session(): GameSession {
   return createRoom1Session({
@@ -55,6 +55,7 @@ describe('room2', () => {
     const session = room2Session()
     expect(body(session, 'room2dagger').x).toBeLessThan(body(session, ROOM2_DUMMY.id).x)
     expect(body(session, ROOM2_DUMMY.id).x).toBeGreaterThan(960)
+    expect(body(session, 'room2dagger')).toMatchObject({ mvLimit: -1 })
   })
 
   it('has a Target Dummy with 1000 Health that nothing collides with', () => {
@@ -84,7 +85,7 @@ describe('room2', () => {
     const session = room2Session()
     const dagger = body(session, 'room2dagger')
     const dummy = body(session, ROOM2_DUMMY.id)
-    expect(session.submitCommand('mv dagger dummy').status).toBe('success')
+    expect(session.submitCommand('acc dagger dummy').status).toBe('success')
     runFor(session, 1500)
     expect(dummy.health!).toBeLessThan(1000)
     expect(dummy.alive).toBe(true)
@@ -100,7 +101,7 @@ describe('room2', () => {
     expect(visibleExitsOf(state, room)).toEqual([])
 
     body(session, ROOM2_DUMMY.id).health = 1
-    expect(session.submitCommand('mv dagger dummy').status).toBe('success')
+    expect(session.submitCommand('acc dagger dummy').status).toBe('success')
     runFor(session, 1500)
 
     expect(body(session, ROOM2_DUMMY.id).alive).toBe(false)
@@ -108,24 +109,24 @@ describe('room2', () => {
     expect(visibleExitsOf(state, room)).toEqual([exit])
   })
 
-  it('keeps the Hidden Exit out of the room listing, Tab completion and mv until it opens', () => {
+  it('keeps the Hidden Exit out of the room listing, Tab completion and acc until it opens', () => {
     const session = room2Session()
-    const names = () => session.getCommandCompletionCandidates('mv dagger ', 'mv dagger '.length)
+    const names = () => session.getCommandCompletionCandidates('acc dagger ', 'acc dagger '.length)
     expect(names()).not.toContain(`${ROOM3_ID}/`)
     const { state, room } = room2Of(session)
     expect(getRoomDirectoryEntries(state, room, true)).not.toContain(ROOM3_ID)
 
-    // Not an exit yet, so the name is simply a new label for the dagger.
-    expect(session.submitCommand(`mv dagger ${ROOM3_ID}`).status).toBe('success')
-    expect(objectOf(session, 'room2dagger').metadata.name).toBe(ROOM3_ID)
-    expect(body(session, 'room2dagger').vx ?? 0).toBe(0)
+    const result = session.submitCommand(`acc dagger ${ROOM3_ID}`)
+    expect(result.status).toBe('rejected')
+    expect(result.feedback).toEqual({ kind: 'popup', text: `Cannot find "${ROOM3_ID}".` })
+    expect(objectOf(session, 'room2dagger').metadata.name).toBe('dagger')
   })
 
-  it('names the exit once it is revealed, so it can be thrown at', () => {
+  it('targets the revealed exit with acc', () => {
     const session = room2Session()
     body(session, ROOM2_DUMMY.id).alive = false
-    expect(session.getCommandCompletionCandidates('mv dagger ', 'mv dagger '.length)).toContain(`${ROOM3_ID}/`)
-    expect(session.submitCommand(`mv dagger ${ROOM3_ID}`).status).toBe('success')
+    expect(session.getCommandCompletionCandidates('acc dagger ', 'acc dagger '.length)).toContain(`${ROOM3_ID}/`)
+    expect(session.submitCommand(`acc dagger ${ROOM3_ID}`).status).toBe('success')
     expect(objectOf(session, 'room2dagger').metadata.name).toBe('dagger')
   })
 

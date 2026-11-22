@@ -33,7 +33,7 @@ export const DEFAULT_SPEED_CONFIG: PlayerSpeedConfig = {
 
 export { GAME_MV_CONFIG, GAME_PHYSICS_CONFIG, type MvConfig, type PhysicsConfig }
 
-/** Everything the Speed Editor tunes for `mv` throws: the pull of `mv` and the global physics values. */
+/** Everything the Speed Editor tunes for `acc` throws: the pull toward targets and the global physics values. */
 export type TuningConfig = MvConfig & PhysicsConfig
 
 export function getTuningConfig(config?: Partial<TuningConfig>): TuningConfig {

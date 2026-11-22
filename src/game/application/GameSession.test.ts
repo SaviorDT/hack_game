@@ -286,7 +286,7 @@ describe('commands', () => {
     runFor(session, 1000)
     const slowDistance = startX - guard.x
 
-    session.submitCommand('mv dagger guard')
+    session.submitCommand('acc dagger guard')
     runFor(session, 1000)
     const fastDistance = startX - slowDistance - guard.x
 
@@ -308,21 +308,15 @@ describe('commands', () => {
     expect(guard2.discovered).toBe(true)
     expect(guard3.discovered).toBe(true)
 
-    const candidates = session.getCommandCompletionCandidates('mv d', 4)
+    const candidates = session.getCommandCompletionCandidates('acc d', 5)
     expect(candidates).toContain('dagger')
   })
 
-  it('renames an object when target does not exist and reflects the new name in autocomplete', () => {
+  it('does not expose mv renaming through the in-game session', () => {
     const session = newSession()
-    const daggerObj = session.getWorldState().worldObjects.find((o) => o.id === 'dagger')!
-
     const renameResult = session.submitCommand('mv dagger sword')
-    expect(renameResult.status).toBe('success')
-    expect(renameResult.feedback).toEqual([{ kind: 'popup', text: 'Renamed dagger to sword.' }])
-    expect(daggerObj.metadata.name).toBe('sword')
-
-    const candidates = session.getCommandCompletionCandidates('sw', 2)
-    expect(candidates).toContain('sword')
+    expect(renameResult.status).toBe('rejected')
+    expect(renameResult.feedback).toEqual({ kind: 'popup', text: 'Unknown command: mv' })
   })
 
   it('includes player label "hacker" in tab completion candidates', () => {
@@ -332,23 +326,22 @@ describe('commands', () => {
     const cmdCandidates = session.getCommandCompletionCandidates('ha', 2)
     expect(cmdCandidates).toContain('hacker')
 
-    // hacker should be tab-completable when typing arguments to mv
-    const argCandidates = session.getCommandCompletionCandidates('mv dagger h', 11)
+    // hacker should be tab-completable when typing arguments to acc
+    const argCandidates = session.getCommandCompletionCandidates('acc dagger h', 11)
     expect(argCandidates).toContain('hacker')
 
-    const mvCandidates = session.getCommandCompletionCandidates('mv h', 4)
-    expect(mvCandidates).toContain('hacker')
+    const accCandidates = session.getCommandCompletionCandidates('acc h', 5)
+    expect(accCandidates).toContain('hacker')
+    const mouseCandidates = session.getCommandCompletionCandidates('acc dagger $', 12)
+    expect(mouseCandidates).toContain('$mouse')
   })
 
 
-  it('updates tab completion candidates when player is renamed', () => {
+  it('does not allow the hidden mv executor to rename the player in-game', () => {
     const session = newSession()
     const renameResult = session.submitCommand('mv hacker neo')
-    expect(renameResult.status).toBe('success')
-
-    const candidates = session.getCommandCompletionCandidates('ne', 2)
-    expect(candidates).toContain('neo')
-    expect(candidates).not.toContain('hacker')
+    expect(renameResult.status).toBe('rejected')
+    expect(renameResult.feedback).toEqual({ kind: 'popup', text: 'Unknown command: mv' })
   })
 
   it('throws an object towards target with speed across simulation ticks until arrival', () => {
@@ -357,7 +350,7 @@ describe('commands', () => {
     const guard = stateOf(session, 'guard')
     const startX = dagger.x
 
-    const result = session.submitCommand('mv dagger guard')
+    const result = session.submitCommand('acc dagger guard')
     expect(result.status).toBe('success')
     expect(result.feedback).toEqual([{ kind: 'popup', text: 'Threw dagger to guard.' }])
 
@@ -378,7 +371,7 @@ describe('commands', () => {
     const session = newSession()
     const dagger = stateOf(session, 'dagger')
 
-    session.submitCommand('mv dagger guard')
+    session.submitCommand('acc dagger guard')
     const daggerRecord = dagger as unknown as Record<string, unknown>
     expect(daggerRecord.thrown).toMatchObject({ targetObjectId: 'guard' })
     expect(Math.hypot((dagger.vx as number) ?? 0, (dagger.vy as number) ?? 0)).toBe(0)
@@ -403,7 +396,7 @@ describe('commands', () => {
     dagger.equippedBy = 'player'
 
     // Throw dagger to guard
-    const result = session.submitCommand('mv dagger guard')
+    const result = session.submitCommand('acc dagger guard')
     expect(result.status).toBe('success')
     // Still within pickup reach right after throwing
     expect(player.weaponId).toBe('dagger')
@@ -428,13 +421,20 @@ describe('commands', () => {
     for (const id of ['guard', 'guard2', 'guard3', 'boulder']) {
       ; (stateOf(session, id) as unknown as { alive: boolean }).alive = false
     }
-    const result = session.submitCommand('mv hacker room2')
+    const result = session.submitCommand('acc hacker room2')
     expect(result.status).toBe('success')
 
     // Run until player reaches room2 exit
     runFor(session, 6000)
     expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.second)
     expect(session.getWorldState().outcome).toBe('congratulations')
+  })
+
+  it('hides mv in the in-game command service', () => {
+    const session = newSession()
+    const result = session.submitCommand('mv dagger sword')
+    expect(result.status).toBe('rejected')
+    expect(result.feedback).toEqual({ kind: 'popup', text: 'Unknown command: mv' })
   })
 })
 
@@ -701,14 +701,14 @@ describe('player facing and turning', () => {
     expect(session.recordLastCommandToSlot(8)).toEqual({ success: false })
 
     // Submit a command to history
-    session.submitCommand('mv dagger guard')
-    expect(session.recordLastCommandToSlot(8)).toEqual({ success: true, command: 'mv dagger guard' })
-    expect(session.getCommandSlot(8)).toBe('mv dagger guard')
-    expect(session.getCommandSlots()).toEqual({ 8: 'mv dagger guard' })
+    session.submitCommand('acc dagger guard')
+    expect(session.recordLastCommandToSlot(8)).toEqual({ success: true, command: 'acc dagger guard' })
+    expect(session.getCommandSlot(8)).toBe('acc dagger guard')
+    expect(session.getCommandSlots()).toEqual({ 8: 'acc dagger guard' })
 
     // Set slot directly
-    session.setCommandSlot(9, 'mv dagger $mouse')
-    expect(session.getCommandSlot(9)).toBe('mv dagger $mouse')
-    expect(session.getCommandSlots()).toEqual({ 8: 'mv dagger guard', 9: 'mv dagger $mouse' })
+    session.setCommandSlot(9, 'acc dagger $mouse')
+    expect(session.getCommandSlot(9)).toBe('acc dagger $mouse')
+    expect(session.getCommandSlots()).toEqual({ 8: 'acc dagger guard', 9: 'acc dagger $mouse' })
   })
 })

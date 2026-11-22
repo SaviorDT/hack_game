@@ -18,7 +18,7 @@ export const HOME_AREA_IDS = {
 
 export const HOME_AREA_ROOMS: RoomDefinition[] = [
   {
-    // A wall splits the room; the only gap is plugged by a crate. Shove it through, or `mv` it out of the way.
+    // A wall splits the room; the only gap is plugged by a crate. Shove it through, or `acc` it out of the way.
     id: HOME_AREA_IDS.home,
     goal: 'Get through to the far side.',
     walls: [wallFromEdges(880, 80, 940, 330), wallFromEdges(880, 470, 940, 700)],
@@ -57,7 +57,7 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
   },
   {
     // An archer sealed in a booth shoots through a narrow window over the plate. The only weight in reach is the
-    // boulder, and `mv boulder plate` both opens the exit and plugs the window.
+    // boulder, and `acc boulder plate` both opens the exit and plugs the window.
     id: HOME_AREA_IDS.lane,
     goal: 'The way on is shut tight, and the archer has the plate covered.',
     walls: [

@@ -68,8 +68,8 @@ export class CommandSubmissionService {
     const isCompletingArgument = Boolean(commandMatch && /\s/.test(textAfterCommand))
 
     if (isCompletingArgument) {
-      const isMv = commandMatch?.[1] === 'mv'
-      return [...new Set(isMv ? [...roomEntries, MOUSE_TARGET] : roomEntries)]
+      const isThrowCommand = commandMatch?.[1] === 'acc'
+      return [...new Set(isThrowCommand ? [...roomEntries, MOUSE_TARGET] : roomEntries)]
     }
 
     return [...new Set([...this.registry.names(), ...roomEntries])]

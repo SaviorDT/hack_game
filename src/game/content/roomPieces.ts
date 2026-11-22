@@ -39,8 +39,8 @@ function createPieceFromPrefab(
 }
 
 // Objects look and behave like room1's, so every room teaches the same things.
-export const dagger = (id: string, x: number, y: number): RoomObjectConfig =>
-  createPieceFromPrefab('dagger', id, x, y, { name: 'dagger' })
+export const dagger = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>
+  createPieceFromPrefab('dagger', id, x, y, { name: 'dagger', ...extra })
 
 export const boulder = (id: string, x: number, y: number): RoomObjectConfig =>
   createPieceFromPrefab('boulder', id, x, y, { name: 'boulder' })

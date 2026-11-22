@@ -25,7 +25,7 @@ A solid, immovable part of a Room that blocks movement, thrown objects and arrow
 _Avoid_: Obstacle (when referring to room geometry)
 
 **Crate**:
-A light World Object that can be pushed by walking into it or thrown with `mv`, heavy enough to hold a Pressure Plate down.
+A light World Object that can be pushed by walking into it or thrown with `acc`, heavy enough to hold a Pressure Plate down.
 _Avoid_: Box
 
 **Target Dummy**:
@@ -93,19 +93,19 @@ A command-facing address that resolves to a room or world object inside the game
 _Avoid_: File path, filesystem path (when referring to the host computer)
 
 **Throw**:
-The flight of a World Object from where it is towards a target after the player moves it with `mv`. It ends when the object arrives at the target or at its first Collision; an object that would Collide on the way never reaches the target. A Weapon is not held inside the Room's edge, so it can fly out of the Room; every other object is stopped by the edge, which also ends its Throw.
+The flight of a World Object from where it is towards a target after the player accelerates it with `acc`. It ends when the object arrives at the target or at its first Collision; an object that would Collide on the way never reaches the target. Weapons can fly out of the Room; other World Objects are stopped by the edge, which also ends their Throw.
 _Avoid_: Shot, launch
 
 **Mv Limit**:
-How many more times a World Object can be the source of a Throw. Each `mv` that throws it uses one; when none are left it is Destroyed as soon as its Throw ends, or when it is next thrown. `-1` means no limit and never changes. A Weapon has 1, everything else `-1`.
+How many more times a World Object can be the source of a Throw. Each `acc` that throws it uses one; when none are left it is Destroyed as soon as its Throw ends, or when it is next thrown. `-1` means no limit and never changes. A Weapon has 1, everything else `-1`.
 _Avoid_: Durability, ammo
 
 **Destroyed**:
-Removed from its Room for good because its Mv Limit ran out. Unlike a defeated Character, a Destroyed object can no longer be named, so it is neither a source nor a target of `mv`.
+Removed from its Room for good because its Mv Limit ran out. Unlike a defeated Character, a Destroyed object can no longer be named, so it is neither a source nor a target of `acc`.
 _Avoid_: Defeated (that is a Character losing all Health), deleted
 
 **Mouse Target**:
-The special `mv` target `$mouse`, which stands for the point in the Room under the cursor at the moment the command is submitted. It is a point, not a World Object, so it is never discovered or renamed to. Because `$mouse` always means this point, no World Object can be named `$mouse`.
+The special `acc` target `$mouse`, which stands for the point in the Room under the cursor at the moment the command is submitted. It is a point, not a World Object, so it is never discovered or renamed to. Because `$mouse` always means this point, no World Object can be named `$mouse`.
 _Avoid_: Cursor object, pointer target
 
 **Collider Tag**:
@@ -117,7 +117,7 @@ A World Object, such as the boulder, that is neither a Character nor a Weapon an
 _Avoid_: Wall, solid
 
 **Force**:
-A push applied to a World Object for one tick. All movement of a World Object (walking, pursuing, an `mv` Throw) is made of Forces, which add up.
+A push applied to a World Object for one tick. All movement of a World Object (walking, pursuing, an `acc` Throw) is made of Forces, which add up.
 _Avoid_: Speed (when referring to the cause of movement)
 
 **Friction**:

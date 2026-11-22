@@ -522,7 +522,7 @@ describe('GameScene key handling', () => {
   describe('recorded commands (8, 9, 0)', () => {
     it('records last command when held for the hold duration in movement mode', () => {
       const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
-      session.submitCommand('mv dagger guard')
+      session.submitCommand('acc dagger guard')
 
       const startSpy = vi.spyOn((scene as any).macroIndicatorView, 'startHoldProgress')
       const preventDefault = vi.fn()
@@ -538,7 +538,7 @@ describe('GameScene key handling', () => {
 
       // Hold duration passes -> trigger hold callback
       delayedCalls[0].callback()
-      expect(session.getCommandSlot(8)).toBe('mv dagger guard')
+      expect(session.getCommandSlot(8)).toBe('acc dagger guard')
 
       // Key release after hold does not execute command
       const historyLength = session.getWorldState().commandHistory.length
@@ -549,7 +549,7 @@ describe('GameScene key handling', () => {
 
     it('taps slot key (releases before hold duration) to execute command directly in movement mode', () => {
       const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
-      session.setCommandSlot(8, 'mv dagger $mouse')
+      session.setCommandSlot(8, 'acc dagger $mouse')
 
       const cancelSpy = vi.spyOn((scene as any).macroIndicatorView, 'cancelHoldProgress')
       const preventDefault = vi.fn()
@@ -567,7 +567,7 @@ describe('GameScene key handling', () => {
       handleKeyUp({ key: '8' } as unknown as KeyboardEvent)
       expect(cancelSpy).toHaveBeenCalled()
       expect(delayedCalls.length).toBe(0) // Timer removed
-      expect(session.getWorldState().commandHistory).toContain('mv dagger $mouse')
+      expect(session.getWorldState().commandHistory).toContain('acc dagger $mouse')
       expect(session.inputMode).toBe('movement')
     })
 

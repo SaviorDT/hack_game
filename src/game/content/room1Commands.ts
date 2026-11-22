@@ -2,12 +2,12 @@ import { CommandSubmissionService } from '../commands/CommandSubmissionService.t
 import { EveryCommandRequirementChecker } from '../commands/EveryCommandRequirementChecker.ts'
 import { RegisteredCommandRegistry } from '../commands/RegisteredCommandRegistry.ts'
 import type { RegisteredCommand } from '../commands/CommandRegistry.ts'
-import { MvCommandExecutor } from '../commands/executors/mv.ts'
+import { AccCommandExecutor } from '../commands/executors/acc.ts'
 import { VirtualCommandParser } from '../commands/VirtualCommandParser.ts'
 
 export function createRoom1CommandSubmissionService(): CommandSubmissionService {
   const commands: RegisteredCommand[] = [
-    { name: 'mv', requirements: [], executor: new MvCommandExecutor() },
+    { name: 'acc', requirements: [], executor: new AccCommandExecutor() },
   ]
 
   return new CommandSubmissionService(

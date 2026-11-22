@@ -39,7 +39,7 @@ function driveStateOf(worldObject: WorldObject): DriveState | undefined {
 }
 
 /**
- * The pull of an `mv` Throw. Every tick it applies a Force of `mass × mv_acceleration` towards the target, so
+ * The pull of an `acc` Throw. Every tick it applies a Force of `mass × mv_acceleration` towards the target, so
  * the object speeds up the same whatever its mass; the
  * physics step does the moving. A Throw ends when the object comes within reach of the target
  * (it is placed on it and stopped) or at its first Collision (it keeps its speed and is only

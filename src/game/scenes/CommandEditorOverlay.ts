@@ -151,7 +151,7 @@ export class CommandEditorOverlay {
       44,
       'mv_acceleration',
       'ACCEL (px/s²)',
-      'mv pull toward target',
+      'acc pull toward target',
       [-250, -50, 50, 250],
       items,
     )
@@ -264,7 +264,7 @@ export class CommandEditorOverlay {
       .setOrigin(0, 0)
 
     const telemetryTip = this.scene.add
-      .text(945, 156, 'Terminal test: $ mv <source> <target>', {
+      .text(945, 156, 'Terminal test: $ acc <source> <target>', {
         fontFamily: FONT_FAMILY,
         fontSize: 10,
         color: DIM_COLOR,
@@ -645,7 +645,7 @@ export class CommandEditorOverlay {
       target = player.id
     }
 
-    const command = `mv ${throwObj.id} ${target}`
+    const command = `acc ${throwObj.id} ${target}`
     const result = this.session.submitCommand(command)
     this.options?.onCommandResult?.(command, result)
   }

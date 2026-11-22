@@ -116,7 +116,7 @@ describe('home area', () => {
     walk(session, { x: 1500, y: 380 })
     expect(exitOpen(session)).toBe(false) // stepped off: locked again
 
-    expect(session.submitCommand('mv crate plate').status).toBe('success')
+    expect(session.submitCommand('acc crate plate').status).toBe('success')
     runFor(session, 2500)
     expect(plateDown(session, 'storageplate')).toBe(true)
     expect(exitOpen(session)).toBe(true)
@@ -135,7 +135,7 @@ describe('home area', () => {
     walk(session, { x: 560, y: 150 }, { x: 540, y: 420 }, { x: 430, y: 560 })
     expect(body(session, 'yarddagger').equippedBy).toBe('player')
     walk(session, { x: 850, y: 650 }, { x: 1150, y: 420 })
-    expect(session.submitCommand('mv dagger archer').status).toBe('success')
+    expect(session.submitCommand('acc dagger archer').status).toBe('success')
     runFor(session, 2000)
     expect(body(session, 'yardarcher').alive).toBe(false)
     expect(body(session, 'player').alive).not.toBe(false)
@@ -162,7 +162,7 @@ describe('home area', () => {
 
     const session = gameIn(HOME_AREA_IDS.lane)
     expect(exitOpen(session)).toBe(false)
-    expect(session.submitCommand('mv boulder plate').status).toBe('success')
+    expect(session.submitCommand('acc boulder plate').status).toBe('success')
     runFor(session, 3000)
     expect(plateDown(session, 'laneplate')).toBe(true)
     expect(exitOpen(session)).toBe(true)
@@ -195,7 +195,7 @@ describe('home area', () => {
 
     // With the guards gone (and the player out of its path), the crate can fly to the plate.
     walk(session, { x: 1000, y: 300 })
-    expect(session.submitCommand('mv crate plate').status).toBe('success')
+    expect(session.submitCommand('acc crate plate').status).toBe('success')
     runFor(session, 2500)
     expect(plateDown(session, 'gateplate')).toBe(true)
     expect(exitOpen(session)).toBe(true)
@@ -203,9 +203,9 @@ describe('home area', () => {
     expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.first)
   })
 
-  it('keeps arrows out of tab completion and mv', () => {
+  it('keeps arrows out of tab completion and acc', () => {
     const session = gameIn(HOME_AREA_IDS.yard)
-    expect(session.getCommandCompletionCandidates('mv yardarcher', 12).some((candidate) => candidate.includes('arrow'))).toBe(false)
-    expect(session.submitCommand('mv yardarcherarrow1 hacker').status).toBe('rejected')
+    expect(session.getCommandCompletionCandidates('acc yardarcher', 12).some((candidate) => candidate.includes('arrow'))).toBe(false)
+    expect(session.submitCommand('acc yardarcherarrow1 hacker').status).toBe('rejected')
   })
 })

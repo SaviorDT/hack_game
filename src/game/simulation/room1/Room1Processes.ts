@@ -336,7 +336,7 @@ export class GuardResponseProcess implements WorldObjectProcess {
   }
 }
 
-/** An Obstacle: it only moves when something pushes it or `mv` pulls it; it has no behavior of its own yet. */
+/** An Obstacle: it only moves when something pushes it or `acc` pulls it; it has no behavior of its own yet. */
 export class BoulderProcess implements WorldObjectProcess {
   readonly id = PROCESS_IDS.boulder
   readonly definitionId = PROCESS_IDS.boulder

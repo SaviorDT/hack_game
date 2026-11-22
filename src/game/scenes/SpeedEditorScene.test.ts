@@ -219,7 +219,7 @@ describe('SpeedEditorScene', () => {
       expect(worldState.outcome).toBe('playing')
     })
 
-    it('flies a thrown dagger with the live mv config and does not hurt the static guards', () => {
+    it('flies a thrown dagger with the live acceleration config and does not hurt the static guards', () => {
       let force = 1000
       const { session, worldState } = createSpeedEditorSession({
         mvConfig: () => ({ ...GAME_MV_CONFIG, mv_acceleration: force }),
@@ -229,7 +229,7 @@ describe('SpeedEditorScene', () => {
       const state = dagger.state as Record<string, unknown>
       const startX = state.x as number
 
-      expect(session.submitCommand('mv dagger guard').status).toBe('success')
+      expect(session.submitCommand('acc dagger guard').status).toBe('success')
       expect(state.thrown).toMatchObject({ targetObjectId: WORLD_OBJECT_IDS.guard })
 
       session.update(16.67 * 3)

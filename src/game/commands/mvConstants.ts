@@ -1,5 +1,5 @@
 /**
- * Constants and configuration for the mv (throw) command.
+ * Constants and configuration for the acc (throw) command.
  * Constant across all rooms in the game world.
  */
 

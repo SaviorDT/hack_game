@@ -28,7 +28,7 @@ function runFor(session: GameSession, ms: number): void {
 describe('Mv Limit in play', () => {
   it('destroys a dagger when its Throw arrives at the target', () => {
     const session = newSession()
-    expect(session.submitCommand('mv dagger guard').status).toBe('success')
+    expect(session.submitCommand('acc dagger guard').status).toBe('success')
     expect(body(session, WORLD_OBJECT_IDS.dagger).mvLimit).toBe(0)
     expect(body(session, WORLD_OBJECT_IDS.dagger).destroyed).toBeUndefined() // still in flight
 
@@ -46,7 +46,7 @@ describe('Mv Limit in play', () => {
     dagger.y = 500
     boulder.x = 700
     boulder.y = 500
-    expect(session.submitCommand('mv dagger guard').status).toBe('success')
+    expect(session.submitCommand('acc dagger guard').status).toBe('success')
 
     runFor(session, 3000)
 
@@ -60,7 +60,7 @@ describe('Mv Limit in play', () => {
     dagger.x = 400
     dagger.y = 600
     const target = { x: 900, y: 600 }
-    expect(session.submitCommand('mv dagger $mouse', { mouse: target }).status).toBe('success')
+    expect(session.submitCommand('acc dagger $mouse', { mouse: target }).status).toBe('success')
     runFor(session, 40)
     expect(dagger.destroyed).toBeUndefined()
     runFor(session, 2000)
@@ -73,7 +73,7 @@ describe('Mv Limit in play', () => {
     const dagger = body(session, WORLD_OBJECT_IDS.dagger)
     dagger.x = ROOM_LAYOUT.right - 200
     dagger.y = 600
-    expect(session.submitCommand('mv dagger $mouse', { mouse: { x: ROOM_LAYOUT.right + 400, y: 600 } }).status).toBe('success')
+    expect(session.submitCommand('acc dagger $mouse', { mouse: { x: ROOM_LAYOUT.right + 400, y: 600 } }).status).toBe('success')
     runFor(session, 2000)
     expect(dagger.x).toBeGreaterThan(ROOM_LAYOUT.right)
     expect(dagger.destroyed).toBe(true)
@@ -88,7 +88,7 @@ describe('Mv Limit in play', () => {
     runFor(session, 100)
     expect(player.weaponId).toBe(WORLD_OBJECT_IDS.dagger)
 
-    expect(session.submitCommand('mv dagger hacker').status).toBe('success')
+    expect(session.submitCommand('acc dagger hacker').status).toBe('success')
     runFor(session, 500)
 
     expect(dagger.destroyed).toBe(true)
@@ -103,7 +103,7 @@ describe('Mv Limit in play', () => {
     dagger.x = 400
     dagger.y = 600
     for (let i = 0; i < 3; i++) {
-      expect(session.submitCommand('mv dagger $mouse', { mouse: { x: 600 + i * 100, y: 600 } }).status).toBe('success')
+      expect(session.submitCommand('acc dagger $mouse', { mouse: { x: 600 + i * 100, y: 600 } }).status).toBe('success')
       runFor(session, 1000)
     }
     expect(dagger.destroyed).toBeUndefined()

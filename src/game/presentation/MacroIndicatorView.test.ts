@@ -74,8 +74,8 @@ describe('MacroIndicatorView', () => {
     view.setPlayerPosition(100, 200)
     expect(container.setPosition).toHaveBeenCalledWith(100, 290)
 
-    view.showRecordSuccess(8, 'mv dagger $mouse')
-    expect(textObj.setText).toHaveBeenCalledWith('[SLOT 8 RECORDED: mv dagger $mouse]')
+    view.showRecordSuccess(8, 'acc dagger $mouse')
+    expect(textObj.setText).toHaveBeenCalledWith('[SLOT 8 RECORDED: acc dagger $mouse]')
     expect(pillBg.setSize).toHaveBeenCalled()
     expect(container.setVisible).toHaveBeenCalledWith(true)
 
@@ -107,8 +107,8 @@ describe('MacroIndicatorView', () => {
     view.showRecordEmpty()
     expect(textObj.setText).toHaveBeenCalledWith('[NO COMMAND TO RECORD]')
 
-    view.showExecutedCommand(8, 'mv dagger hacker')
-    expect(textObj.setText).toHaveBeenCalledWith('[8: mv dagger hacker]')
+    view.showExecutedCommand(8, 'acc dagger hacker')
+    expect(textObj.setText).toHaveBeenCalledWith('[8: acc dagger hacker]')
 
     view.showSlotEmpty(9)
     expect(textObj.setText).toHaveBeenCalledWith('[SLOT 9 EMPTY (HOLD TO RECORD)]')
@@ -213,10 +213,10 @@ describe('MacroIndicatorView', () => {
     expect(container.setVisible).toHaveBeenCalledWith(true)
 
     // Complete hold into success
-    view.showRecordSuccess(0, 'mv dagger $mouse')
+    view.showRecordSuccess(0, 'acc dagger $mouse')
     expect(progressTrack.setVisible).toHaveBeenCalledWith(false)
     expect(progressFill.setVisible).toHaveBeenCalledWith(false)
-    expect(textObj.setText).toHaveBeenCalledWith('[SLOT 0 RECORDED: mv dagger $mouse]')
+    expect(textObj.setText).toHaveBeenCalledWith('[SLOT 0 RECORDED: acc dagger $mouse]')
     expect(textObj.setPosition).toHaveBeenCalledWith(-46, 0)
 
     view.destroy()

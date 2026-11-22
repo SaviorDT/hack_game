@@ -129,7 +129,7 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   name?: string
   /** An enemy that never moves or attacks, such as a training dummy. */
   passive?: boolean
-  /** How many more times it can be the source of an \`mv\` Throw; \`-1\` is unlimited. Defaults: 1 for a Weapon, else -1. */
+  /** How many more times it can be the source of an \`acc\` Throw; \`-1\` is unlimited. Defaults: 1 for a Weapon, else -1. */
   mvLimit?: number
   /** A special object: a pushable \`crate\`, a pressure \`plate\`, an \`archer\` enemy, or a Target \`dummy\`. */
   kind?: 'crate' | 'plate' | 'archer' | 'dummy'

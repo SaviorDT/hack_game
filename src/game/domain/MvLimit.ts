@@ -2,7 +2,7 @@ import type { WorldObject } from './WorldObject.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from './WorldObjectState.ts'
 import type { WorldState } from './WorldState.ts'
 
-/** An `mvLimit` of `-1` means the object can be thrown without limit and the count never changes. */
+/** An `mvLimit` of `-1` means the object can be thrown with `acc` without limit and the count never changes. */
 export const UNLIMITED_MV_LIMIT = -1
 
 /** A Weapon can be thrown once, everything else without limit. */
@@ -42,7 +42,7 @@ export function destroyWorldObject(state: WorldState, worldObject: WorldObject):
 }
 
 /**
- * Called when an `mv` is about to throw the object. An object whose Mv Limit is 0 is destroyed instead
+ * Called when `acc` is about to throw the object. An object whose Mv Limit is 0 is destroyed instead
  * (returns `false`, nothing is thrown); otherwise a limited object uses one up (returns `true`).
  */
 export function spendMvLimit(state: WorldState, worldObject: WorldObject): boolean {

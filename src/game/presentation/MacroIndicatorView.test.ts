@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { MacroIndicatorView } from './MacroIndicatorView.ts'
+import { POPUP_DISPLAY_DURATION_MS, POPUP_FADE_DURATION_MS } from './uiTheme.ts'
 
 describe('MacroIndicatorView', () => {
   function setupMockScene() {
@@ -80,8 +81,18 @@ describe('MacroIndicatorView', () => {
 
     // Trigger timer
     expect(delayedCalls.length).toBe(1)
+    expect(mockScene.time.delayedCall).toHaveBeenCalledWith(
+      POPUP_DISPLAY_DURATION_MS,
+      expect.any(Function),
+    )
     delayedCalls[0]()
-    expect(mockScene.tweens.add).toHaveBeenCalled()
+    expect(mockScene.tweens.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        duration: POPUP_FADE_DURATION_MS,
+      }),
+    )
+    expect(POPUP_DISPLAY_DURATION_MS).toBeGreaterThan(0)
+    expect(POPUP_FADE_DURATION_MS).toBeGreaterThan(0)
     expect(container.setVisible).toHaveBeenCalledWith(false)
 
     view.destroy()

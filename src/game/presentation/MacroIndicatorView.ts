@@ -3,6 +3,8 @@ import {
   COLOR_DIM,
   PANEL_BG,
   PANEL_BORDER,
+  POPUP_DISPLAY_DURATION_MS,
+  POPUP_FADE_DURATION_MS,
   TERMINAL_FONT,
   TEXT_COLOR,
 } from './uiTheme.ts'
@@ -211,12 +213,12 @@ export class MacroIndicatorView {
     this.pillBg.setSize(totalWidth, totalHeight).setStrokeStyle(2, strokeColor)
     this.container.setAlpha(1).setVisible(true)
 
-    this.hideTimer = this.scene.time.delayedCall(1200, () => {
+    this.hideTimer = this.scene.time.delayedCall(POPUP_DISPLAY_DURATION_MS, () => {
       if (!this.scene || !this.container) return
       this.fadeTween = this.scene.tweens.add({
         targets: this.container,
         alpha: 0,
-        duration: 250,
+        duration: POPUP_FADE_DURATION_MS,
         ease: 'Linear',
         onComplete: () => {
           this.container?.setVisible(false)

@@ -8,6 +8,8 @@ export const TEXT_COLOR = '#d6d6d6'
 export const VALUE_COLOR = '#64ffda'
 
 export const TYPING_SPEED_MS = 15
+export const POPUP_FADE_DURATION_MS = 100
+export const POPUP_DISPLAY_DURATION_MS = 1200
 
 export const PANEL_BG = 0x000000
 export const PANEL_BG_ALPHA = 0.90

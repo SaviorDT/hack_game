@@ -3,7 +3,7 @@
  * Constant across all rooms in the game world.
  */
 
-export const DEFAULT_MV_ACCELERATION = 5000
+export const DEFAULT_MV_ACCELERATION = 4000
 
 export interface MvConfig {
   mv_acceleration: number

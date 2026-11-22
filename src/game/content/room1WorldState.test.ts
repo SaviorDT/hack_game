@@ -138,17 +138,17 @@ describe('room1WorldState scaled collision AABB', () => {
     expect((player.state as Record<string, unknown>).discovered).toBe(true)
 
     expect(dagger.metadata.discoverable).toBe(true)
-    expect((dagger.state as Record<string, unknown>).discovered).toBe(false)
+    expect((dagger.state as Record<string, unknown>).discovered).toBe(true)
 
     expect(guard.metadata.role).toBe('enemy')
     expect(guard.metadata.discoverable).toBe(true)
-    expect((guard.state as Record<string, unknown>).discovered).toBe(false)
+    expect((guard.state as Record<string, unknown>).discovered).toBe(true)
 
     expect(boulder).toBeDefined()
     expect(boulder.metadata.name).toBe('boulder')
     expect(boulder.metadata.role).toBe('object')
     expect(boulder.metadata.discoverable).toBe(true)
-    expect((boulder.state as Record<string, unknown>).discovered).toBe(false)
+    expect((boulder.state as Record<string, unknown>).discovered).toBe(true)
     expect(boulder.behaviorRules).toEqual([
       {
         condition: { kind: 'always' },

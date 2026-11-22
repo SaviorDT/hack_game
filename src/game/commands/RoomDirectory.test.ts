@@ -37,6 +37,7 @@ describe('getRoomDirectoryEntries', () => {
     const state = createInitialWorldState()
     const room = state.rooms.find((r) => r.id === state.currentRoomId)!
     const dagger = state.worldObjects.find((o) => o.id === 'dagger')!
+    ;(dagger.state as Record<string, unknown>).discovered = false
 
     expect((dagger.state as Record<string, unknown>).discovered).toBe(false)
 

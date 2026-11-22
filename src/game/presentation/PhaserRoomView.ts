@@ -321,11 +321,10 @@ export class PhaserRoomView {
       }
 
       if (label) {
-        const isDiscovered = worldObject.id === WORLD_OBJECT_IDS.player || worldObject.metadata.discoverable === false || objectState.discovered === true
         const objectName = typeof worldObject.metadata.name === 'string'
           ? worldObject.metadata.name
           : worldObject.id
-        const labelText = isDiscovered ? objectName : '?'
+        const labelText = objectName
 
         label.setText(labelText)
         const isItem = isWeapon || worldObject.metadata.role === 'item'

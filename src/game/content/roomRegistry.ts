@@ -8,7 +8,6 @@ import { TUTORIAL_ROOMS, TUTORIAL_ROOM_IDS, ROOM1_HINT } from './tutorialRooms.t
 
 export const EDITOR_ROOM_IDS = [
   TUTORIAL_ROOM_IDS.move,
-  TUTORIAL_ROOM_IDS.discover,
   TUTORIAL_ROOM_IDS.throw,
   TUTORIAL_ROOM_IDS.slowTime,
   HOME_AREA_IDS.home,

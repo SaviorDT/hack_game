@@ -44,7 +44,7 @@ describe('MvCommandExecutor', () => {
     const state = createInitialWorldState()
     const daggerObj = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)!
     expect(daggerObj.metadata.name).toBe('dagger')
-    expect((daggerObj.state as Record<string, unknown>).discovered).toBe(false)
+    ;(daggerObj.state as Record<string, unknown>).discovered = false
 
     const result = executor.execute({ name: 'mv', arguments: ['dagger', 'knife'], options: [] }, state)
     expect(result).toEqual({

@@ -476,7 +476,7 @@ describe('GameScene key handling', () => {
   describe('recorded commands (8, 9, 0)', () => {
     it('records last command when held for the hold duration in movement mode', () => {
       const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
-      session.submitCommand('ls')
+      session.submitCommand('mv dagger guard')
 
       const startSpy = vi.spyOn((scene as any).macroIndicatorView, 'startHoldProgress')
       const preventDefault = vi.fn()
@@ -492,7 +492,7 @@ describe('GameScene key handling', () => {
 
       // Hold duration passes -> trigger hold callback
       delayedCalls[0].callback()
-      expect(session.getCommandSlot(8)).toBe('ls')
+      expect(session.getCommandSlot(8)).toBe('mv dagger guard')
 
       // Key release after hold does not execute command
       const historyLength = session.getWorldState().commandHistory.length

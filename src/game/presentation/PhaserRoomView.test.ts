@@ -207,59 +207,46 @@ describe('PhaserRoomView', () => {
     expect(images.at(-state.worldObjects.length)?.texture.key).toBe('player-idle')
   })
 
-  it('shows sprites by default with ? for undiscovered objects and hacker for player', () => {
+  it('shows sprites and displays object labels by default', () => {
     const view = new PhaserRoomView()
     const { mockScene, images, texts } = createMockScene()
     const worldState = createInitialWorldState()
 
     view.mount(mockScene, worldState)
 
-    // All sprites should be visible by default even if undiscovered
+    // All sprites should be visible by default
     expect(images.length).toBe(worldState.worldObjects.length)
     for (const img of images) {
       expect(img.visible).toBe(true)
     }
 
-    // Texts should include overhead labels for world objects
+    // Texts should include overhead labels with object names by default
     const labels = texts.map((t) => t.text)
     expect(labels).toContain('hacker')
-    expect(labels).toContain('?')
-
-    // Verify player label is 'hacker' and not '?'
-    const playerText = texts.find((t) => t.text === 'hacker')
-    expect(playerText).toBeDefined()
-    expect(playerText?.visible).toBe(true)
-
-    // Verify undiscovered items/enemies have '?'
-    const questionMarks = texts.filter((t) => t.text === '?')
-    expect(questionMarks.length).toBeGreaterThanOrEqual(4) // dagger, guard, guard2, guard3
+    expect(labels).toContain('dagger')
+    expect(labels).toContain('guard')
+    expect(labels).toContain('guard2')
+    expect(labels).toContain('guard3')
+    expect(labels).not.toContain('?')
   })
 
-  it('reveals ? to object names when objects become discovered (e.g. after ls)', () => {
+  it('updates overhead label when an object is renamed', () => {
     const view = new PhaserRoomView()
     const { mockScene, texts } = createMockScene()
     const worldState = createInitialWorldState()
 
     view.mount(mockScene, worldState)
 
-    // Initially has '?' labels
-    expect(texts.some((t) => t.text === 'guard')).toBe(false)
-    expect(texts.some((t) => t.text === 'dagger')).toBe(false)
+    expect(texts.some((t) => t.text === 'dagger')).toBe(true)
+    expect(texts.some((t) => t.text === 'sword')).toBe(false)
 
-    // Simulate discovery (as done by `ls`)
-    for (const obj of worldState.worldObjects) {
-      (obj.state as Record<string, unknown>).discovered = true
-    }
+    const dagger = worldState.worldObjects.find((o) => o.id === 'dagger')!
+    dagger.rename('sword')
 
     view.update(worldState)
 
-    // All labels are revealed to their names
-    expect(texts.some((t) => t.text === '?')).toBe(false)
-    expect(texts.some((t) => t.text === 'hacker')).toBe(true)
-    expect(texts.some((t) => t.text === 'dagger')).toBe(true)
-    expect(texts.some((t) => t.text === 'guard')).toBe(true)
-    expect(texts.some((t) => t.text === 'guard2')).toBe(true)
-    expect(texts.some((t) => t.text === 'guard3')).toBe(true)
+    expect(texts.some((t) => t.text === 'dagger')).toBe(false)
+    expect(texts.some((t) => t.text === 'sword')).toBe(true)
   })
 
   it('keeps item label visible when equipped by a character and shrinks text width to ratio of item sprite', () => {

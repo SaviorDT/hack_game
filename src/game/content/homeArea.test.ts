@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createRoom1Session } from './createRoom1Session.ts'
-import { createGameWorldState } from './tutorialRooms.ts'
+import { createGameWorldState, TUTORIAL_ROOM_IDS } from './tutorialRooms.ts'
 import { HOME_AREA_IDS } from './homeArea.ts'
 import { ROOM_IDS, ROOM_LAYOUT } from './room1Constants.ts'
 import type { GameSession } from '../application/GameSession.ts'
@@ -84,7 +84,7 @@ describe('home area', () => {
   it('follows the tutorial and leads into room1', () => {
     const state = createGameWorldState()
     const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0].targetRoomId
-    expect(exitOf('tutorial4')).toBe(HOME_AREA_IDS.home)
+    expect(exitOf(TUTORIAL_ROOM_IDS.slowTime)).toBe(HOME_AREA_IDS.home)
     expect([exitOf('home'), exitOf('storage'), exitOf('yard'), exitOf('lane'), exitOf('gate')]).toEqual([
       'storage',
       'yard',
@@ -116,7 +116,6 @@ describe('home area', () => {
     walk(session, { x: 1500, y: 380 })
     expect(exitOpen(session)).toBe(false) // stepped off: locked again
 
-    expect(session.submitCommand('ls').status).toBe('success')
     expect(session.submitCommand('mv crate plate').status).toBe('success')
     runFor(session, 2500)
     expect(plateDown(session, 'storageplate')).toBe(true)
@@ -204,12 +203,8 @@ describe('home area', () => {
     expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.first)
   })
 
-  it('keeps arrows out of ls, tab completion and mv', () => {
+  it('keeps arrows out of tab completion and mv', () => {
     const session = gameIn(HOME_AREA_IDS.yard)
-    const ls = session.submitCommand('ls')
-    const text = ls.status === 'success' ? ls.feedback.map((feedback) => feedback.text).join('\n') : ''
-    expect(text).toContain('archer')
-    expect(text).not.toContain('arrow')
     expect(session.getCommandCompletionCandidates('mv yardarcher', 12).some((candidate) => candidate.includes('arrow'))).toBe(false)
     expect(session.submitCommand('mv yardarcherarrow1 hacker').status).toBe('rejected')
   })

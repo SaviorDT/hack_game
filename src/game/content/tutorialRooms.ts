@@ -6,14 +6,13 @@ import { createInitialWorldState } from './room1WorldState.ts'
 import { boulder, buildRooms, dagger, guard, ROOM_ENTRY, STANDS_FIRM, type RoomDefinition } from './roomPieces.ts'
 
 /**
- * Tutorial rooms played first, one per mechanic: tutorial1 → tutorial2 → tutorial3 → tutorial4, then the
+ * Tutorial rooms played first, one per mechanic: tutorial1 → tutorial2 → tutorial3, then the
  * home area (`homeArea.ts`) and room1. Each Exit stays locked until the room's goal is met.
  */
 export const TUTORIAL_ROOM_IDS = {
   move: 'tutorial1',
-  discover: 'tutorial2',
-  throw: 'tutorial3',
-  slowTime: 'tutorial4',
+  throw: 'tutorial2',
+  slowTime: 'tutorial3',
 } as const
 
 export const TUTORIAL_ROOMS: RoomDefinition[] = [
@@ -28,26 +27,9 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
       guard('dummy', 1250, 420, { name: 'dummy', speed: 0, maxHealth: 60, passive: true, mass: STANDS_FIRM }),
     ],
     exit: {
-      targetRoomId: TUTORIAL_ROOM_IDS.discover,
-      label: TUTORIAL_ROOM_IDS.discover,
-      requires: { kind: 'defeat', objectIds: ['dummy'] },
-    },
-  },
-  {
-    id: TUTORIAL_ROOM_IDS.discover,
-    hint:
-      'Things you have not identified are marked ?. Hold SHIFT to open the command line, type ls and ' +
-      'release SHIFT: it executes the command and reveals names. TAB completes names.',
-    goal: 'Reveal everything in this room (ls).',
-    objects: [
-      boulder('tutorial2boulder', 900, 330),
-      dagger('tutorial2dagger', 1150, 600),
-      guard('tutorial2guard', 1450, 420, { speed: 0, passive: true, mass: STANDS_FIRM }),
-    ],
-    exit: {
       targetRoomId: TUTORIAL_ROOM_IDS.throw,
       label: TUTORIAL_ROOM_IDS.throw,
-      requires: { kind: 'discover-all' },
+      requires: { kind: 'defeat', objectIds: ['dummy'] },
     },
   },
   {
@@ -57,8 +39,8 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
       'throw it from a distance: mv dagger guard. mv boulder hacker pulls the boulder over to you.',
     goal: 'Defeat the guard. Try throwing the dagger with mv.',
     objects: [
-      dagger('tutorial3dagger', 420, 600),
-      boulder('tutorial3boulder', 760, 300),
+      dagger('tutorial2dagger', 420, 600),
+      boulder('tutorial2boulder', 760, 300),
       guard('sentry', 1500, 420, { speed: 0, maxHealth: 40, mass: STANDS_FIRM }),
     ],
     exit: {
@@ -74,7 +56,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
       'you cross the middle of the room. Grab the dagger, and when the guard comes, type mv dagger guard.',
     goal: 'Defeat the fast guard.',
     objects: [
-      dagger('tutorial4dagger', 430, 600),
+      dagger('tutorial3dagger', 430, 600),
       guard('runner', 1550, 420, { speed: 380, maxHealth: 40 }),
     ],
     exit: {
@@ -86,7 +68,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
 ]
 
 export const ROOM1_HINT =
-  'The real thing: guards rush you once you cross the middle of the room. Use ls, mv and your dagger to reach room2.'
+  'The real thing: guards rush you once you cross the middle of the room. Use mv and your dagger to reach room2.'
 
 /**
  * The whole game: the tutorial rooms, the home area, then room1 (and the room2 ending). The Player Character

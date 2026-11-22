@@ -52,9 +52,8 @@ describe('LevelEditorScene & Room Registry', () => {
       const roomIds = getEditorRoomIds()
       expect(roomIds).toEqual([
         TUTORIAL_ROOM_IDS.move,       // tutorial1
-        TUTORIAL_ROOM_IDS.discover,   // tutorial2
-        TUTORIAL_ROOM_IDS.throw,      // tutorial3
-        TUTORIAL_ROOM_IDS.slowTime,   // tutorial4
+        TUTORIAL_ROOM_IDS.throw,      // tutorial2
+        TUTORIAL_ROOM_IDS.slowTime,   // tutorial3
         HOME_AREA_IDS.home,           // home
         HOME_AREA_IDS.storage,        // storage
         HOME_AREA_IDS.yard,           // yard
@@ -63,7 +62,7 @@ describe('LevelEditorScene & Room Registry', () => {
         ROOM_IDS.first,               // room1
         ROOM_IDS.second,              // room2
       ])
-      expect(roomIds.length).toBe(11)
+      expect(roomIds.length).toBe(10)
     })
 
     it('returns valid room definitions for all editor rooms', () => {
@@ -102,7 +101,6 @@ describe('LevelEditorScene & Room Registry', () => {
 
     it('returns hints for tutorial rooms and room1', () => {
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.move)?.hint).toContain('WASD')
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.discover)?.hint).toContain('ls')
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.throw)?.hint).toContain('mv dagger guard')
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.slowTime)?.hint).toContain('slows time')
       expect(getRoomDefinition(ROOM_IDS.first)?.hint).toContain('reach room2')
@@ -112,8 +110,6 @@ describe('LevelEditorScene & Room Registry', () => {
   describe('room progression navigation (getNextRoomId & getPreviousRoomId)', () => {
     it('navigates sequentially forward through all rooms and wraps around', () => {
       let current: string = TUTORIAL_ROOM_IDS.move
-      current = getNextRoomId(current)
-      expect(current).toBe(TUTORIAL_ROOM_IDS.discover)
       current = getNextRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.throw)
       current = getNextRoomId(current)
@@ -157,8 +153,6 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getPreviousRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.throw)
       current = getPreviousRoomId(current)
-      expect(current).toBe(TUTORIAL_ROOM_IDS.discover)
-      current = getPreviousRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.move)
     })
   })
@@ -169,8 +163,8 @@ describe('LevelEditorScene & Room Registry', () => {
       const tut1Objs = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.move)
       expect(tut1Objs.some((o) => o.role === 'player')).toBe(true)
 
-      // tutorial2 includes dagger and guard
-      const tut2Objs = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.discover)
+      // tutorial2 includes dagger and sentry
+      const tut2Objs = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.throw)
       expect(tut2Objs.some((o) => o.role === 'weapon')).toBe(true)
       expect(tut2Objs.some((o) => o.role === 'enemy' || o.role === 'guard')).toBe(true)
 

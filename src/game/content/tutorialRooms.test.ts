@@ -115,22 +115,15 @@ describe('tutorial rooms', () => {
     expect(body(session, 'player').health).toBe(100) // the dummy never fights back
     expect(exitOpen(session)).toBe(true)
     walk(session, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.discover)
+    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.throw)
     // The dagger stayed behind in tutorial1.
     expect(body(session, 'player').weaponId).toBeNull()
     expect(session.getWorldState().worldObjects.find((o) => o.id === 'tutorial1dagger')!.roomId).toBe(TUTORIAL_ROOM_IDS.move)
     expect(body(session, 'tutorial1dagger').equippedBy).toBeNull()
 
-    // tutorial2: ls reveals everything and opens the exit; walk through the exit zone.
-    expect(exitOpen(session)).toBe(false)
-    expect(session.submitCommand('ls').status).toBe('success')
-    expect(exitOpen(session)).toBe(true)
-    walk(session, { x: 700, y: 640 }, { x: 1600, y: 640 }, { x: EXIT.x - 160, y: EXIT.y }, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.throw)
-
-    // tutorial3: pick up the dagger and throw it at the sentry from a distance.
+    // tutorial2: pick up the dagger and throw it at the sentry from a distance.
     walk(session, { x: 420, y: 560 })
-    expect(body(session, 'tutorial3dagger').equippedBy).toBe('player')
+    expect(body(session, 'tutorial2dagger').equippedBy).toBe('player')
     expect(session.submitCommand('mv dagger guard').status).toBe('success')
     runFor(session, 2000)
     expect(body(session, 'sentry').alive).toBe(false)
@@ -139,10 +132,10 @@ describe('tutorial rooms', () => {
     walk(session, { x: EXIT.x - 160, y: 600 }, { x: EXIT.x, y: EXIT.y })
     expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.slowTime)
 
-    // tutorial4: crossing the middle sets off the runner, which outpaces the player; throwing the held
+    // tutorial3: crossing the middle sets off the runner, which outpaces the player; throwing the held
     // dagger, typed in slowed time, still beats it.
     walk(session, { x: 430, y: 560 })
-    expect(body(session, 'tutorial4dagger').equippedBy).toBe('player')
+    expect(body(session, 'tutorial3dagger').equippedBy).toBe('player')
     walk(session, { x: 1000, y: 420 })
     runFor(session, 200)
     expect(Math.abs((body(session, 'runner') as unknown as { vx: number }).vx)).toBeGreaterThan(0) // it charges

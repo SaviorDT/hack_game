@@ -40,6 +40,7 @@ describe('Prefab Registry & Propagation', () => {
 
   it('propagatePrefabChanges updates all instances across rooms while preserving coordinates and id', () => {
     const guardPrefab = getPrefab('guard')!
+    const playerWidthBefore = getRoomObjectConfigs(ROOM_IDS.first).find((o) => o.id === 'player')!.displayWidth
     const updatedPrefab = {
       ...guardPrefab,
       maxHealth: 180,
@@ -77,7 +78,7 @@ describe('Prefab Registry & Propagation', () => {
 
     // Non-guard objects should NOT be changed
     const player = room1Objects.find((o) => o.id === 'player')!
-    expect(player.displayWidth).toBe(125)
+    expect(player.displayWidth).toBe(playerWidthBefore)
   })
 
   describe('saveActivePrefabs', () => {

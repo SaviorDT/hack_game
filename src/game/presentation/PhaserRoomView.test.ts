@@ -93,7 +93,7 @@ function createMockScene() {
           fillRect() { return g },
           clear() { return g },
           setVisible(v: boolean) { g.visible = v; return g },
-          destroy() {},
+          destroy() { },
         }
         graphics.push(g)
         return g
@@ -124,7 +124,7 @@ function createMockScene() {
           setStroke(color: string, thickness: number) { t.stroke = color; t.strokeThickness = thickness; return t },
           setAlpha(alpha: number) { t.alpha = alpha; return t },
           setScale(sx: number, sy: number = sx) { t.scaleX = sx; t.scaleY = sy; return t },
-          destroy() {},
+          destroy() { },
         }
         texts.push(t)
         return t
@@ -149,7 +149,7 @@ function createMockScene() {
           setPosition(px: number, py: number) { img.x = px; img.y = py; return img },
           setVisible(v: boolean) { img.visible = v; return img },
           setFlipX(flip: boolean) { img.flipX = flip; return img },
-          destroy() {},
+          destroy() { },
         }
         images.push(img)
         return img
@@ -251,25 +251,25 @@ describe('PhaserRoomView', () => {
 
   it('keeps item label visible when equipped by a character and shrinks text width to ratio of item sprite', () => {
     const view = new PhaserRoomView()
-    const { mockScene, texts } = createMockScene()
+    const { mockScene, images, texts } = createMockScene()
     const worldState = createInitialWorldState()
 
     view.mount(mockScene, worldState)
 
     const dagger = worldState.worldObjects.find((o) => o.id === 'dagger')!
-    ;(dagger.state as Record<string, unknown>).discovered = true
-    ;(dagger.state as Record<string, unknown>).equippedBy = 'player'
+      ; (dagger.state as Record<string, unknown>).discovered = true
+      ; (dagger.state as Record<string, unknown>).equippedBy = 'player'
 
     view.update(worldState)
 
     const daggerText = texts.find((t) => t.text === 'dagger')
+    const daggerImage = images[worldState.worldObjects.indexOf(dagger)]!
     expect(daggerText).toBeDefined()
     // Does not hide equipped item's label
     expect(daggerText?.visible).toBe(true)
 
-    // Dagger sprite displayWidth when equipped is Math.round(72 * 0.8) = 58
-    // Total text width is ITEM_LABEL_WIDTH_RATIO * sprite.displayWidth
-    expect(daggerText?.displayWidth).toBeCloseTo(58 * ITEM_LABEL_WIDTH_RATIO, 1)
+    // Total text width is ITEM_LABEL_WIDTH_RATIO * the rendered sprite width
+    expect(daggerText?.displayWidth).toBeCloseTo(daggerImage.displayWidth * ITEM_LABEL_WIDTH_RATIO, 1)
   })
 
   it('updates overhead label when object is renamed', () => {
@@ -281,7 +281,7 @@ describe('PhaserRoomView', () => {
 
     const dagger = worldState.worldObjects.find((o) => o.id === 'dagger')!
     dagger.rename('sword')
-    ;(dagger.state as Record<string, unknown>).discovered = true
+      ; (dagger.state as Record<string, unknown>).discovered = true
 
     view.update(worldState)
 
@@ -303,13 +303,13 @@ describe('PhaserRoomView', () => {
     // Default player facing is 'right' -> flipX is false
     expect(playerImage.flipX).toBe(false)
 
-    // When facing is 'left' -> flipX is true
-    ;(player.state as Record<string, unknown>).facing = 'left'
+      // When facing is 'left' -> flipX is true
+      ; (player.state as Record<string, unknown>).facing = 'left'
     view.update(worldState)
     expect(playerImage.flipX).toBe(true)
 
-    // When facing is 'right' -> flipX is false
-    ;(player.state as Record<string, unknown>).facing = 'right'
+      // When facing is 'right' -> flipX is false
+      ; (player.state as Record<string, unknown>).facing = 'right'
     view.update(worldState)
     expect(playerImage.flipX).toBe(false)
   })

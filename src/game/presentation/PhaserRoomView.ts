@@ -60,7 +60,13 @@ export const WORLD_OBJECT_TEXTURE_URLS = {
 } as const
 
 /** Objects with a `kind` draw with its own texture and no walking animation. */
-const KIND_TEXTURES: Readonly<Record<string, string>> = { archer: 'archer', arrow: 'arrow', crate: 'crate', plate: 'plate' }
+const KIND_TEXTURES: Readonly<Record<string, string>> = {
+  archer: 'archer',
+  arrow: 'arrow',
+  crate: 'crate',
+  plate: 'plate',
+  dummy: GUARD_TEXTURE_KEY,
+}
 
 interface DisplayState {
   x?: unknown

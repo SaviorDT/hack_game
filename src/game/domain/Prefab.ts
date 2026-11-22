@@ -1,4 +1,5 @@
 import type { ColliderShape } from './CollisionWorld.ts'
+import type { ObjectKind } from './ObjectKind.ts'
 import type {
   PhysicsAttrConfig,
   PlayerSpeedConfig,
@@ -10,7 +11,7 @@ export interface PrefabDefinition extends PhysicsAttrConfig {
   id: string
   name: string
   role: WorldObjectRole
-  kind?: 'crate' | 'plate' | 'archer'
+  kind?: ObjectKind
   displayWidth: number
   displayHeight: number
   scaleX: number
@@ -25,6 +26,7 @@ export interface PrefabDefinition extends PhysicsAttrConfig {
   holdOffsetX?: number
   holdOffsetY?: number
   passive?: boolean
+  mvLimit?: number
 }
 
 export const DEFAULT_PREFABS: readonly PrefabDefinition[] = [
@@ -115,6 +117,20 @@ export const DEFAULT_PREFABS: readonly PrefabDefinition[] = [
     mass: 1000,
   },
   {
+    id: "dummy",
+    name: "Target Dummy",
+    role: "object",
+    kind: "dummy",
+    displayWidth: 176,
+    displayHeight: 176,
+    scaleX: 1,
+    scaleY: 1,
+    maxHealth: 1000,
+    colliderWidth: 110,
+    colliderHeight: 160,
+    colliderShape: "box",
+  },
+  {
     id: "player",
     name: "Player",
     role: "player",
@@ -145,6 +161,7 @@ export function inferPrefabId(obj: RoomObjectConfig): string {
   if (obj.kind === 'crate') return 'crate'
   if (obj.kind === 'plate') return 'plate'
   if (obj.kind === 'archer') return 'archer'
+  if (obj.kind === 'dummy') return 'dummy'
   if (obj.role === 'weapon') return 'dagger'
   if (obj.role === 'player' || obj.id === 'player') return 'player'
   if (
@@ -209,6 +226,9 @@ export function applyPrefabToObject(
   }
   if (prefab.passive !== undefined) {
     result.passive = prefab.passive
+  }
+  if (prefab.mvLimit !== undefined) {
+    result.mvLimit = prefab.mvLimit
   }
 
   const physicsKeys: (keyof PhysicsAttrConfig)[] = [

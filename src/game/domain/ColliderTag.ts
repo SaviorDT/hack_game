@@ -22,7 +22,17 @@ export type FloorColliderTag = {
   readonly class: 'floor'
 }
 
-export type ColliderTag = WeaponColliderTag | CharacterColliderTag | ObstacleColliderTag | FloorColliderTag
+/** Something a Weapon in flight can hurt that nothing Collides with, such as a Target Dummy. */
+export type TargetColliderTag = {
+  readonly class: 'target'
+}
+
+export type ColliderTag =
+  | WeaponColliderTag
+  | CharacterColliderTag
+  | ObstacleColliderTag
+  | FloorColliderTag
+  | TargetColliderTag
 
 /** Players and enemies are Characters, weapons are Weapons, other objects (the boulder) are Obstacles. */
 export function defaultColliderTags(role: 'player' | 'enemy' | 'weapon' | 'object'): ColliderTag[] {
@@ -51,6 +61,9 @@ function parseTag(raw: JsonValue): ColliderTag | undefined {
   if (record.class === 'floor') {
     return { class: 'floor' }
   }
+  if (record.class === 'target') {
+    return { class: 'target' }
+  }
   if (record.class === 'weapon' && typeof record.impactDamageRate === 'number') {
     return { class: 'weapon', impactDamageRate: record.impactDamageRate }
   }
@@ -66,6 +79,11 @@ export function colliderTagsOf(worldObject: WorldObject): ColliderTag[] {
     const tag = parseTag(entry)
     return tag ? [tag] : []
   })
+}
+
+/** Whether the tags make an object take part in the physics' walls and bounds: floor and target objects pass through. */
+export function isSolidTagged(tags: readonly ColliderTag[]): boolean {
+  return tags.some((tag) => tag.class !== 'floor' && tag.class !== 'target')
 }
 
 /** Pairs of tag classes that push each other apart. A Weapon passes through Characters and Weapons. */

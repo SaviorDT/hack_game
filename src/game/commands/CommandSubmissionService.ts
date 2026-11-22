@@ -5,6 +5,7 @@ import type { CommandResult } from './CommandResult.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import { MOUSE_TARGET } from './CommandContext.ts'
 import type { CommandContext } from './CommandContext.ts'
+import { visibleExitsOf } from '../domain/RoomTravel.ts'
 import { getRoomDirectoryEntries } from './RoomDirectory.ts'
 
 export class CommandSubmissionService {
@@ -56,7 +57,7 @@ export class CommandSubmissionService {
 
     const directoryEntries = getRoomDirectoryEntries(state, currentRoom, false, true)
     const roomEntries = directoryEntries.map((entry) =>
-      currentRoom.exits.some((exit) => exit.label === entry) ? `${entry}/` : entry,
+      visibleExitsOf(state, currentRoom).some((exit) => exit.label === entry) ? `${entry}/` : entry,
     )
 
     const textBeforeCursor = rawText.slice(0, cursorIndex)

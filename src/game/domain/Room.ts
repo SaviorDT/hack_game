@@ -21,6 +21,8 @@ export interface RoomExit {
   readonly requires?: ExitRequirement | readonly ExitRequirement[]
   /** Going through ends the run with `congratulations` instead of entering the target room. */
   readonly endsGame?: boolean
+  /** A Hidden Exit: not shown, listed or targetable until its requirements are met. */
+  readonly hiddenUntilOpen?: boolean
 }
 
 export function assertValidRoomExit(exit: RoomExit): void {

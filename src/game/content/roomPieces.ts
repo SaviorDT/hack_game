@@ -60,6 +60,10 @@ export const plate = (id: string, x: number, y: number, name = 'plate'): RoomObj
 export const archer = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>
   createPieceFromPrefab('archer', id, x, y, { name: 'archer', mass: STANDS_FIRM, ...extra })
 
+/** A Target Dummy: nothing Collides with it, but a Weapon in flight hurts it. */
+export const targetDummy = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>
+  createPieceFromPrefab('dummy', id, x, y, { name: 'dummy', ...extra })
+
 export interface RoomDefinition {
   readonly id: string
   /** On-screen teaching text; rooms that teach by their layout leave it out. */
@@ -67,7 +71,9 @@ export interface RoomDefinition {
   readonly goal: string
   objects: RoomObjectConfig[]
   readonly walls?: readonly Box[]
-  readonly exit: Pick<RoomExit, 'targetRoomId' | 'label' | 'requires'>
+  /** `x`/`y` default to the standard Exit position on the right wall. */
+  readonly exit: Pick<RoomExit, 'targetRoomId' | 'label' | 'requires' | 'endsGame' | 'hiddenUntilOpen'> &
+    Partial<Pick<RoomExit, 'x' | 'y'>>
 }
 
 /** Turns room definitions into Rooms and their World Objects; `player` (if given) starts in the first room. */
@@ -84,7 +90,7 @@ export function buildRooms(
   const rooms: Room[] = definitions.map((definition) => ({
     id: definition.id,
     objectIds: worldObjects.filter((worldObject) => worldObject.roomId === definition.id).map((worldObject) => worldObject.id),
-    exits: [{ ...definition.exit, ...ROOM_LAYOUT.exit }],
+    exits: [{ ...ROOM_LAYOUT.exit, ...definition.exit }],
     state: { name: definition.id, width: ROOM_LAYOUT.width, height: ROOM_LAYOUT.height },
     bounds: ROOM_BOUNDS,
     entry: ROOM_ENTRY,

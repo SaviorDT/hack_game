@@ -2,6 +2,7 @@ import type { ParsedCommand } from '../ParsedCommand.ts'
 import type { CommandResult } from '../CommandResult.ts'
 import type { WorldState } from '../../domain/WorldState.ts'
 import type { CommandExecutor } from './base.ts'
+import { visibleExitsOf } from '../../domain/RoomTravel.ts'
 import { getRoomDirectoryEntries } from '../RoomDirectory.ts'
 
 export class LsCommandExecutor implements CommandExecutor {
@@ -26,7 +27,7 @@ export class LsCommandExecutor implements CommandExecutor {
       feedback: [{
         kind: 'popup',
         text: entries.length > 0 ? entries.join('\n') : 'Nothing to list.',
-        reverseColorLines: currentRoom.exits.map((exit) => exit.label),
+        reverseColorLines: visibleExitsOf(state, currentRoom).map((exit) => exit.label),
       }],
     }
   }

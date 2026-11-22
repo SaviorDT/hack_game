@@ -74,8 +74,7 @@ describe('MvCommandExecutor', () => {
       targetX: guardState.x,
       targetY: guardState.y,
       targetObjectId: guardObj.id,
-      hitIds: [],
-    })
+          })
     expect(daggerState.discovered).toBe(true)
   })
 
@@ -141,20 +140,108 @@ describe('MvCommandExecutor', () => {
     expect(daggerState.vy ?? 0).toBe(0)
   })
 
-  it('keeps the current velocity and resets hitIds when thrown again mid-flight', () => {
+  it('keeps the current velocity when thrown again mid-flight', () => {
     const state = createInitialWorldState()
     const daggerObj = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)!
     const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(daggerObj)
+    daggerState.mvLimit = -1
 
     executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
     daggerState.vx = 120
     daggerState.vy = -30
-    ;(daggerState.thrown as { hitIds: string[] }).hitIds.push('guard')
 
     executor.execute({ name: 'mv', arguments: ['dagger', 'room2'], options: [] }, state)
     expect(daggerState.vx).toBe(120)
     expect(daggerState.vy).toBe(-30)
-    expect((daggerState.thrown as { hitIds: string[] }).hitIds).toEqual([])
+    expect(daggerState.thrown).toMatchObject({ targetObjectId: null })
+  })
+
+  describe('Mv Limit', () => {
+    const daggerOf = (state: ReturnType<typeof createInitialWorldState>) =>
+      state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)!
+
+    it('gives the dagger one throw and uses it when it is thrown', () => {
+      const state = createInitialWorldState()
+      const dagger = daggerOf(state)
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger).mvLimit).toBe(1)
+
+      const result = executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
+
+      expect(result.status).toBe('success')
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger).mvLimit).toBe(0)
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger).thrown).toBeTruthy()
+    })
+
+    it('destroys a dagger with no throws left instead of throwing it', () => {
+      const state = createInitialWorldState()
+      const dagger = daggerOf(state)
+      executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)
+
+      const result = executor.execute({ name: 'mv', arguments: ['dagger', 'room2'], options: [] }, state)
+
+      expect(result).toEqual({ status: 'success', feedback: [{ kind: 'popup', text: 'dagger is used up.' }] })
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger)).toMatchObject({
+        destroyed: true,
+        alive: false,
+        thrown: null,
+      })
+    })
+
+    it('does not use a throw up for a rename', () => {
+      const state = createInitialWorldState()
+      const dagger = daggerOf(state)
+
+      const result = executor.execute({ name: 'mv', arguments: ['dagger', 'blade'], options: [] }, state)
+
+      expect(result.status).toBe('success')
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger).mvLimit).toBe(1)
+    })
+
+    it('never changes an unlimited object', () => {
+      const state = createInitialWorldState()
+      const boulder = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.boulder)!
+      for (let i = 0; i < 3; i++) {
+        executor.execute({ name: 'mv', arguments: ['boulder', 'guard'], options: [] }, state)
+      }
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(boulder).mvLimit).toBe(-1)
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(boulder).destroyed).toBeUndefined()
+    })
+
+    it('handles each wildcard source on its own: throws the ones with throws left, destroys the others', () => {
+      const state = createInitialWorldState()
+      const dagger = daggerOf(state)
+      const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(dagger)
+      daggerState.mvLimit = 0
+      const boulderState = getMutableWorldObjectState<MutableWorldObjectState>(
+        state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.boulder)!,
+      )
+
+      const result = executor.execute({ name: 'mv', arguments: ['d*', 'guard'], options: [] }, state)
+      expect(result).toMatchObject({ status: 'success', feedback: [{ text: 'dagger is used up.' }] })
+      expect(daggerState.destroyed).toBe(true)
+      expect(boulderState.thrown).toBeUndefined()
+
+      const both = executor.execute({ name: 'mv', arguments: ['b*', 'guard'], options: [] }, state)
+      expect(both).toMatchObject({ status: 'success', feedback: [{ text: expect.stringContaining('Threw boulder') }] })
+    })
+
+    it('cannot find a destroyed object by name, as a source or as a target', () => {
+      const state = createInitialWorldState()
+      destroyForTest(state)
+
+      expect(executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state)).toEqual({
+        status: 'rejected',
+        feedback: { kind: 'popup', text: 'Cannot find "dagger".' },
+      })
+      // As a target the name is free again, so the boulder is simply renamed.
+      expect(executor.execute({ name: 'mv', arguments: ['boulder', 'dagger'], options: [] }, state).status).toBe('success')
+    })
+
+    function destroyForTest(state: ReturnType<typeof createInitialWorldState>) {
+      const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(daggerOf(state))
+      daggerState.destroyed = true
+      daggerState.alive = false
+    }
   })
 
   describe('boulder mv behavior', () => {
@@ -179,8 +266,7 @@ describe('MvCommandExecutor', () => {
         targetX: guardState.x,
         targetY: guardState.y,
         targetObjectId: guardObj.id,
-        hitIds: [],
-      })
+              })
       expect(boulderState.discovered).toBe(true)
 
       // Run simulation engine with room 1 processes

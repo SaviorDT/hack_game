@@ -5,7 +5,7 @@
 
 export const DEFAULT_DRAG = 0.5
 export const DEFAULT_MASS = 1
-export const DEFAULT_MAX_VELOCITY = 1000
+export const DEFAULT_MAX_VELOCITY = 700
 export const DEFAULT_RESTITUTION = 0.5
 export const DEFAULT_FRICTION = 1
 export const DEFAULT_MIN_VELOCITY = 5

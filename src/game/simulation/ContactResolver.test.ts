@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
-import { WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { createInitialWorldState, createRoomObjects } from '../content/room1WorldState.ts'
+import { targetDummy } from '../content/roomPieces.ts'
+import { ROOM_IDS, WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
 import { colliderTagsOf } from '../domain/ColliderTag.ts'
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
-import { ContactResolver } from './ContactResolver.ts'
+import { ContactResolver, IMPACT_COOLDOWN_MS } from './ContactResolver.ts'
 import { GAME_PHYSICS_CONFIG } from './physicsConstants.ts'
 import { SIMULATION_TICK_MS, TickSimulationEngine } from './TickSimulationEngine.ts'
 import { ROOM1_PROCESSES } from './room1/Room1Processes.ts'
@@ -16,9 +17,11 @@ type Body = {
   health?: number
   alive?: boolean
   discovered?: boolean
-  thrown?: { hitIds: string[]; targetX: number; targetY: number; targetObjectId?: string | null } | null
+  thrown?: { targetX: number; targetY: number; targetObjectId?: string | null } | null
   [key: string]: unknown
 }
+
+const cooldownTicks = Math.ceil(IMPACT_COOLDOWN_MS / SIMULATION_TICK_MS)
 
 function setup() {
   const state = createInitialWorldState()
@@ -35,7 +38,7 @@ function setup() {
 function fly(dagger: Body, speed: number): void {
   dagger.vx = speed
   dagger.vy = 0
-  dagger.thrown = { targetX: 1700, targetY: dagger.y, targetObjectId: null, hitIds: [] }
+  dagger.thrown = { targetX: 1700, targetY: dagger.y, targetObjectId: null }
 }
 
 describe('Collider Tags', () => {
@@ -57,7 +60,7 @@ describe('Collider Tags', () => {
     boulder.y = guard.y
     boulder.vx = 500
     boulder.vy = 0
-    boulder.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null, hitIds: [] }
+    boulder.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
     resolver.resolve(state)
     expect(guard.health).toBe(100)
   })
@@ -82,35 +85,44 @@ describe('ContactResolver: thrown weapon touching a character', () => {
     expect(guard.health).toBeCloseTo(100 - 0.05 * 50, 9)
   })
 
-  it('hurts each character at most once per throw', () => {
+  it('hurts a character only once within the Impact Cooldown, even in one Throw', () => {
     const { state, dagger, guard, resolver } = setup()
     guard.health = 100
     fly(dagger, 300)
     resolver.resolve(state)
+    state.simulationTick += cooldownTicks - 1
     resolver.resolve(state)
     expect(guard.health).toBeCloseTo(85, 9)
-    expect(dagger.thrown?.hitIds).toContain(WORLD_OBJECT_IDS.guard)
   })
 
-  it('hits again on a different throw (hitIds reset)', () => {
+  it('hurts the same character again in the same Throw once the Impact Cooldown has passed', () => {
     const { state, dagger, guard, resolver } = setup()
     guard.health = 100
     fly(dagger, 300)
     resolver.resolve(state)
-    fly(dagger, 300)
+    state.simulationTick += cooldownTicks
     resolver.resolve(state)
     expect(guard.health).toBeCloseTo(70, 9)
   })
 
-  it('consumes the hit even when the speed is zero', () => {
+  it('does not reset the Impact Cooldown when thrown again', () => {
+    const { state, dagger, guard, resolver } = setup()
+    guard.health = 100
+    fly(dagger, 300)
+    resolver.resolve(state)
+    fly(dagger, 300)
+    resolver.resolve(state)
+    expect(guard.health).toBeCloseTo(85, 9)
+  })
+
+  it('starts no cooldown for a touch that does no damage', () => {
     const { state, dagger, guard, resolver } = setup()
     guard.health = 100
     fly(dagger, 0)
     resolver.resolve(state)
-    expect(guard.health).toBe(100)
-    dagger.vx = 300
+    fly(dagger, 300)
     resolver.resolve(state)
-    expect(guard.health).toBe(100)
+    expect(guard.health).toBeCloseTo(85, 9)
   })
 
   it('is a trigger: the weapon keeps flying and nothing but Health changes', () => {
@@ -171,7 +183,7 @@ describe('ContactResolver: thrown weapon touching a character', () => {
     player.x = guard.x
     player.y = guard.y
     player.vx = 300
-    player.thrown = { targetX: 1700, targetY: player.y, targetObjectId: null, hitIds: [] }
+    player.thrown = { targetX: 1700, targetY: player.y, targetObjectId: null }
     resolver.resolve(state)
     expect(guard.health).toBe(100)
   })
@@ -192,7 +204,7 @@ describe('tick order: move, contacts, then velocity update', () => {
     dagger.x = 1000
     dagger.y = guard.y
     guard.health = 100
-    dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null, hitIds: [] }
+    dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
 
     const engine = new TickSimulationEngine(ROOM1_PROCESSES)
     let lastSpeedBeforeHit = 0
@@ -221,10 +233,60 @@ describe('engine without a contact resolver', () => {
     dagger.y = guard.y
     dagger.vx = 500
     dagger.vy = 0
-    dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null, hitIds: [] }
+    dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
 
     const engine = new TickSimulationEngine(ROOM1_PROCESSES, undefined, undefined, { contactResolver: null })
     engine.advance(state, SIMULATION_TICK_MS * 3)
     expect(guard.health).toBe(100)
+  })
+})
+
+describe('ContactResolver: thrown weapon touching a Target Dummy', () => {
+  function setupTarget() {
+    const { state, dagger, resolver, body } = setup()
+    const [dummyObject] = createRoomObjects([targetDummy('testdummy', dagger.x, dagger.y)], ROOM_IDS.first)
+    state.worldObjects.push(dummyObject)
+    state.rooms = state.rooms.map((room) =>
+      room.id === ROOM_IDS.first ? { ...room, objectIds: [...room.objectIds, dummyObject.id] } : room,
+    )
+    return { state, dagger, resolver, dummy: body('testdummy') }
+  }
+
+  it('hurts it like a Character: impact damage rate x weapon speed', () => {
+    const { state, dagger, resolver, dummy } = setupTarget()
+    fly(dagger, 400)
+    resolver.resolve(state)
+    expect(dummy.health).toBeCloseTo(1000 - 0.05 * 400, 9)
+    expect(dummy.alive).toBe(true)
+  })
+
+  it('hurts it again within the same Throw once the Impact Cooldown has passed, not before', () => {
+    const { state, dagger, resolver, dummy } = setupTarget()
+    fly(dagger, 400)
+    resolver.resolve(state)
+    state.simulationTick += cooldownTicks - 1
+    resolver.resolve(state)
+    expect(dummy.health).toBeCloseTo(980, 9)
+    state.simulationTick += 1
+    resolver.resolve(state)
+    expect(dummy.health).toBeCloseTo(960, 9)
+  })
+
+  it('defeats it at 0 Health and then leaves it alone', () => {
+    const { state, dagger, resolver, dummy } = setupTarget()
+    dummy.health = 10
+    fly(dagger, 400)
+    resolver.resolve(state)
+    expect(dummy.health).toBe(0)
+    expect(dummy.alive).toBe(false)
+    state.simulationTick += cooldownTicks
+    resolver.resolve(state)
+    expect(dummy.health).toBe(0)
+  })
+
+  it('is not hurt by a weapon that is not in flight', () => {
+    const { state, resolver, dummy } = setupTarget()
+    resolver.resolve(state)
+    expect(dummy.health).toBe(1000)
   })
 })

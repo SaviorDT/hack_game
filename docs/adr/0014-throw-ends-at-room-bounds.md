@@ -1,5 +1,5 @@
 ---
-status: accepted, adds to the Throw end rules of 0009 and 0010
+status: accepted, adds to the Throw end rules of 0009 and 0010; superseded for Weapons by 0016
 ---
 
 # A Throw also ends when the room edge stops the object

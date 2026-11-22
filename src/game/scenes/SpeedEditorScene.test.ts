@@ -230,7 +230,7 @@ describe('SpeedEditorScene', () => {
       const startX = state.x as number
 
       expect(session.submitCommand('mv dagger guard').status).toBe('success')
-      expect(state.thrown).toMatchObject({ targetObjectId: WORLD_OBJECT_IDS.guard, hitIds: [] })
+      expect(state.thrown).toMatchObject({ targetObjectId: WORLD_OBJECT_IDS.guard })
 
       session.update(16.67 * 3)
       expect(state.x as number).toBeGreaterThan(startX)

@@ -1,4 +1,4 @@
-import { collidesPhysically, colliderTagsOf } from '../domain/ColliderTag.ts'
+import { collidesPhysically, colliderTagsOf, isSolidTagged } from '../domain/ColliderTag.ts'
 import { ShapeCollisionWorld, boxFromState, contactOf, isCircle, type Box, type Bounds, type CollisionWorld } from '../domain/CollisionWorld.ts'
 import { resolveCollision } from '../domain/CollisionResponse.ts'
 import { resolvePhysicsAttr, velocityDecay, type PhysicsAttr } from '../domain/PhysicsAttr.ts'
@@ -67,7 +67,12 @@ export function applyForce(worldObject: WorldObject, forceX: number, forceY: num
 
 /** Whether walls stop this body: anything solid does; floor objects (pressure plates) and untagged ones do not. */
 function blocksWalls(worldObject: WorldObject): boolean {
-  return colliderTagsOf(worldObject).some((tag) => tag.class !== 'floor')
+  return isSolidTagged(colliderTagsOf(worldObject))
+}
+
+/** The room bounds that hold this body in: a Weapon is not held, so it can fly out of the room. */
+function boundsFor(worldObject: WorldObject, bounds: Bounds | undefined): Bounds | undefined {
+  return colliderTagsOf(worldObject).some((tag) => tag.class === 'weapon') ? undefined : bounds
 }
 
 /** Gap below which two bodies count as touching. */
@@ -192,6 +197,7 @@ export class PhysicsWorld {
     config: PhysicsConfig,
   ): void {
     const { state } = body
+    bounds = boundsFor(body.object, bounds)
     const next = { ...boxOf(state), x: state.x + (state.vx ?? 0) * dt, y: state.y + (state.vy ?? 0) * dt }
     const obstacles = bodies.filter((other) => other !== body && collidesPhysically(body.object, other.object))
     const solidWalls = blocksWalls(body.object) ? walls : []
@@ -305,8 +311,9 @@ export class PhysicsWorld {
           const contact = contactOf(boxOf(mover.state), boxOf(fixed.state))
           mover.state.x += contact.normal.x * contact.distance
           mover.state.y += contact.normal.y * contact.distance
-          if (bounds) {
-            Object.assign(mover.state, this.collision.clampToBounds(boxOf(mover.state), bounds))
+          const moverBounds = boundsFor(mover.object, bounds)
+          if (moverBounds) {
+            Object.assign(mover.state, this.collision.clampToBounds(boxOf(mover.state), moverBounds))
           }
           continue
         }
@@ -317,8 +324,9 @@ export class PhysicsWorld {
         } else {
           mover.state.y += (mover.state.y >= fixed.state.y ? 1 : -1) * penetrationY
         }
-        if (bounds) {
-          Object.assign(mover.state, this.collision.clampToBounds(boxOf(mover.state), bounds))
+        const moverBounds = boundsFor(mover.object, bounds)
+        if (moverBounds) {
+          Object.assign(mover.state, this.collision.clampToBounds(boxOf(mover.state), moverBounds))
         }
       }
     }

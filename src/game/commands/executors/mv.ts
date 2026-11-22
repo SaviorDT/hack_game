@@ -5,6 +5,8 @@ import type { CommandExecutor } from './base.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import type { WorldObject } from '../../domain/WorldObject.ts'
 import { hasUppercase } from '../../domain/label.ts'
+import { isDestroyed, spendMvLimit } from '../../domain/MvLimit.ts'
+import { visibleExitsOf } from '../../domain/RoomTravel.ts'
 import { isMouseTarget, MOUSE_TARGET, type CommandContext } from '../CommandContext.ts'
 
 export function findObjectInRoom(state: WorldState, label: string): WorldObject | undefined {
@@ -16,7 +18,7 @@ export function findObjectInRoom(state: WorldState, label: string): WorldObject 
   const normalized = label.trim().toLowerCase()
   // Hidden objects (arrows) are not things the player can name.
   const roomObjects = state.worldObjects.filter(
-    (obj) => obj.roomId === state.currentRoomId && currentRoom.objectIds.includes(obj.id) && obj.metadata.hidden !== true,
+    (obj) => obj.roomId === state.currentRoomId && currentRoom.objectIds.includes(obj.id) && obj.metadata.hidden !== true && !isDestroyed(obj),
   )
 
   // 1. Exact match on metadata.name
@@ -93,7 +95,7 @@ export class MvCommandExecutor implements CommandExecutor {
 
     const targetObject = toMouse ? undefined : findObjectInRoom(state, label2)
     const norm2 = label2.trim().toLowerCase().replace(/\/$/, '')
-    const targetExit = toMouse ? undefined : currentRoom.exits.find(
+    const targetExit = toMouse ? undefined : visibleExitsOf(state, currentRoom).find(
       (exit) => exit.label.toLowerCase() === norm2 || exit.targetRoomId.toLowerCase() === norm2,
     )
 
@@ -105,6 +107,7 @@ export class MvCommandExecutor implements CommandExecutor {
           obj.roomId === state.currentRoomId &&
           currentRoom.objectIds.includes(obj.id) &&
           obj.metadata.hidden !== true &&
+          !isDestroyed(obj) &&
           obj.id !== targetObject?.id &&
           matcher.test(displayName(obj)),
       )
@@ -187,7 +190,15 @@ export class MvCommandExecutor implements CommandExecutor {
       targetName = targetExit.label
     }
 
+    const thrownNames: string[] = []
+    const usedUpNames: string[] = []
     for (const sourceObject of sources) {
+      // A source with no throws left is destroyed instead of thrown; a limited one uses a throw up.
+      if (!spendMvLimit(state, sourceObject)) {
+        usedUpNames.push(displayName(sourceObject))
+        continue
+      }
+      thrownNames.push(displayName(sourceObject))
       const sourceState = getMutableWorldObjectState<MutableWorldObjectState>(sourceObject)
 
       sourceState.discovered = true
@@ -212,14 +223,17 @@ export class MvCommandExecutor implements CommandExecutor {
           targetX,
           targetY,
           targetObjectId: targetObjectId ?? null,
-          hitIds: [],
         }
       }
     }
 
-    return {
-      status: 'success',
-      feedback: [{ kind: 'popup', text: `Threw ${sources.map(displayName).join(', ')} to ${targetName}.` }],
+    const feedback: { kind: 'popup'; text: string }[] = []
+    if (thrownNames.length > 0) {
+      feedback.push({ kind: 'popup', text: `Threw ${thrownNames.join(', ')} to ${targetName}.` })
     }
+    if (usedUpNames.length > 0) {
+      feedback.push({ kind: 'popup', text: `${usedUpNames.join(', ')} ${usedUpNames.length === 1 ? 'is' : 'are'} used up.` })
+    }
+    return { status: 'success', feedback }
   }
 }

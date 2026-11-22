@@ -44,6 +44,7 @@ export function generatePrefabSource(prefabs: readonly PrefabDefinition[]): stri
     if (p.colliderHeight !== undefined) rows.push(`    colliderHeight: ${Math.round(p.colliderHeight)},`)
     if (p.colliderShape !== undefined) rows.push(`    colliderShape: ${JSON.stringify(p.colliderShape)},`)
     if (p.passive !== undefined) rows.push(`    passive: ${p.passive},`)
+    if (p.mvLimit !== undefined) rows.push(`    mvLimit: ${p.mvLimit},`)
     if (p.mass !== undefined) rows.push(`    mass: ${p.mass},`)
     if (p.drag !== undefined) rows.push(`    drag: ${p.drag},`)
     if (p.friction !== undefined) rows.push(`    friction: ${p.friction},`)
@@ -54,6 +55,7 @@ export function generatePrefabSource(prefabs: readonly PrefabDefinition[]): stri
   })
 
   return `import type { ColliderShape } from './CollisionWorld.ts'
+import type { ObjectKind } from './ObjectKind.ts'
 import type {
   PhysicsAttrConfig,
   PlayerSpeedConfig,
@@ -65,7 +67,7 @@ export interface PrefabDefinition extends PhysicsAttrConfig {
   id: string
   name: string
   role: WorldObjectRole
-  kind?: 'crate' | 'plate' | 'archer'
+  kind?: ObjectKind
   displayWidth: number
   displayHeight: number
   scaleX: number
@@ -80,6 +82,7 @@ export interface PrefabDefinition extends PhysicsAttrConfig {
   holdOffsetX?: number
   holdOffsetY?: number
   passive?: boolean
+  mvLimit?: number
 }
 
 export const DEFAULT_PREFABS: readonly PrefabDefinition[] = [
@@ -160,6 +163,9 @@ export function applyPrefabToObject(
   }
   if (prefab.passive !== undefined) {
     result.passive = prefab.passive
+  }
+  if (prefab.mvLimit !== undefined) {
+    result.mvLimit = prefab.mvLimit
   }
 
   const physicsKeys: (keyof PhysicsAttrConfig)[] = [

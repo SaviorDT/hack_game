@@ -1,5 +1,7 @@
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
+import { isDestroyed } from '../domain/MvLimit.ts'
 import type { Room } from '../domain/Room.ts'
+import { visibleExitsOf } from '../domain/RoomTravel.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 
 export function getRoomDirectoryEntries(
@@ -20,6 +22,10 @@ export function getRoomDirectoryEntries(
       ? worldObject.metadata.name
       : (worldObject.metadata.role === 'player' || worldObject.id === 'player' ? worldObject.id : undefined)
     if (typeof name !== 'string') {
+      continue
+    }
+
+    if (isDestroyed(worldObject)) {
       continue
     }
 
@@ -53,6 +59,6 @@ export function getRoomDirectoryEntries(
     }
   }
 
-  entries.push(...room.exits.map((exit) => exit.label))
+  entries.push(...visibleExitsOf(state, room).map((exit) => exit.label))
   return entries
 }

@@ -1,5 +1,6 @@
 import { ShapeCollisionWorld, boxFromState } from './CollisionWorld.ts'
 import type { CollisionWorld } from './CollisionWorld.ts'
+import { isDestroyed } from './MvLimit.ts'
 import type { WorldObject } from './WorldObject.ts'
 import { getMutableWorldObjectState } from './WorldObjectState.ts'
 import type { WorldState } from './WorldState.ts'
@@ -52,7 +53,8 @@ export class PickUpService {
           (worldObject.metadata.role === 'weapon' ||
             worldObject.metadata.role === 'item' ||
             Boolean(worldObject.metadata.pickUpAble)) &&
-          !getMutableWorldObjectState<WeaponItemState>(worldObject).equippedBy,
+          !getMutableWorldObjectState<WeaponItemState>(worldObject).equippedBy &&
+          !isDestroyed(worldObject),
       )
       .map((worldObject) => ({ worldObject, box: boxOf(worldObject) }))
 

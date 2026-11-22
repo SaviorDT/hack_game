@@ -17,6 +17,7 @@ import type {
   RoomObjectConfig,
   WorldObjectRole,
 } from '../content/room1.ts'
+import type { ObjectKind } from '../domain/ObjectKind.ts'
 import {
   EDITOR_ROOM_IDS,
   getRoomDefinition,
@@ -75,13 +76,15 @@ const KIND_TEXTURES: Readonly<Record<string, string>> = {
   arrow: 'arrow',
   crate: 'crate',
   plate: 'plate',
+  dummy: GUARD_TEXTURE_KEY,
 }
 
 export interface SpawnObjectConfig extends PhysicsAttrConfig {
   id?: string
   name?: string
-  kind?: 'crate' | 'plate' | 'archer'
+  kind?: ObjectKind
   passive?: boolean
+  mvLimit?: number
   x?: number
   y?: number
   displayWidth?: number
@@ -105,8 +108,9 @@ type ColliderOutline = Phaser.GameObjects.Rectangle | Phaser.GameObjects.Ellipse
 export interface EditorObject extends ScalableMovableObject {
   role: WorldObjectRole
   name?: string
-  kind?: 'crate' | 'plate' | 'archer'
+  kind?: ObjectKind
   passive?: boolean
+  mvLimit?: number
   sprite: Phaser.GameObjects.Image
   outline: Phaser.GameObjects.Rectangle
   collisionBox?: ColliderOutline
@@ -528,8 +532,9 @@ export class LevelEditorScene extends Phaser.Scene {
     const roomObjects = getRoomObjectConfigs(this.currentRoomId)
     const roomObj = roomObjects.find((o) => o.id === worldObject.id)
     const name = roomObj?.name ?? (typeof worldObject.metadata.name === 'string' ? worldObject.metadata.name : undefined)
-    const kind = (roomObj?.kind ?? worldObject.metadata.kind) as 'crate' | 'plate' | 'archer' | undefined
+    const kind = (roomObj?.kind ?? worldObject.metadata.kind) as ObjectKind | undefined
     const passive = roomObj?.passive
+    const mvLimit = roomObj?.mvLimit
 
     const attackDistance = isWeapon
       ? typeof state.weaponAttackDistance === 'number'
@@ -558,20 +563,21 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const isCrate = kind === 'crate'
     const isPlate = kind === 'plate'
+    const isDummy = kind === 'dummy'
     const defaultBaseWidth = isWeapon
       ? DAGGER_SIZE.width
       : isCrate
         ? 88
         : isPlate
           ? 96
-          : (role === 'object' ? BOULDER_BASE_SIZE.width : CHARACTER_BASE_SIZE.width)
+          : (role === 'object' && !isDummy ? BOULDER_BASE_SIZE.width : CHARACTER_BASE_SIZE.width)
     const defaultBaseHeight = isWeapon
       ? DAGGER_SIZE.height
       : isCrate
         ? 88
         : isPlate
           ? 96
-          : (role === 'object' ? BOULDER_BASE_SIZE.height : CHARACTER_BASE_SIZE.height)
+          : (role === 'object' && !isDummy ? BOULDER_BASE_SIZE.height : CHARACTER_BASE_SIZE.height)
 
     const displayWidth = typeof state.displayWidth === 'number'
       ? state.displayWidth
@@ -671,6 +677,7 @@ export class LevelEditorScene extends Phaser.Scene {
       name,
       kind,
       passive,
+      mvLimit,
       role,
       sprite,
       outline,
@@ -812,7 +819,22 @@ export class LevelEditorScene extends Phaser.Scene {
       })
     })
 
-    items.push(spawnGuardBtn, spawnDaggerBtn, spawnCrateBtn, spawnBoulderBtn)
+    const spawnDummyBtn = this.add
+      .text(140, 94, '+ DUMMY', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 10,
+        color: '#ffffff',
+        backgroundColor: '#6a1b9a',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5, 0)
+      .setInteractive({ useHandCursor: true })
+    spawnDummyBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.()
+      this.spawnWorldObject('object', { kind: 'dummy', name: 'dummy', maxHealth: 1000, colliderWidth: 110, colliderHeight: 160 })
+    })
+
+    items.push(spawnGuardBtn, spawnDaggerBtn, spawnCrateBtn, spawnBoulderBtn, spawnDummyBtn)
 
     // Edit prefab button
     this.editPrefabButton = this.add
@@ -2573,6 +2595,7 @@ export class LevelEditorScene extends Phaser.Scene {
           name: reversed.snapshot.name,
           kind: reversed.snapshot.kind,
           passive: reversed.snapshot.passive,
+          mvLimit: reversed.snapshot.mvLimit,
           x: reversed.snapshot.x,
           y: reversed.snapshot.y,
           displayWidth: reversed.snapshot.displayWidth,
@@ -2720,6 +2743,9 @@ export class LevelEditorScene extends Phaser.Scene {
     const exit = def?.exit
     const doorLabelText = exit?.label || exit?.targetRoomId || 'exit'
     this.doorLabel?.setText(doorLabelText)
+    // A Hidden Exit is not shown until its goal is met, so the editor draws no door for it either.
+    this.doorFrame?.setVisible(!exit?.hiddenUntilOpen)
+    this.doorLabel?.setVisible(!exit?.hiddenUntilOpen)
   }
 
   private loadRoomObjects(roomId: string): void {
@@ -2793,6 +2819,7 @@ export class LevelEditorScene extends Phaser.Scene {
         ...(obj.name ? { name: obj.name } : {}),
         ...(obj.kind ? { kind: obj.kind } : {}),
         ...(obj.passive !== undefined ? { passive: obj.passive } : {}),
+        ...(obj.mvLimit !== undefined ? { mvLimit: obj.mvLimit } : {}),
         x: Math.round(posX),
         y: Math.round(posY),
         displayWidth: Math.round(obj.displayWidth),
@@ -2927,7 +2954,7 @@ export class LevelEditorScene extends Phaser.Scene {
     config: SpawnObjectConfig = {},
     recordHistory = true,
   ): EditorObject {
-    const id = config.id ?? this.generateNextId(role, config.kind ?? (role === 'object' && config.colliderShape === 'circle' ? 'boulder' : undefined))
+    const id = config.id ?? this.generateNextId(role, (config.kind === 'dummy' ? 'targetdummy' : config.kind) ?? (role === 'object' && config.colliderShape === 'circle' ? 'boulder' : undefined))
 
     const existingIndex = this.editorObjects.findIndex((o) => o.id === id)
     if (existingIndex !== -1) {
@@ -2935,6 +2962,7 @@ export class LevelEditorScene extends Phaser.Scene {
       if (config.name !== undefined) existing.name = config.name
       if (config.kind !== undefined) existing.kind = config.kind
       if (config.passive !== undefined) existing.passive = config.passive
+      if (config.mvLimit !== undefined) existing.mvLimit = config.mvLimit
       if (config.x !== undefined) existing.x = config.x
       if (config.y !== undefined) existing.y = config.y
       if (config.displayWidth !== undefined) existing.displayWidth = config.displayWidth
@@ -2967,7 +2995,8 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const isCrate = config.kind === 'crate'
     const isPlate = config.kind === 'plate'
-    const isBoulder = role === 'object' && !isCrate && !isPlate
+    const isDummy = config.kind === 'dummy'
+    const isBoulder = role === 'object' && !isCrate && !isPlate && !isDummy
     const textureKey =
       config.kind && (KIND_TEXTURES as any)[config.kind]
         ? (KIND_TEXTURES as any)[config.kind]
@@ -3126,6 +3155,7 @@ export class LevelEditorScene extends Phaser.Scene {
       name: config.name,
       kind: config.kind,
       passive: config.passive,
+      mvLimit: config.mvLimit,
       role,
       sprite,
       outline,
@@ -3297,6 +3327,7 @@ export class LevelEditorScene extends Phaser.Scene {
       name: obj.name,
       kind: obj.kind,
       passive: obj.passive,
+      mvLimit: obj.mvLimit,
       x: savedPos ? savedPos.x : obj.x,
       y: savedPos ? savedPos.y : obj.y,
       displayWidth: obj.displayWidth,

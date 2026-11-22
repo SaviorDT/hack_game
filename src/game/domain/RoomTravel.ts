@@ -70,6 +70,16 @@ export function isExitOpen(state: WorldState, room: Room, exit: RoomExit): boole
   return (requirements as readonly ExitRequirement[]).every((requirement) => isRequirementMet(state, room, requirement))
 }
 
+/** Whether the Exit is shown and can be named: a Hidden Exit only once it is open. */
+export function isExitVisible(state: WorldState, room: Room, exit: RoomExit): boolean {
+  return !exit.hiddenUntilOpen || isExitOpen(state, room, exit)
+}
+
+/** The Exits of a room that the player can currently see. */
+export function visibleExitsOf(state: WorldState, room: Room): readonly RoomExit[] {
+  return room.exits.filter((exit) => isExitVisible(state, room, exit))
+}
+
 /** Whether an Obstacle (a crate, a boulder) stands in the Exit's doorway, so nobody can get through it. */
 export function isExitBlocked(state: WorldState, room: Room, exit: RoomExit): boolean {
   const zone = exitZoneOf(exit)

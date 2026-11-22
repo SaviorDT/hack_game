@@ -226,7 +226,8 @@ export class PhaserGameHud {
   }
 
   private resetTutorialPrompt(): void {
-    if (this.tutorialPromptStage === undefined && !this.scrollTween && !this.fadeTween && !this.typingTimer) return
+    // Without a tutorial prompt in play, any typing timer belongs to the room hint and must keep running.
+    if (this.tutorialPromptStage === undefined && !this.scrollTween && !this.fadeTween) return
     this.clearTypingTimer()
     this.scrollTween?.stop()
     this.scrollTween = undefined

@@ -380,7 +380,7 @@ describe('commands', () => {
 
     session.submitCommand('mv dagger guard')
     const daggerRecord = dagger as unknown as Record<string, unknown>
-    expect(daggerRecord.thrown).toMatchObject({ targetObjectId: 'guard', hitIds: [] })
+    expect(daggerRecord.thrown).toMatchObject({ targetObjectId: 'guard' })
     expect(Math.hypot((dagger.vx as number) ?? 0, (dagger.vy as number) ?? 0)).toBe(0)
 
     session.update(SIMULATION_TICK_MS)

@@ -4,6 +4,7 @@ import { assertValidRoom } from '../domain/Room.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import { defaultColliderTags } from '../domain/ColliderTag.ts'
+import { defaultMvLimit } from '../domain/MvLimit.ts'
 import { PHYSICS_ATTR_KEYS, type PhysicsAttrOverride } from '../domain/PhysicsAttr.ts'
 import { ALWAYS_ACTIVE_BEHAVIOR } from '../processes/BehaviorRule.ts'
 import {
@@ -129,7 +130,21 @@ function colliderState(obj: RoomObjectConfig, width: number, height: number) {
   }
 }
 
-/** Builds the World Objects described by `objects`, all placed in `roomId`. */
+/** The fields every placed World Object shares: position, physics attributes, collider and display size. */
+function placedBodyState(obj: RoomObjectConfig, width: number, height: number, scaleX: number, scaleY: number) {
+  return {
+    x: obj.x,
+    y: obj.y,
+    ...physicsAttrState(obj),
+    ...colliderState(obj, width, height),
+    displayWidth: obj.displayWidth,
+    displayHeight: obj.displayHeight,
+    scaleX,
+    scaleY,
+    mvLimit: obj.mvLimit ?? defaultMvLimit(obj.role),
+  }
+}
+
 /** The arrows an archer shoots, kept out of sight (not alive) until fired. */
 function createArrows(archer: RoomObjectConfig, roomId: string): WorldObject[] {
   const { width, height } = ARCHER_CONFIG.arrowSize
@@ -158,6 +173,26 @@ function createArrows(archer: RoomObjectConfig, roomId: string): WorldObject[] {
   )
 }
 
+/** A Target Dummy: tagged `target` so nothing Collides with it, with Health like a Character but no behavior. */
+function createTargetDummy(obj: RoomObjectConfig, roomId: string): WorldObject {
+  const { scaleX, scaleY } = resolveScale(obj, CHARACTER_BASE_SIZE.width, CHARACTER_BASE_SIZE.height)
+  const { width, height } = computeColliderSize('enemy', scaleX, scaleY, obj)
+  const maxHealth = obj.maxHealth ?? MAX_HEALTH
+  return createRoomWorldObject(
+    roomId,
+    obj.id,
+    { name: obj.name ?? obj.id, role: 'object', kind: 'dummy', discoverable: true, colliderTags: [{ class: 'target' }] },
+    [],
+    {
+      ...placedBodyState(obj, width, height, scaleX, scaleY),
+      health: maxHealth,
+      maxHealth,
+      alive: true,
+      discovered: true,
+    },
+  )
+}
+
 /** Builds the World Objects described by `objects`, all placed in `roomId`; archers bring their arrows. */
 export function createRoomObjects(objects: readonly RoomObjectConfig[], roomId: string): WorldObject[] {
   return objects.flatMap((obj) => (obj.kind === 'archer' ? [createRoomObject(obj, roomId), ...createArrows(obj, roomId)] : [createRoomObject(obj, roomId)]))
@@ -173,14 +208,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
       { name: 'hacker', role: 'player', discoverable: false, colliderTags: defaultColliderTags('player') },
       [alwaysActiveRule(PROCESS_IDS.player)],
       {
-        x: obj.x,
-        y: obj.y,
-        ...physicsAttrState(obj),
-        ...colliderState(obj, width, height),
-        displayWidth: obj.displayWidth,
-        displayHeight: obj.displayHeight,
-        scaleX,
-        scaleY,
+        ...placedBodyState(obj, width, height, scaleX, scaleY),
         speed: typeof obj.speed === 'object' && obj.speed !== null
           ? {
             acceleration: obj.speed.acceleration,
@@ -228,14 +256,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
       { name: obj.name ?? obj.id, role: 'weapon', weaponId: 'dagger', discoverable: true, colliderTags: defaultColliderTags('weapon') },
       [alwaysActiveRule(PROCESS_IDS.dagger)],
       {
-        x: obj.x,
-        y: obj.y,
-        ...physicsAttrState(obj),
-        ...colliderState(obj, width, height),
-        displayWidth: obj.displayWidth,
-        displayHeight: obj.displayHeight,
-        scaleX,
-        scaleY,
+        ...placedBodyState(obj, width, height, scaleX, scaleY),
         discovered: true,
         equippedBy: null,
         attackDurationMs: 0,
@@ -247,6 +268,10 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
         holdOffsetY: obj.holdOffsetY ?? GAME_WEAPON_CONFIG.holdOffsetY,
       },
     )
+  }
+
+  if (obj.kind === 'dummy') {
+    return createTargetDummy(obj, roomId)
   }
 
   if (obj.role === 'object') {
@@ -265,14 +290,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
       },
       obj.kind === 'plate' ? [] : [alwaysActiveRule(PROCESS_IDS.boulder)],
       {
-        x: obj.x,
-        y: obj.y,
-        ...physicsAttrState(obj),
-        ...colliderState(obj, width, height),
-        displayWidth: obj.displayWidth,
-        displayHeight: obj.displayHeight,
-        scaleX,
-        scaleY,
+        ...placedBodyState(obj, width, height, scaleX, scaleY),
         discovered: true,
         alive: true,
       },
@@ -295,14 +313,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
     },
     [alwaysActiveRule(obj.kind === 'archer' ? PROCESS_IDS.archer : PROCESS_IDS.guard)],
     {
-      x: obj.x,
-      y: obj.y,
-      ...physicsAttrState(obj),
-      ...colliderState(obj, width, height),
-      displayWidth: obj.displayWidth,
-      displayHeight: obj.displayHeight,
-      scaleX,
-      scaleY,
+      ...placedBodyState(obj, width, height, scaleX, scaleY),
       speed: obj.speed ?? 210,
       health: obj.maxHealth ?? MAX_HEALTH,
       maxHealth: obj.maxHealth ?? MAX_HEALTH,

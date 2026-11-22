@@ -58,7 +58,7 @@ describe('accelerateToward', () => {
     accelerateToward(grounded.object, 300, 0, 2500, TICK_MS)
     expect((290 + grounded.state.forceX * DT) * (1 - 5 * DT)).toBeCloseTo(300, 6)
 
-    const thrown = bodyAt(0, 0, { vx: 290, drag: 0, friction: 5, thrown: { targetX: 1, targetY: 1, hitIds: [] } })
+    const thrown = bodyAt(0, 0, { vx: 290, drag: 0, friction: 5, thrown: { targetX: 1, targetY: 1 } })
     accelerateToward(thrown.object, 300, 0, 2500, TICK_MS)
     expect(290 + thrown.state.forceX * DT).toBeCloseTo(300, 6)
   })

@@ -2,6 +2,7 @@ import type { WorldState } from '../domain/WorldState.ts'
 import { HOME_AREA_IDS, HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM1_OBJECTS, type RoomObjectConfig } from './room1.ts'
 import { ROOM_IDS } from './room1Constants.ts'
+import { ROOM2_DEFINITION } from './room2.ts'
 import { createInitialWorldState } from './room1WorldState.ts'
 import { boulder, buildRooms, dagger, guard, ROOM_ENTRY, STANDS_FIRM, type RoomDefinition } from './roomPieces.ts'
 
@@ -71,8 +72,8 @@ export const ROOM1_HINT =
   'The real thing: guards rush you once you cross the middle of the room. Use mv and your dagger to reach room2.'
 
 /**
- * The whole game: the tutorial rooms, the home area, then room1 (and the room2 ending). The Player Character
- * starts in tutorial1 with the stats configured for room1's player.
+ * The whole game: the tutorial rooms, the home area, room1, then room2 (whose Hidden Exit to room3 ends the
+ * game). The Player Character starts in tutorial1 with the stats configured for room1's player.
  */
 export function createGameWorldState(
   room1Objects: readonly RoomObjectConfig[] = ROOM1_OBJECTS,
@@ -81,20 +82,21 @@ export function createGameWorldState(
   const room1 = createInitialWorldState([...room1Objects])
   const playerConfig = room1Objects.find((obj) => obj.role === 'player')
   const playerId = playerConfig?.id ?? 'player'
-  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS], playerConfig)
+  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ROOM2_DEFINITION], playerConfig)
 
-  const room1Rooms = room1.rooms.map((room) =>
-    room.id === ROOM_IDS.first
-      ? {
-          ...room,
-          objectIds: room.objectIds.filter((id) => id !== playerId),
-          entry: playerConfig ? { x: playerConfig.x, y: playerConfig.y } : ROOM_ENTRY,
-          hint: ROOM1_HINT,
-          goal: 'Reach the exit to room2.',
-          restoresHealth: true,
-        }
-      : room,
-  )
+  // room1 only: `createInitialWorldState` also holds an empty room2, which `built` replaces with the real one.
+  const room1Rooms = room1.rooms
+    .filter((room) => room.id === ROOM_IDS.first)
+    .map((room) => ({
+      ...room,
+      // Here room1's Exit leads on to the real room2 instead of ending the run.
+      exits: room.exits.map(({ endsGame: _endsGame, ...exit }) => exit),
+      objectIds: room.objectIds.filter((id) => id !== playerId),
+      entry: playerConfig ? { x: playerConfig.x, y: playerConfig.y } : ROOM_ENTRY,
+      hint: ROOM1_HINT,
+      goal: 'Reach the exit to room2.',
+      restoresHealth: true,
+    }))
 
   const allRooms = [...built.rooms, ...room1Rooms]
   const allWorldObjects = [

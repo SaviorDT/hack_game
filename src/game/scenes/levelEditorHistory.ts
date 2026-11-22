@@ -1,4 +1,5 @@
 import type { PhysicsAttrConfig, PlayerSpeedConfig, WorldObjectRole } from '../content/room1.ts'
+import type { ObjectKind } from '../domain/ObjectKind.ts'
 import { GAME_WEAPON_CONFIG } from '../content/weaponConstants.ts'
 import { computeCollisionSize } from '../content/room1WorldState.ts'
 import { rolesCollide } from '../domain/ColliderTag.ts'
@@ -7,6 +8,11 @@ import { ShapeCollisionWorld, type ColliderShape } from '../domain/CollisionWorl
 const editorCollision = new ShapeCollisionWorld()
 
 /** Collider size as the editor draws and checks it: a circle is a square whose side is its diameter (the width). */
+/** Pressure plates and Target Dummies are never in the way: nothing Collides with them. */
+export function passesThrough(kind: string | undefined): boolean {
+  return kind === 'plate' || kind === 'dummy'
+}
+
 export function computeEditorColliderSize(
   role: WorldObjectRole,
   scaleX: number,
@@ -57,12 +63,12 @@ export function wouldOverlapAnyEditorObject(
   colliderShape?: ColliderShape,
   targetKind?: string,
 ): boolean {
-  if (targetKind === 'plate') return false
+  if (passesThrough(targetKind)) return false
   const targetSize = computeEditorColliderSize(targetRole, scaleX, scaleY, colliderWidth, colliderHeight, colliderShape)
   const target = { x, y, ...targetSize, shape: colliderShape }
 
   for (const other of allObjects) {
-    if (other.id === objectId || other.kind === 'plate' || !rolesCollide(targetRole, other.role)) continue
+    if (other.id === objectId || passesThrough(other.kind) || !rolesCollide(targetRole, other.role)) continue
     const otherSize = computeEditorColliderSize(
       other.role,
       other.scaleX,
@@ -110,8 +116,9 @@ export function generateNextObjectId(
 export interface ScalableMovableObject {
   id: string
   name?: string
-  kind?: 'crate' | 'plate' | 'archer'
+  kind?: ObjectKind
   passive?: boolean
+  mvLimit?: number
   x: number
   y: number
   displayWidth: number

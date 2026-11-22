@@ -184,6 +184,18 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(room1Objs.some((o) => o.role === 'weapon')).toBe(true)
     })
 
+    it('serves room2 from its definition: a dagger and a Target Dummy, and a Hidden Exit', () => {
+      const objects = getRoomObjectConfigs(ROOM_IDS.second)
+      expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
+      expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(1000)
+      expect(getRoomDefinition(ROOM_IDS.second)?.exit).toMatchObject({ targetRoomId: 'room3', hiddenUntilOpen: true })
+
+      setRoomObjectConfigs(ROOM_IDS.second, [])
+      expect(getRoomObjectConfigs(ROOM_IDS.second)).toHaveLength(0)
+      resetAllRooms()
+      expect(getRoomObjectConfigs(ROOM_IDS.second)).toHaveLength(2)
+    })
+
     it('persists modified object configurations in memory with setRoomObjectConfigs', () => {
       const customStorageObjs: RoomObjectConfig[] = [
         {

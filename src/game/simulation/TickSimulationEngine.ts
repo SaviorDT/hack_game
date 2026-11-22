@@ -8,6 +8,7 @@ import type { ProcessInstance } from '../processes/ProcessInstance.ts'
 import { ContactResolver } from './ContactResolver.ts'
 import { MvDrive } from './MvDrive.ts'
 import type { PhysicsConfig } from './physicsConstants.ts'
+import { SIMULATION_TICK_MS } from './tickConstants.ts'
 import { PhysicsWorld } from './PhysicsWorld.ts'
 import type { RenderPosition, SimulationEngine } from './SimulationEngine.ts'
 
@@ -41,7 +42,7 @@ export interface TickSimulationEngineOptions {
   readonly contactResolver?: ContactResolver | null
 }
 
-export const SIMULATION_TICK_MS = 1000 / 60
+export { SIMULATION_TICK_MS }
 
 function evaluateAlwaysActiveCondition(condition: JsonValue): boolean {
   if (condition === true) {

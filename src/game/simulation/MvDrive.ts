@@ -1,4 +1,5 @@
 import { GAME_MV_CONFIG, type MvConfig } from '../commands/mvConstants.ts'
+import { destroyWorldObject, isSpent } from '../domain/MvLimit.ts'
 import { resolvePhysicsAttr } from '../domain/PhysicsAttr.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
@@ -13,8 +14,6 @@ export interface ThrownState {
   targetX: number
   targetY: number
   targetObjectId?: string | null
-  /** Ids of Characters already hurt during this Throw. */
-  hitIds: string[]
   /** Set for the tick in which the object reached the target; `settle` then ends the Throw. */
   arrived?: boolean
 }
@@ -100,8 +99,21 @@ export class MvDrive {
     }
   }
 
-  /** After the contacts of the tick: stops the objects that arrived and ends their Throw. */
+  /**
+   * After the contacts of the tick: stops the objects that arrived and ends their Throw, then destroys every
+   * object whose Mv Limit is used up and that is no longer in flight (its Throw ended by arriving, a Collision
+   * or a wall).
+   */
   settle(state: WorldState): void {
+    this.stopArrived(state)
+    for (const worldObject of state.worldObjects) {
+      if (worldObject.roomId === state.currentRoomId && isSpent(worldObject)) {
+        destroyWorldObject(state, worldObject)
+      }
+    }
+  }
+
+  private stopArrived(state: WorldState): void {
     for (const { body, thrown } of this.thrownObjects(state)) {
       if (!thrown.arrived) {
         continue

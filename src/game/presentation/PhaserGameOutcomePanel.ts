@@ -44,7 +44,7 @@ export class PhaserGameOutcomePanel {
     this.congratulationsPanel = this.createPanel(
       scene,
       'CONGRATULATIONS',
-      'The guard is defeated. You reached room2.',
+      'The dummy is defeated. You reached room3.',
     )
   }
 

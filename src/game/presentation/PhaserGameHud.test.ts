@@ -288,6 +288,23 @@ describe('PhaserGameHud', () => {
     hud.destroy()
   })
 
+  it('keeps typing the room hint across later updates in the same room', () => {
+    const { mockScene, activeTimers } = setupMockScene()
+    const hud = new PhaserGameHud(mockScene)
+    const state = mockWorldState('room2', 'Keep typing.')
+
+    hud.update(state)
+    expect(activeTimers.length).toBe(1)
+    const timer = activeTimers[0]
+
+    hud.update(state)
+    hud.update(state)
+
+    expect(timer.remove).not.toHaveBeenCalled()
+
+    hud.destroy()
+  })
+
   it('cancels previous typing timer and hides panel when transitioning to room without hint', () => {
     const { mockScene, createdTexts, createdRects, activeTimers } = setupMockScene()
     const hud = new PhaserGameHud(mockScene)

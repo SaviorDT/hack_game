@@ -13,8 +13,12 @@ A route from one Room to another Room.
 _Avoid_: Door (when referring to the room-to-room connection)
 
 **Locked Exit**:
-An Exit that cannot be used until its Room's goal is met, such as defeating a Guard or discovering everything in the Room.
+An Exit that cannot be used until its Room's goal is met, such as defeating a Guard or discovering everything in the Room. Most are shown barred; a Hidden Exit is not shown until it opens.
 _Avoid_: Closed door
+
+**Hidden Exit**:
+A Locked Exit that is not shown at all until its Room's goal is met, so it appears where it is when the goal is met.
+_Avoid_: Secret door, spawned exit
 
 **Wall**:
 A solid, immovable part of a Room that blocks movement, thrown objects and arrows. It is not a World Object.
@@ -23,6 +27,10 @@ _Avoid_: Obstacle (when referring to room geometry)
 **Crate**:
 A light World Object that can be pushed by walking into it or thrown with `mv`, heavy enough to hold a Pressure Plate down.
 _Avoid_: Box
+
+**Target Dummy**:
+A World Object that nothing Collides with but that loses Health when a Weapon in flight touches it, and that is defeated at 0 Health. Its label is `dummy`. It is not a Character and not the tutorial1 training dummy, which is a passive Guard that Characters do Collide with.
+_Avoid_: Training dummy (that names the tutorial1 Guard), scarecrow
 
 **Pressure Plate**:
 A World Object on the floor that is pressed while a Character or an Obstacle stands on it; it can hold an Exit shut.
@@ -68,6 +76,10 @@ _Avoid_: HP, life (when referring to the glossary term)
 The greatest gap between a Character and a target at which an attack or pick-up can affect that target.
 _Avoid_: Range, hitbox
 
+**Impact Cooldown**:
+The game time that must pass after a target takes Impact Damage before the same target can take it again.
+_Avoid_: Attack Cooldown (that is the attacker's wait between its own attacks)
+
 **Attack Cooldown**:
 The time a Character must wait after an attack before attacking again.
 _Avoid_: Delay
@@ -81,15 +93,23 @@ A command-facing address that resolves to a room or world object inside the game
 _Avoid_: File path, filesystem path (when referring to the host computer)
 
 **Throw**:
-The flight of a World Object from where it is towards a target after the player moves it with `mv`. It ends when the object arrives at the target or at its first Collision; an object that would Collide on the way never reaches the target.
+The flight of a World Object from where it is towards a target after the player moves it with `mv`. It ends when the object arrives at the target or at its first Collision; an object that would Collide on the way never reaches the target. A Weapon is not held inside the Room's edge, so it can fly out of the Room; every other object is stopped by the edge, which also ends its Throw.
 _Avoid_: Shot, launch
+
+**Mv Limit**:
+How many more times a World Object can be the source of a Throw. Each `mv` that throws it uses one; when none are left it is Destroyed as soon as its Throw ends, or when it is next thrown. `-1` means no limit and never changes. A Weapon has 1, everything else `-1`.
+_Avoid_: Durability, ammo
+
+**Destroyed**:
+Removed from its Room for good because its Mv Limit ran out. Unlike a defeated Character, a Destroyed object can no longer be named, so it is neither a source nor a target of `mv`.
+_Avoid_: Defeated (that is a Character losing all Health), deleted
 
 **Mouse Target**:
 The special `mv` target `$mouse`, which stands for the point in the Room under the cursor at the moment the command is submitted. It is a point, not a World Object, so it is never discovered or renamed to. Because `$mouse` always means this point, no World Object can be named `$mouse`.
 _Avoid_: Cursor object, pointer target
 
 **Collider Tag**:
-A typed label on a World Object that says what kind of thing it is when it touches another object, such as Weapon, Character or Obstacle. What happens on contact, and whether two objects Collide at all, depends only on the tags of the two objects.
+A typed label on a World Object that says what kind of thing it is when it touches another object, such as Weapon, Character, Obstacle or Target. What happens on contact, and whether two objects Collide at all, depends only on the tags of the two objects.
 _Avoid_: Hitbox, collision type
 
 **Obstacle**:
@@ -117,7 +137,7 @@ How much of the speed with which two objects approach each other is returned aft
 _Avoid_: Bounciness, elasticity
 
 **Impact Damage**:
-The Health a Weapon in flight takes from a Character it touches, in proportion to the Weapon's speed. It is distinct from the damage of an attack.
+The Health a Weapon in flight takes from a Character or Target Dummy it touches, in proportion to the Weapon's speed. The same target can take it again once the Impact Cooldown has passed, even within one Throw. It is distinct from the damage of an attack.
 _Avoid_: Collision damage, throw damage
 
 **Wildcard**:

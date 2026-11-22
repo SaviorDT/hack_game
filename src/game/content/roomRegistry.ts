@@ -2,6 +2,7 @@ import type { Box } from '../domain/CollisionWorld.ts'
 import type { RoomExit } from '../domain/Room.ts'
 import { HOME_AREA_IDS, HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM1_OBJECTS, type RoomObjectConfig } from './room1.ts'
+import { ROOM2_DEFINITION } from './room2.ts'
 import { ROOM_IDS } from './room1Constants.ts'
 import { ROOM_ENTRY, type RoomDefinition } from './roomPieces.ts'
 import { TUTORIAL_ROOMS, TUTORIAL_ROOM_IDS, ROOM1_HINT } from './tutorialRooms.ts'
@@ -27,15 +28,14 @@ export interface EditorRoomDefinition {
   readonly hint?: string
   readonly goal: string
   readonly walls?: readonly Box[]
-  readonly exit: Pick<RoomExit, 'targetRoomId' | 'label' | 'requires' | 'endsGame'>
+  readonly exit: Pick<RoomExit, 'targetRoomId' | 'label' | 'requires' | 'endsGame' | 'hiddenUntilOpen'>
 }
-
-let room2Objects: RoomObjectConfig[] = []
 
 // Deep clone snapshots taken at module evaluation for clean test resets
 const initialTutorialRoomsSnapshot = JSON.stringify(TUTORIAL_ROOMS)
 const initialHomeAreaRoomsSnapshot = JSON.stringify(HOME_AREA_ROOMS)
 const initialRoom1ObjectsSnapshot = JSON.stringify(ROOM1_OBJECTS)
+const initialRoom2ObjectsSnapshot = JSON.stringify(ROOM2_DEFINITION.objects)
 
 export function getEditorRoomIds(): readonly string[] {
   return EDITOR_ROOM_IDS
@@ -74,8 +74,9 @@ export function getRoomDefinition(roomId: string): EditorRoomDefinition | undefi
     return {
       id: ROOM_IDS.second,
       title: 'room2',
-      goal: 'Victory!',
-      exit: { targetRoomId: ROOM_IDS.first, label: ROOM_IDS.first },
+      hint: ROOM2_DEFINITION.hint,
+      goal: ROOM2_DEFINITION.goal,
+      exit: ROOM2_DEFINITION.exit,
     }
   }
 
@@ -112,7 +113,7 @@ export function getRoomObjectConfigs(roomId: string): RoomObjectConfig[] {
   }
 
   if (roomId === ROOM_IDS.second) {
-    return [...room2Objects]
+    return [...ROOM2_DEFINITION.objects]
   }
 
   if (roomId === TUTORIAL_ROOM_IDS.move) {
@@ -159,7 +160,7 @@ export function setRoomObjectConfigs(roomId: string, objects: readonly RoomObjec
   }
 
   if (roomId === ROOM_IDS.second) {
-    room2Objects = [...objects]
+    ROOM2_DEFINITION.objects = [...objects]
     return
   }
 
@@ -210,5 +211,5 @@ export function resetAllRooms(): void {
   ROOM1_OBJECTS.length = 0
   ROOM1_OBJECTS.push(...parsedRoom1)
 
-  room2Objects = []
+  ROOM2_DEFINITION.objects = JSON.parse(initialRoom2ObjectsSnapshot)
 }

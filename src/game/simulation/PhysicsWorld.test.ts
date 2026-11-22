@@ -126,7 +126,7 @@ describe('PhysicsWorld motion', () => {
 
   it('ignores ground friction while the body is Thrown, but not drag', () => {
     const { add, step } = createWorld({ drag: 0.5, friction: 5, min_velocity: 0 })
-    const { body } = add('dagger', 'weapon', { vx: 300, thrown: { targetX: 900, targetY: 500, hitIds: [] } })
+    const { body } = add('dagger', 'weapon', { vx: 300, thrown: { targetX: 900, targetY: 500 } })
 
     step()
 
@@ -367,6 +367,44 @@ describe('PhysicsWorld with a circle collider', () => {
   })
 })
 
+describe('PhysicsWorld room bounds and Weapons', () => {
+  const SMALL: Bounds = { left: 0, top: 0, right: 800, bottom: 800 }
+
+  it('lets a Weapon fly out through the room edge without losing speed', () => {
+    const { add, step } = createWorld({ drag: 0 }, SMALL)
+    const { body } = add('dagger', 'weapon', { x: 700, width: 50, height: 50, vx: 600, vy: 0 })
+    step(60)
+    expect(body.x).toBeGreaterThan(SMALL.right)
+    expect(body.vx).toBe(600)
+  })
+
+  it('does not tell the wall listeners when a Weapon crosses the room edge', () => {
+    const { add, step, physics } = createWorld({ drag: 0 }, SMALL)
+    const hits: string[] = []
+    physics.onWallHit((worldObject) => hits.push(worldObject.id))
+    add('dagger', 'weapon', { x: 700, width: 50, height: 50, vx: 600, vy: 0 })
+    step(30)
+    expect(hits).toEqual([])
+  })
+
+  it('still stops every other body at the room edge', () => {
+    const { add, step } = createWorld({ drag: 0 }, SMALL)
+    const { body } = add('guard', 'enemy', { x: 700, width: 100, height: 100, vx: 600, vy: 0 })
+    step(60)
+    expect(body.x).toBeLessThanOrEqual(SMALL.right)
+    expect(body.vx).toBe(0)
+  })
+
+  it('still stops a Weapon at a wall inside the room', () => {
+    const world = createWorld({ drag: 0 }, SMALL)
+    world.state.rooms[0] = { ...world.state.rooms[0], walls: [{ x: 620, y: 500, width: 40, height: 2000 }] }
+    const { body } = world.add('dagger', 'weapon', { x: 500, width: 100, height: 100, vx: 600, vy: 0 })
+    world.step(30)
+    expect(body.x).toBeCloseTo(550, 6)
+    expect(body.vx).toBe(0)
+  })
+})
+
 describe('PhysicsWorld walls', () => {
   function walledWorld() {
     const world = createWorld({ drag: 0 })
@@ -401,7 +439,7 @@ describe('PhysicsWorld walls', () => {
 
   it('ends a Throw that runs into a wall', () => {
     const { add, step, physics } = walledWorld()
-    const { body } = add('boulder', 'object', { x: 500, width: 100, height: 100, vx: 400, thrown: { targetX: 900, targetY: 500, hitIds: [] } })
+    const { body } = add('boulder', 'object', { x: 500, width: 100, height: 100, vx: 400, thrown: { targetX: 900, targetY: 500 } })
     physics.onWallHit((worldObject) => {
       ; (worldObject.state as { thrown?: unknown }).thrown = null
     })

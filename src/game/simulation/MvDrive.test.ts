@@ -30,7 +30,7 @@ function setup(mv: Partial<MvConfig> = {}, physics: Partial<PhysicsConfig> = {})
 }
 
 function throwTo(body: Body, targetX: number, targetY: number, targetObjectId: string | null = null): void {
-  body.thrown = { targetX, targetY, targetObjectId, hitIds: [] }
+  body.thrown = { targetX, targetY, targetObjectId }
 }
 
 /** x at which `blocker` sits 5 px in front of the boulder's leading edge, whatever the boulder's size. */
@@ -55,7 +55,7 @@ function boulderSetup(targetId: string) {
   blocker.y = 500
   blocker.discovered = false
   const target = ctx.body(targetId)
-  boulder.thrown = { targetX: target.x, targetY: target.y, targetObjectId: targetId, hitIds: [] }
+  boulder.thrown = { targetX: target.x, targetY: target.y, targetObjectId: targetId }
   return { ...ctx, boulder, blocker }
 }
 
@@ -226,7 +226,7 @@ describe('MvDrive collisions', () => {
     target.x = 1200
     target.y = 500
     target.discovered = false
-    boulder.thrown = { targetX: 1200, targetY: 500, targetObjectId: 'guard', hitIds: [] }
+    boulder.thrown = { targetX: 1200, targetY: 500, targetObjectId: 'guard' }
     blocker.x = blockerFiveAhead(boulder, blocker)
 
     tick()
@@ -260,14 +260,50 @@ describe('MvDrive and the room', () => {
 
   it('ends a Throw whose target lies outside the room once the room edge stops the object', () => {
     const { body, tick } = setup()
+    for (const id of ['player', 'guard', 'guard2', 'guard3']) {
+      body(id).alive = false
+    }
+    const boulder = body(WORLD_OBJECT_IDS.boulder)
+    boulder.x = ROOM_LAYOUT.right - 200
+    boulder.y = (ROOM_LAYOUT.top + ROOM_LAYOUT.bottom) / 2
+    throwTo(boulder, ROOM_LAYOUT.right + 500, boulder.y)
+    for (let i = 0; i < 600 && boulder.thrown; i++) {
+      tick()
+    }
+    expect(boulder.thrown).toBeNull()
+    expect(boulder.x).toBeLessThanOrEqual(ROOM_LAYOUT.right)
+  })
+
+  it('lets a Weapon fly out of the room and arrive at a target outside it', () => {
+    const { body, tick } = setup()
     const dagger = body(WORLD_OBJECT_IDS.dagger)
+    dagger.mvLimit = -1
     dagger.x = ROOM_LAYOUT.right - 100
     dagger.y = (ROOM_LAYOUT.top + ROOM_LAYOUT.bottom) / 2
-    throwTo(dagger, ROOM_LAYOUT.right + 500, dagger.y)
+    const targetX = ROOM_LAYOUT.right + 500
+    throwTo(dagger, targetX, dagger.y)
     for (let i = 0; i < 600 && dagger.thrown; i++) {
       tick()
     }
     expect(dagger.thrown).toBeNull()
-    expect(dagger.x).toBeLessThanOrEqual(ROOM_LAYOUT.right)
+    expect(dagger.x).toBeCloseTo(targetX, 5)
+    expect(dagger.x).toBeGreaterThan(ROOM_LAYOUT.right)
+  })
+
+  it('destroys a Weapon with no throws left once its Throw ends outside the room', () => {
+    const { body, tick, state } = setup()
+    const dagger = body(WORLD_OBJECT_IDS.dagger)
+    dagger.mvLimit = 0
+    dagger.x = ROOM_LAYOUT.right - 100
+    dagger.y = (ROOM_LAYOUT.top + ROOM_LAYOUT.bottom) / 2
+    throwTo(dagger, ROOM_LAYOUT.right + 500, dagger.y)
+    tick()
+    expect(dagger.destroyed).toBeUndefined()
+    for (let i = 0; i < 600 && dagger.thrown; i++) {
+      tick()
+    }
+    expect(dagger.destroyed).toBe(true)
+    expect(dagger.alive).toBe(false)
+    expect(state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)).toBeDefined()
   })
 })

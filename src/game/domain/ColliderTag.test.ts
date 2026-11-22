@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { BasicWorldObject } from './BasicWorldObject.ts'
-import { collidesPhysically, defaultColliderTags, rolesCollide } from './ColliderTag.ts'
+import { collidesPhysically, colliderTagsOf, defaultColliderTags, isSolidTagged, rolesCollide } from './ColliderTag.ts'
 
 function objectWithRole(role: 'player' | 'enemy' | 'weapon' | 'object', alive?: boolean) {
   return new BasicWorldObject(
@@ -53,5 +53,32 @@ describe('rolesCollide', () => {
   it('treats a guard like an enemy', () => {
     expect(rolesCollide('guard', 'object')).toBe(true)
     expect(rolesCollide('guard', 'weapon')).toBe(false)
+  })
+})
+
+describe('Target tag', () => {
+  const target = new BasicWorldObject('t', 'room1', { name: 't', role: 'object', colliderTags: [{ class: 'target' }] }, [], {
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+  })
+
+  it('is read back from the object metadata', () => {
+    expect(colliderTagsOf(target)).toEqual([{ class: 'target' }])
+  })
+
+  it('collides with nothing, not even Obstacles or Characters', () => {
+    for (const role of ['player', 'enemy', 'weapon', 'object'] as const) {
+      expect(collidesPhysically(target, objectWithRole(role))).toBe(false)
+      expect(collidesPhysically(objectWithRole(role), target)).toBe(false)
+    }
+    expect(collidesPhysically(target, target)).toBe(false)
+  })
+
+  it('is not stopped by walls, like floor objects, while solid tags are', () => {
+    expect(isSolidTagged(colliderTagsOf(target))).toBe(false)
+    expect(isSolidTagged([{ class: 'floor' }])).toBe(false)
+    expect(isSolidTagged([{ class: 'character' }])).toBe(true)
   })
 })

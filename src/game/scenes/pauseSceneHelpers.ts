@@ -22,10 +22,11 @@ export {
   TERMINAL_FONT,
   TYPING_SPEED_MS,
 }
+import { SCROLL_SPEED_MS } from '../presentation/uiTransitions.ts'
+export { SCROLL_SPEED_MS, scrollTransition } from '../presentation/uiTransitions.ts'
 const LEGACY_DIM = '#555555'
 const LEGACY_PROMPT = '#888888'
 
-export const SCROLL_SPEED_MS = 27
 export const PAUSE_DURATION_MS = 150
 export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS
 export const SHRINK_MS = 50
@@ -72,28 +73,6 @@ export function typeCommand(
       })
     })
   })
-}
-
-export function scrollTransition(
-  scene: Phaser.Scene,
-  fromContainer: Phaser.GameObjects.Container,
-  toContainer: Phaser.GameObjects.Container,
-  onComplete: () => void,
-): void {
-  toContainer.setY(850).setVisible(true)
-  if (scene.tweens?.add) {
-    scene.tweens.add({
-      targets: [fromContainer, toContainer],
-      y: '-=850',
-      duration: SCROLL_SPEED_MS,
-      ease: 'Linear',
-      onComplete,
-    })
-  } else {
-    toContainer.setY(0)
-    fromContainer.setY(-850)
-    onComplete()
-  }
 }
 
 /** Scrolls a single container off the top of the screen and calls onComplete. */

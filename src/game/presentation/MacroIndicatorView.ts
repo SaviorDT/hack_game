@@ -4,10 +4,10 @@ import {
   PANEL_BG,
   PANEL_BORDER,
   POPUP_DISPLAY_DURATION_MS,
-  POPUP_FADE_DURATION_MS,
   TERMINAL_FONT,
   TEXT_COLOR,
 } from './uiTheme.ts'
+import { fadeOut } from './uiTransitions.ts'
 
 const FONT_FAMILY = TERMINAL_FONT
 const FONT_SIZE = 14
@@ -215,14 +215,8 @@ export class MacroIndicatorView {
 
     this.hideTimer = this.scene.time.delayedCall(POPUP_DISPLAY_DURATION_MS, () => {
       if (!this.scene || !this.container) return
-      this.fadeTween = this.scene.tweens.add({
-        targets: this.container,
-        alpha: 0,
-        duration: POPUP_FADE_DURATION_MS,
-        ease: 'Linear',
-        onComplete: () => {
-          this.container?.setVisible(false)
-        },
+      this.fadeTween = fadeOut(this.scene, this.container, () => {
+        this.container?.setVisible(false)
       })
     })
   }

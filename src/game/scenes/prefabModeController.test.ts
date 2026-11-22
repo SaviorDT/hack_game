@@ -200,4 +200,56 @@ describe('PrefabModeController', () => {
     expect(mockGuard.outline.setVisible).toHaveBeenCalledWith(false)
     expect(scene.updatePropertyPanel).toHaveBeenCalled()
   })
+
+  it('saves prefabs via savePrefabs and updates UI status', async () => {
+    const mockGuard: any = {
+      id: 'guard',
+      role: 'enemy',
+      displayWidth: 176,
+      displayHeight: 176,
+      scaleX: 1,
+      scaleY: 1,
+      sprite: { setAlpha: vi.fn() },
+      outline: { setVisible: vi.fn(), setStrokeStyle: vi.fn() },
+    }
+
+    const scene = createMockScene([mockGuard])
+    const controller = new PrefabModeController(scene)
+    controller.enterPrefabMode('guard')
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    })
+
+    const saved = await controller.savePrefabs(mockFetch as any)
+    expect(saved).toBe(true)
+    expect(mockFetch).toHaveBeenCalledWith('/api/save-prefabs', expect.objectContaining({ method: 'POST' }))
+  })
+
+  it('handles save error and reports failure', async () => {
+    const mockGuard: any = {
+      id: 'guard',
+      role: 'enemy',
+      displayWidth: 176,
+      displayHeight: 176,
+      scaleX: 1,
+      scaleY: 1,
+      sprite: { setAlpha: vi.fn() },
+      outline: { setVisible: vi.fn(), setStrokeStyle: vi.fn() },
+    }
+
+    const scene = createMockScene([mockGuard])
+    const controller = new PrefabModeController(scene)
+    controller.enterPrefabMode('guard')
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    })
+
+    const saved = await controller.savePrefabs(mockFetch as any)
+    expect(saved).toBe(false)
+  })
 })

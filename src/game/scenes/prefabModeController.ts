@@ -12,6 +12,7 @@ import {
   getPrefab,
   getPrefabInstances,
   propagatePrefabChanges,
+  saveActivePrefabs,
   updatePrefab,
 } from '../content/prefabRegistry.ts'
 import {
@@ -43,6 +44,7 @@ export class PrefabModeController {
   private bannerTitleText?: Phaser.GameObjects.Text
   private bannerSubtitleText?: Phaser.GameObjects.Text
   private applyStatusText?: Phaser.GameObjects.Text
+  private saveButton?: Phaser.GameObjects.Text
 
   private panelContainer?: Phaser.GameObjects.Container
   private prefabTabs: Map<string, Phaser.GameObjects.Text> = new Map()
@@ -186,6 +188,41 @@ export class PrefabModeController {
     }
   }
 
+  public async savePrefabs(fetchFn?: typeof fetch): Promise<boolean> {
+    if (this.saveButton) {
+      this.saveButton.setText('SAVING...')
+    }
+    const res = await saveActivePrefabs(fetchFn)
+    if (res.success) {
+      if (this.saveButton) {
+        this.saveButton.setText('SAVED TO PREFAB.TS!')
+        this.saveButton.setBackgroundColor('#2e7d32')
+        setTimeout(() => {
+          this.saveButton?.setText('SAVE PREFABS')
+        }, 1500)
+      }
+      if (this.applyStatusText) {
+        this.applyStatusText.setText('PREFABS SAVED TO DISK!')
+        this.applyStatusText.setColor(VALUE_COLOR)
+      }
+      return true
+    } else {
+      if (this.saveButton) {
+        this.saveButton.setText('SAVE FAILED')
+        this.saveButton.setBackgroundColor('#b71c1c')
+        setTimeout(() => {
+          this.saveButton?.setText('SAVE PREFABS')
+          this.saveButton?.setBackgroundColor('#2e7d32')
+        }, 2000)
+      }
+      if (this.applyStatusText) {
+        this.applyStatusText.setText(`SAVE ERROR: ${res.error}`)
+        this.applyStatusText.setColor('#ff5252')
+      }
+      return false
+    }
+  }
+
   private syncToRoomInstances(prefab: PrefabDefinition, skipId?: string): void {
     for (const obj of this.scene.getEditorObjects()) {
       if (inferPrefabId(obj) !== prefab.id) continue
@@ -244,6 +281,26 @@ export class PrefabModeController {
       })
       .setOrigin(0, 0)
 
+    this.applyStatusText = this.scene.add
+      .text(700, 14, '', {
+        fontFamily: FONT_FAMILY,
+        fontSize: 10,
+        color: VALUE_COLOR,
+      })
+      .setOrigin(0, 0)
+
+    const saveBtn = this.createButton(
+      1240,
+      8,
+      'SAVE PREFABS',
+      () => {
+        void this.savePrefabs()
+      },
+      '#ffffff',
+      '#2e7d32',
+    )
+    this.saveButton = saveBtn
+
     const applyBtn = this.createButton(
       1420,
       8,
@@ -262,20 +319,13 @@ export class PrefabModeController {
       '#b71c1c',
     )
 
-    this.applyStatusText = this.scene.add
-      .text(820, 14, '', {
-        fontFamily: FONT_FAMILY,
-        fontSize: 10,
-        color: VALUE_COLOR,
-      })
-      .setOrigin(0, 0)
-
     this.topBannerContainer = this.scene.add
       .container(x, y, [
         bg,
         this.bannerTitleText,
         this.bannerSubtitleText,
         this.applyStatusText,
+        saveBtn,
         applyBtn,
         exitBtn,
       ])

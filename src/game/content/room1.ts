@@ -1,3 +1,9 @@
+import {
+  DEFAULT_PREFABS,
+  applyPrefabToObject,
+  inferPrefabId,
+} from '../domain/Prefab.ts'
+
 export interface PlayerSpeedConfig {
   acceleration: number
   frictionAcceleration: number
@@ -46,7 +52,7 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   prefabId?: string
 }
 
-export const ROOM1_OBJECTS: RoomObjectConfig[] = [
+export const ROOM1_OBJECTS: RoomObjectConfig[] = ([
   {
     id: "player",
     role: "player",
@@ -136,4 +142,7 @@ export const ROOM1_OBJECTS: RoomObjectConfig[] = [
     colliderWidth: 54,
     colliderHeight: 78,
   },
-]
+] as RoomObjectConfig[]).map((obj) => {
+  const prefab = DEFAULT_PREFABS.find((p) => p.id === inferPrefabId(obj))
+  return prefab ? applyPrefabToObject(obj, prefab) : obj
+})

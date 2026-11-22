@@ -64,6 +64,9 @@ export function generateRoom1Source(objects: RoomObjectConfig[]): string {
     if (obj.kind !== undefined) {
       lines.push(`    kind: ${JSON.stringify(obj.kind)},`)
     }
+    if (obj.prefabId !== undefined) {
+      lines.push(`    prefabId: ${JSON.stringify(obj.prefabId)},`)
+    }
     if (obj.colliderShape !== undefined && obj.colliderShape !== 'box') {
       lines.push(`    colliderShape: ${JSON.stringify(obj.colliderShape)},`)
     }
@@ -75,7 +78,13 @@ export function generateRoom1Source(objects: RoomObjectConfig[]): string {
     return `  {\n${lines.join('\n')}\n  },`
   })
 
-  return `export interface PlayerSpeedConfig {
+  return `import {
+  DEFAULT_PREFABS,
+  applyPrefabToObject,
+  inferPrefabId,
+} from '../domain/Prefab.ts'
+
+export interface PlayerSpeedConfig {
   acceleration: number
   frictionAcceleration: number
   turnaroundAcceleration: number
@@ -119,10 +128,15 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   passive?: boolean
   /** A special object: a pushable \`crate\`, a pressure \`plate\`, or an \`archer\` enemy. */
   kind?: 'crate' | 'plate' | 'archer'
+  /** The prefab template ID this object was instantiated from. */
+  prefabId?: string
 }
 
-export const ROOM1_OBJECTS: RoomObjectConfig[] = [
+export const ROOM1_OBJECTS: RoomObjectConfig[] = ([
 ${serializedObjects.join('\n')}
-]
+] as RoomObjectConfig[]).map((obj) => {
+  const prefab = DEFAULT_PREFABS.find((p) => p.id === inferPrefabId(obj))
+  return prefab ? applyPrefabToObject(obj, prefab) : obj
+})
 `
 }

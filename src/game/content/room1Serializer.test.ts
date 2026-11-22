@@ -27,7 +27,9 @@ describe('room1Serializer', () => {
 
     const source = generateRoom1Source(objects)
     expect(source).toContain('export interface RoomObjectConfig')
-    expect(source).toContain('export const ROOM1_OBJECTS: RoomObjectConfig[] = [')
+    expect(source).toContain('export const ROOM1_OBJECTS: RoomObjectConfig[] = ([')
+    expect(source).toContain('] as RoomObjectConfig[]).map((obj) => {')
+    expect(source).toContain('DEFAULT_PREFABS')
     expect(source).toContain("id: \"player\"")
     expect(source).toContain("role: \"player\"")
     expect(source).toContain("speed: 240")
@@ -35,6 +37,24 @@ describe('room1Serializer', () => {
     expect(source).toContain("id: \"dagger\"")
     expect(source).toContain("role: \"weapon\"")
     expect(source).not.toContain("speed: undefined")
+  })
+
+  it('serializes prefabId when defined on object', () => {
+    const objects: RoomObjectConfig[] = [
+      {
+        id: 'guard-elite',
+        role: 'enemy',
+        x: 100,
+        y: 200,
+        displayWidth: 176,
+        displayHeight: 176,
+        prefabId: 'guard',
+      },
+    ]
+
+    const source = generateRoom1Source(objects)
+    expect(source).toContain('prefabId: "guard"')
+    expect(source).toContain('prefabId?: string')
   })
 
   it('serializes spawned objects and rounds float coordinates', () => {

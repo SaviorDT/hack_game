@@ -5,6 +5,7 @@ import {
   applyPrefabToObject,
   inferPrefabId,
 } from '../domain/Prefab.ts'
+import { generatePrefabSource } from '../domain/prefabSerializer.ts'
 import {
   getEditorRoomIds,
   getRoomObjectConfigs,
@@ -114,5 +115,41 @@ export function propagatePrefabChanges(
     affectedRooms,
     affectedInstanceCount: objectIds.length,
     objectIds,
+  }
+}
+
+export interface SavePrefabsResult {
+  success: boolean
+  error?: string
+}
+
+/**
+ * Serializes active prefabs and persists them directly to src/game/domain/Prefab.ts.
+ * Also synchronizes changes across all rooms.
+ */
+export async function saveActivePrefabs(
+  fetchFn: typeof fetch = globalThis.fetch,
+): Promise<SavePrefabsResult> {
+  const source = generatePrefabSource(activePrefabs)
+  try {
+    const res = await fetchFn('/api/save-prefabs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: source }),
+    })
+    if (!res.ok) {
+      return { success: false, error: `Server returned ${res.status}: ${res.statusText}` }
+    }
+    const result = (await res.json()) as { success: boolean; error?: string }
+    if (!result.success) {
+      return { success: false, error: result.error ?? 'Unknown error writing prefabs' }
+    }
+    for (const prefab of activePrefabs) {
+      propagatePrefabChanges(prefab.id, prefab)
+    }
+    return { success: true }
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err)
+    return { success: false, error }
   }
 }

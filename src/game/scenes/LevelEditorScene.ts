@@ -52,6 +52,7 @@ import {
 import { SceneManager } from './SceneManager.ts'
 import { PrefabModeController } from './prefabModeController.ts'
 import { inferPrefabId } from '../domain/Prefab.ts'
+import { getPrefab, saveActivePrefabs } from '../content/prefabRegistry.ts'
 import {
   FONT_FAMILY,
   TEXT_COLOR,
@@ -2856,6 +2857,7 @@ export class LevelEditorScene extends Phaser.Scene {
     const label = this.exportButton?.getAt(1) as Phaser.GameObjects.Text | undefined
 
     if (roomId === ROOM_IDS.first) {
+      await saveActivePrefabs()
       const source = generateRoom1Source(objects)
       try {
         const response = await fetch('/api/save-room1', {
@@ -2972,7 +2974,12 @@ export class LevelEditorScene extends Phaser.Scene {
         : this.textureKeyForRole(role)
     const isWeapon = role === 'weapon'
     const isCharacter = role === 'player' || role === 'guard' || role === 'enemy'
-    const defaultBaseWidth = isWeapon
+    const inferredPrefabId = config.id
+      ? inferPrefabId({ id: config.id, role, kind: config.kind } as any)
+      : (role === 'object' && config.colliderShape === 'circle' ? 'boulder' : config.kind ?? (role === 'enemy' || role === 'guard' ? 'guard' : role))
+    const prefab = getPrefab(inferredPrefabId)
+
+    const defaultBaseWidth = prefab?.displayWidth ?? (isWeapon
       ? DAGGER_SIZE.width
       : isCrate
         ? 88
@@ -2980,8 +2987,8 @@ export class LevelEditorScene extends Phaser.Scene {
           ? 96
           : isBoulder
             ? BOULDER_BASE_SIZE.width
-            : CHARACTER_BASE_SIZE.width
-    const defaultBaseHeight = isWeapon
+            : CHARACTER_BASE_SIZE.width)
+    const defaultBaseHeight = prefab?.displayHeight ?? (isWeapon
       ? DAGGER_SIZE.height
       : isCrate
         ? 88
@@ -2989,30 +2996,34 @@ export class LevelEditorScene extends Phaser.Scene {
           ? 96
           : isBoulder
             ? BOULDER_BASE_SIZE.height
-            : CHARACTER_BASE_SIZE.height
+            : CHARACTER_BASE_SIZE.height)
 
-    const displayWidth = config.displayWidth ?? (isBoulder ? 154 : defaultBaseWidth)
-    const displayHeight = config.displayHeight ?? (isBoulder ? 154 : defaultBaseHeight)
+    const displayWidth = config.displayWidth ?? (isBoulder && !prefab ? 154 : defaultBaseWidth)
+    const displayHeight = config.displayHeight ?? (isBoulder && !prefab ? 154 : defaultBaseHeight)
 
-    const scaleX = config.scaleX ?? (displayWidth / defaultBaseWidth)
-    const scaleY = config.scaleY ?? (displayHeight / defaultBaseHeight)
+    const scaleX = config.scaleX ?? (prefab?.scaleX ?? displayWidth / defaultBaseWidth)
+    const scaleY = config.scaleY ?? (prefab?.scaleY ?? displayHeight / defaultBaseHeight)
 
     const baseWidth = scaleX !== 0 ? displayWidth / scaleX : defaultBaseWidth
     const baseHeight = scaleY !== 0 ? displayHeight / scaleY : defaultBaseHeight
     const maxHealth =
       config.maxHealth !== undefined
         ? config.maxHealth
-        : isCharacter
-          ? 100
-          : undefined
+        : prefab?.maxHealth !== undefined
+          ? prefab.maxHealth
+          : isCharacter
+            ? 100
+            : undefined
     const speed =
       config.speed !== undefined
         ? config.speed
-        : isCharacter
-          ? (role === 'guard' || role === 'enemy'
-              ? 120
-              : { acceleration: 800, frictionAcceleration: 1200, turnaroundAcceleration: 1600, maxSpeed: 240 })
-          : undefined
+        : prefab?.speed !== undefined
+          ? prefab.speed
+          : isCharacter
+            ? (role === 'guard' || role === 'enemy'
+                ? 120
+                : { acceleration: 800, frictionAcceleration: 1200, turnaroundAcceleration: 1600, maxSpeed: 240 })
+            : undefined
     const speedConfig = typeof speed === 'object' && speed !== null ? speed : undefined
     const maxSpeed = speedConfig?.maxSpeed ?? (typeof speed === 'number' ? speed : undefined)
     const acceleration = speedConfig?.acceleration

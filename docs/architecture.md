@@ -170,6 +170,7 @@ The Prefab system (`domain/Prefab.ts`, `content/prefabRegistry.ts`, `scenes/pref
 - **In-Level Preview**: Prefab Mode operates directly within `LevelEditorScene`. Instead of an isolated stage, the active open room remains fully visible as the preview canvas.
 - **Instance Synchronization**: Modifying any template property (dimensions, collider dimensions, collider shape, health, speed, physics attributes) or dragging the scale/collider handle on any instance in the room simultaneously updates all sibling instances of that prefab in the open room in real time.
 - **Cross-Room Propagation**: `propagatePrefabChanges` updates matching instances across all rooms in `roomRegistry` (`room1`, `tutorialRooms`, `homeArea`), preserving individual instance coordinates (`x`, `y`), `id`, `roomId`, and custom names.
+- **Persistence to Disk**: Prefab modifications are serialized and saved directly to `src/game/domain/Prefab.ts` (`DEFAULT_PREFABS`) via `/api/save-prefabs` using the `[SAVE PREFABS]` banner button or automatically when invoking `SAVE TO ROOM1.TS` in `LevelEditorScene`.
 - **Access via Buttons**: Entered from `LevelEditorScene` via the `[PREFABS]` toolbar button or the `[PREFAB: <NAME>]` button in the inspector when an instance is selected; exited via `[EXIT PREFAB]`.
 
 ### Rooms, Exits and Tutorial

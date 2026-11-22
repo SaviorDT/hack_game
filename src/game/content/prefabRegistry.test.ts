@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getAllPrefabs,
   getPrefab,
   getPrefabInstances,
   propagatePrefabChanges,
   resetPrefabs,
+  saveActivePrefabs,
   updatePrefab,
 } from './prefabRegistry.ts'
 import { getRoomObjectConfigs, resetAllRooms } from './roomRegistry.ts'
@@ -48,7 +49,6 @@ describe('Prefab Registry & Propagation', () => {
     }
 
     const result = propagatePrefabChanges('guard', updatedPrefab)
-
     expect(result.affectedRooms).toContain(ROOM_IDS.first)
     expect(result.affectedInstanceCount).toBeGreaterThanOrEqual(3)
 
@@ -78,5 +78,32 @@ describe('Prefab Registry & Propagation', () => {
     // Non-guard objects should NOT be changed
     const player = room1Objects.find((o) => o.id === 'player')!
     expect(player.displayWidth).toBe(125)
+  })
+
+  describe('saveActivePrefabs', () => {
+    it('persists serialized prefabs to /api/save-prefabs on success', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, path: '/fake/Prefab.ts' }),
+      })
+
+      const res = await saveActivePrefabs(mockFetch as any)
+      expect(res.success).toBe(true)
+      expect(mockFetch).toHaveBeenCalledWith('/api/save-prefabs', expect.objectContaining({
+        method: 'POST',
+      }))
+    })
+
+    it('returns error when server returns failure or non-200 status', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      })
+
+      const res = await saveActivePrefabs(mockFetch as any)
+      expect(res.success).toBe(false)
+      expect(res.error).toContain('Server returned 500')
+    })
   })
 })

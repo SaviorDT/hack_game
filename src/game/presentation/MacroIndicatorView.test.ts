@@ -112,7 +112,7 @@ describe('MacroIndicatorView', () => {
 
     view.startHoldProgress(8, 250)
     expect(textObj.setText).toHaveBeenCalledWith('[RECORDING SLOT 8]')
-    expect(textObj.setPosition).toHaveBeenCalledWith(0, -6)
+    expect(textObj.setPosition).toHaveBeenCalledWith(-46, -6)
     expect(progressTrack.setVisible).toHaveBeenCalledWith(true)
     expect(progressFill.setVisible).toHaveBeenCalledWith(true)
     expect(container.setVisible).toHaveBeenCalledWith(false)
@@ -206,7 +206,7 @@ describe('MacroIndicatorView', () => {
     expect(progressTrack.setVisible).toHaveBeenCalledWith(false)
     expect(progressFill.setVisible).toHaveBeenCalledWith(false)
     expect(textObj.setText).toHaveBeenCalledWith('[SLOT 0 RECORDED: mv dagger $mouse]')
-    expect(textObj.setPosition).toHaveBeenCalledWith(0, 0)
+    expect(textObj.setPosition).toHaveBeenCalledWith(-46, 0)
 
     view.destroy()
   })

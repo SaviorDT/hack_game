@@ -1,4 +1,10 @@
 import type Phaser from 'phaser'
+import {
+  PANEL_BG,
+  PANEL_BORDER,
+  TERMINAL_FONT,
+  TEXT_COLOR,
+} from './uiTheme.ts'
 
 export type CommandCompletionProvider = (
   rawText: string,
@@ -7,15 +13,15 @@ export type CommandCompletionProvider = (
 
 export type CommandHistoryProvider = () => readonly string[]
 
-const FONT_FAMILY = 'Consolas, monospace'
-const FONT_SIZE = 22
-const TEXT_COLOR = '#d6e8e5'
+const FONT_FAMILY = TERMINAL_FONT
+const FONT_SIZE = 16
 const CURSOR_COLOR = 0xd6d6d6
 const FIELD_COLOR = '#101010'
 const CURSOR_BLINK_MS = 500
 const PADDING_H = 12
 const PADDING_V = 6
 const PILL_MIN_WIDTH = 120
+const LEFT_ANCHOR_X = -PILL_MIN_WIDTH / 2
 const PROMPT = '$ '
 const OFFSET_Y = 90
 const VIEW_DEPTH = 20
@@ -61,12 +67,12 @@ export class InlineCommandInputView {
     this.container = scene.add.container(this.playerX, this.playerY + OFFSET_Y).setDepth(VIEW_DEPTH).setVisible(false)
 
     this.pillBg = scene.add
-      .rectangle(0, 0, PILL_MIN_WIDTH, FONT_SIZE + PADDING_V * 2, 0x101d26, 0.92)
-      .setStrokeStyle(2, 0x547e82)
-      .setOrigin(0.5, 0.5)
+      .rectangle(LEFT_ANCHOR_X, 0, PILL_MIN_WIDTH, FONT_SIZE + PADDING_V * 2, PANEL_BG, 0.92)
+      .setStrokeStyle(2, PANEL_BORDER)
+      .setOrigin(0, 0.5)
 
     this.textObject = scene.add
-      .text(0, 0, PROMPT, {
+      .text(LEFT_ANCHOR_X + PADDING_H, 0, PROMPT, {
         fontFamily: FONT_FAMILY,
         fontSize: FONT_SIZE,
         color: TEXT_COLOR,
@@ -74,11 +80,11 @@ export class InlineCommandInputView {
       .setOrigin(0, 0.5)
 
     this.cursorBlock = scene.add
-      .rectangle(0, 0, this.charWidth, FONT_SIZE, CURSOR_COLOR)
+      .rectangle(LEFT_ANCHOR_X + PADDING_H, 0, this.charWidth, FONT_SIZE, CURSOR_COLOR)
       .setOrigin(0, 0.5)
 
     this.cursorGlyph = scene.add
-      .text(0, 0, '', {
+      .text(LEFT_ANCHOR_X + PADDING_H, 0, '', {
         fontFamily: FONT_FAMILY,
         fontSize: FONT_SIZE,
         color: FIELD_COLOR,
@@ -416,7 +422,7 @@ export class InlineCommandInputView {
 
     this.pillBg.setSize(totalWidth, totalHeight)
 
-    const startX = -totalWidth / 2 + PADDING_H
+    const startX = LEFT_ANCHOR_X + PADDING_H
     this.textObject.setPosition(startX, 0)
 
     const cursorCharPos = Array.from(PROMPT).length + this.cursorIndex
@@ -433,16 +439,16 @@ export class InlineCommandInputView {
 
   private measureCharacterWidth(): number {
     if (typeof document === 'undefined') {
-      return 13
+      return FONT_SIZE
     }
     const measurementCanvas = document.createElement('canvas')
     const context = measurementCanvas.getContext('2d')
     if (!context) {
-      return 13
+      return FONT_SIZE
     }
     context.font = `${FONT_SIZE}px ${FONT_FAMILY}`
     const measuredWidth = context.measureText('M').width
-    return measuredWidth > 0 ? measuredWidth : 13
+    return measuredWidth > 0 ? measuredWidth : FONT_SIZE
   }
 }
 

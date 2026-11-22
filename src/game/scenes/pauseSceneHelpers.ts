@@ -1,17 +1,26 @@
 import type Phaser from 'phaser'
 import { COMMAND_TYPING_MODES, type CommandTypingMode } from '../application/gameSettings.ts'
 import { focusForMode, SETTING_RETURN_FOCUS, type SettingFocus } from './settingsFocus.ts'
+import {
+  COLOR_DIM,
+  COLOR_MUTED,
+  COLOR_PROMPT,
+  COLOR_WHITE,
+  TERMINAL_FONT,
+  TYPING_SPEED_MS,
+} from '../presentation/uiTheme.ts'
 
-export const TERMINAL_FONT = '"Press Start 2P", monospace'
-/** Reserved for active selections and hero titles, never standard content or list items. */
-export const COLOR_WHITE = '#ffffff'
-export const COLOR_DIM = '#606060'
-export const COLOR_MUTED = '#202020'
-export const COLOR_PROMPT = '#9f9f9f'
+export {
+  COLOR_DIM,
+  COLOR_MUTED,
+  COLOR_PROMPT,
+  COLOR_WHITE,
+  TERMINAL_FONT,
+  TYPING_SPEED_MS,
+}
 const LEGACY_DIM = '#555555'
 const LEGACY_PROMPT = '#888888'
 
-export const TYPING_SPEED_MS = 15
 export const SCROLL_SPEED_MS = 27
 export const PAUSE_DURATION_MS = 150
 export const EXECUTION_PAUSE_MS = PAUSE_DURATION_MS

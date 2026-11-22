@@ -1,12 +1,19 @@
 import type Phaser from 'phaser'
+import {
+  COLOR_DIM,
+  PANEL_BG,
+  PANEL_BORDER,
+  TERMINAL_FONT,
+  TEXT_COLOR,
+} from './uiTheme.ts'
 
-const FONT_FAMILY = 'Consolas, monospace'
-const FONT_SIZE = 16
-const TEXT_COLOR_SUCCESS = '#d6e8e5'
-const TEXT_COLOR_WARN = '#e08282'
-const BG_COLOR = 0x101d26
-const STROKE_COLOR_SUCCESS = 0x547e82
-const STROKE_COLOR_WARN = 0x9e4b4b
+const FONT_FAMILY = TERMINAL_FONT
+const FONT_SIZE = 14
+const TEXT_COLOR_SUCCESS = TEXT_COLOR
+const TEXT_COLOR_WARN = COLOR_DIM
+const BG_COLOR = PANEL_BG
+const STROKE_COLOR_SUCCESS = PANEL_BORDER
+const STROKE_COLOR_WARN = 0x773333
 const PADDING_H = 14
 const PADDING_V = 8
 const OFFSET_Y = 90
@@ -14,8 +21,10 @@ const VIEW_DEPTH = 21
 
 const PROGRESS_BAR_WIDTH = 120
 const PROGRESS_BAR_HEIGHT = 4
-const PROGRESS_BAR_BG_COLOR = 0x1f333e
+const PROGRESS_BAR_BG_COLOR = 0x222222
 const PROGRESS_BAR_FILL_COLOR = 0x64ffda
+const PILL_MIN_WIDTH = 120
+const LEFT_ANCHOR_X = -PILL_MIN_WIDTH / 2
 const PILL_HOLD_HEIGHT = FONT_SIZE + PADDING_V * 2 + 10
 
 export class MacroIndicatorView {
@@ -44,25 +53,25 @@ export class MacroIndicatorView {
       .setVisible(false)
 
     this.pillBg = scene.add
-      .rectangle(0, 0, 100, FONT_SIZE + PADDING_V * 2, BG_COLOR, 0.94)
+      .rectangle(LEFT_ANCHOR_X, 0, PILL_MIN_WIDTH, FONT_SIZE + PADDING_V * 2, BG_COLOR, 0.94)
       .setStrokeStyle(2, STROKE_COLOR_SUCCESS)
-      .setOrigin(0.5, 0.5)
+      .setOrigin(0, 0.5)
 
     this.textObject = scene.add
-      .text(0, 0, '', {
+      .text(LEFT_ANCHOR_X + PADDING_H, 0, '', {
         fontFamily: FONT_FAMILY,
         fontSize: FONT_SIZE,
         color: TEXT_COLOR_SUCCESS,
       })
-      .setOrigin(0.5, 0.5)
+      .setOrigin(0, 0.5)
 
     this.progressTrack = scene.add
-      .rectangle(0, 10, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT, PROGRESS_BAR_BG_COLOR)
-      .setOrigin(0.5, 0.5)
+      .rectangle(LEFT_ANCHOR_X + PADDING_H, 10, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT, PROGRESS_BAR_BG_COLOR)
+      .setOrigin(0, 0.5)
       .setVisible(false)
 
     this.progressFill = scene.add
-      .rectangle(-PROGRESS_BAR_WIDTH / 2, 10, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT, PROGRESS_BAR_FILL_COLOR)
+      .rectangle(LEFT_ANCHOR_X + PADDING_H, 10, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT, PROGRESS_BAR_FILL_COLOR)
       .setOrigin(0, 0.5)
       .setVisible(false)
 
@@ -116,17 +125,17 @@ export class MacroIndicatorView {
     this.progressTween = undefined
 
     const message = `[RECORDING SLOT ${slot}]`
-    this.textObject.setText(message).setColor(TEXT_COLOR_SUCCESS).setPosition(0, -6)
+    this.textObject.setText(message).setColor(TEXT_COLOR_SUCCESS).setPosition(LEFT_ANCHOR_X + PADDING_H, -6)
 
     const barWidth = Math.max(PROGRESS_BAR_WIDTH, this.textObject.width)
-    this.progressTrack.setSize(barWidth, PROGRESS_BAR_HEIGHT).setPosition(0, 10).setVisible(true)
+    this.progressTrack.setSize(barWidth, PROGRESS_BAR_HEIGHT).setPosition(LEFT_ANCHOR_X + PADDING_H, 10).setVisible(true)
     this.progressFill
       .setSize(barWidth, PROGRESS_BAR_HEIGHT)
-      .setPosition(-barWidth / 2, 10)
+      .setPosition(LEFT_ANCHOR_X + PADDING_H, 10)
       .setScale(0, 1)
       .setVisible(true)
 
-    const totalWidth = Math.max(140, barWidth + PADDING_H * 2)
+    const totalWidth = Math.max(PILL_MIN_WIDTH, barWidth + PADDING_H * 2)
     this.pillBg.setSize(totalWidth, PILL_HOLD_HEIGHT).setStrokeStyle(2, STROKE_COLOR_SUCCESS)
 
     if (showDelayMs > 0) {
@@ -169,7 +178,7 @@ export class MacroIndicatorView {
     this.progressTween = undefined
     this.progressTrack?.setVisible(false)
     this.progressFill?.setVisible(false)
-    this.textObject?.setPosition(0, 0)
+    this.textObject?.setPosition(LEFT_ANCHOR_X + PADDING_H, 0)
     this.container?.setVisible(false)
   }
 
@@ -185,7 +194,7 @@ export class MacroIndicatorView {
     this.progressTween = undefined
     this.progressTrack?.setVisible(false)
     this.progressFill?.setVisible(false)
-    this.textObject.setPosition(0, 0)
+    this.textObject.setPosition(LEFT_ANCHOR_X + PADDING_H, 0)
 
     this.fadeTween?.stop()
     this.fadeTween = undefined
@@ -196,7 +205,7 @@ export class MacroIndicatorView {
     const strokeColor = isSuccess ? STROKE_COLOR_SUCCESS : STROKE_COLOR_WARN
 
     this.textObject.setText(message).setColor(textColor)
-    const totalWidth = Math.max(120, this.textObject.width + PADDING_H * 2)
+    const totalWidth = Math.max(PILL_MIN_WIDTH, this.textObject.width + PADDING_H * 2)
     const totalHeight = FONT_SIZE + PADDING_V * 2
 
     this.pillBg.setSize(totalWidth, totalHeight).setStrokeStyle(2, strokeColor)

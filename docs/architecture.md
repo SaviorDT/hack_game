@@ -244,6 +244,10 @@ Room 1 initializes with Player Character (upper-left, named `hacker`), Dagger (l
 
 **Save Point: entering a room.** `GameScene.update` watches `currentRoomId`; when it changes while the outcome is `playing` (walking through an Exit), it calls `session.saveCurrentState()`, so the record holds the player at the new room's entry. The starting room is not saved, so "LOAD SAVE" stays disabled until the player has reached a second room; after that a defeat offers restarting from the beginning or from the last room entered. A fresh page load always starts a new game; there is no "continue" entry point.
 
+### Room Reset (R)
+
+`GameScene.handleKeyDown` handles `R` in Movement Mode only (Command Mode types it, the Pause overlay and Game Over menu never reach it, a held key is ignored) and only while `outcome === 'playing'` and the Command Editor is closed. `resetRoom()` calls `GameSession.loadSavedState()`, which restores the Save Slot's record in place (objects, Health, `simulationTick` and Impact cooldowns; in-flight Throws, Arrows, `mv` and any Command Mode draft are dropped; Movement Mode resumes) and never writes the slot. The scene then clears held-slot and draft state, re-mounts `PhaserRoomView` and recreates `PhaserGameHud` so the room hint and tutorial prompts play again. Recorded Commands and command history live outside the world and are kept. With no usable record (the start room before the first Save Point), it calls `scene.restart({ resumeFromSave: false })` like `RESTART`. Help lists `R` under `── SHORTCUTS ──`.
+
 ### Game Over Choices
 
 When `outcome === 'game-over'`, `PhaserGameOutcomePanel` shows two buttons below the message: `RESTART` and `LOAD SAVE`. Selection state lives in `GameOverMenu` (Phaser-free, unit-tested).

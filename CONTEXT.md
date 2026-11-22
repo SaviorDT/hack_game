@@ -5,7 +5,7 @@ This context defines the language used to describe the command-driven game world
 ## Language
 
 **Room**:
-A discrete game area that can be entered and revisited. It is represented through a directory-like command path.
+A discrete game area that can be entered and revisited. It is represented through a directory-like command path. What players call a "level" (關卡) is the Room they are currently in.
 _Avoid_: Folder, level (when referring to the loaded area)
 
 **Exit**:
@@ -199,6 +199,10 @@ _Avoid_: Save file, checkpoint (when referring to the place the record is kept)
 **Save Point**:
 A moment in play at which the game writes the Save Slot. Entering a Room is a Save Point.
 _Avoid_: Autosave (when referring to the moment itself)
+
+**Room Reset**:
+The player's own choice, without being defeated, to put the current Room back as it was when the Player Character entered it. It returns to the Save Slot's record without replacing it, and leaves the player's settings alone. When the Save Slot holds no record it starts the game over from the beginning. It is not a Game Over Choice, which is offered only after defeat.
+_Avoid_: Restart (that names the Game Over Choice), retry, level restart
 
 **Game Over Choice**:
 An option offered when the Player Character is defeated: restart from the beginning, or return to the Save Slot's record.

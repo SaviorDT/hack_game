@@ -528,6 +528,20 @@ describe('saved state', () => {
     expect(session.inputMode).toBe('movement')
   })
 
+  it('restores the simulation tick with the saved world, and leaves the record in place', () => {
+    const storage = storageStub()
+    const session = createRoom1Session({ movementBindings: bindings, storage })
+    session.getWorldState().simulationTick = 40
+    session.saveCurrentState()
+    const record = storage.getItem('hack-game.save')
+
+    session.getWorldState().simulationTick = 500
+    session.loadSavedState()
+
+    expect(session.getWorldState().simulationTick).toBe(40)
+    expect(storage.getItem('hack-game.save')).toBe(record)
+  })
+
   it('treats corrupt save data as no save', () => {
     const storage = storageStub()
     storage.setItem('hack-game.save', '{not json')

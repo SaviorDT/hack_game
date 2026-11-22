@@ -222,6 +222,52 @@ describe('GameScene key handling', () => {
     expect(result).toBe(true)
   })
 
+  describe('Room Reset (R)', () => {
+    function resetSpy(scene: GameScene) {
+      return vi.spyOn(scene as unknown as { resetRoom: () => void }, 'resetRoom').mockImplementation(() => {})
+    }
+    const press = (handleKeyDown: (e: KeyboardEvent) => boolean, repeat = false) =>
+      handleKeyDown({ key: 'r', repeat, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+
+    it('resets the room on R in movement mode', () => {
+      const { scene, handleKeyDown } = setupScene()
+      const reset = resetSpy(scene)
+      expect(press(handleKeyDown)).toBe(false)
+      expect(reset).toHaveBeenCalledTimes(1)
+    })
+
+    it('ignores a held R', () => {
+      const { scene, handleKeyDown } = setupScene()
+      const reset = resetSpy(scene)
+      press(handleKeyDown, true)
+      expect(reset).not.toHaveBeenCalled()
+    })
+
+    it('lets R be typed in command mode', () => {
+      const { scene, session, handleKeyDown } = setupScene()
+      const reset = resetSpy(scene)
+      session.enterCommandMode()
+      expect(press(handleKeyDown)).toBe(true)
+      expect(reset).not.toHaveBeenCalled()
+    })
+
+    it('ignores R once the game is no longer playing', () => {
+      const { scene, session, handleKeyDown } = setupScene()
+      const reset = resetSpy(scene)
+      session.getWorldState().outcome = 'game-over'
+      press(handleKeyDown)
+      expect(reset).not.toHaveBeenCalled()
+    })
+
+    it('ignores R while the Command Editor is open', () => {
+      const { scene, mockCommandEditor, handleKeyDown } = setupScene()
+      const reset = resetSpy(scene)
+      mockCommandEditor.isOpen.mockReturnValue(true)
+      press(handleKeyDown)
+      expect(reset).not.toHaveBeenCalled()
+    })
+  })
+
   it('attacks with J in movement mode', () => {
     const { session, handleKeyDown } = setupScene()
     const attackSpy = vi.spyOn(session, 'attack').mockImplementation(() => ({} as any))

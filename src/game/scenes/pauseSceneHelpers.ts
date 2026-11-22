@@ -283,6 +283,7 @@ export function getHelpLines(mode: CommandTypingMode): string[] {
     '  8, 9, 0              Execute recorded command',
     '  HOLD 8, 9, 0         Record last executed command to slot (0.5s)',
     '  SPACE / P            Open pause menu',
+    '  R                    Reset the current room to its last save',
   ]
 }
 

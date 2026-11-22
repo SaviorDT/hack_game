@@ -139,10 +139,10 @@ export const DEFAULT_PREFABS: readonly PrefabDefinition[] = [
     scaleX: 0.53,
     scaleY: 0.53,
     speed: {
-      acceleration: 2500,
+      acceleration: 4000,
       frictionAcceleration: 3000,
       turnaroundAcceleration: 1600,
-      maxSpeed: 300,
+      maxSpeed: 500,
     },
     maxHealth: 100,
     colliderWidth: 50,

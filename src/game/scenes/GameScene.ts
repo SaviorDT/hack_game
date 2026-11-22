@@ -283,6 +283,14 @@ export class GameScene extends Phaser.Scene {
                 return false
             }
 
+            if (key === 'r' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                event.preventDefault()
+                if (!event.repeat && this.canResetRoom()) {
+                    this.resetRoom()
+                }
+                return false
+            }
+
             if (key === 'shift') {
                 event.preventDefault()
                 if (shiftOpensCommandInput(this.commandTypingMode) && !event.repeat) {
@@ -344,6 +352,34 @@ export class GameScene extends Phaser.Scene {
 
         const { typeable } = this.session.keyDown(key)
         return typeable
+    }
+
+    private canResetRoom(): boolean {
+        return this.session.getWorldState().outcome === 'playing' && !this.isCommandEditorOpen()
+    }
+
+    // Room Reset: back to the Save Slot's record (written on entering the room), without
+    // rewriting it. With no record yet, this is a fresh start like the RESTART choice.
+    private resetRoom(): void {
+        if (!this.session.loadSavedState()) {
+            this.scene.restart({ resumeFromSave: false, startingRoomId: this.startingRoomId })
+            return
+        }
+        this.slotHoldTimer?.remove()
+        this.slotHoldTimer = undefined
+        this.heldSlotKey = undefined
+        this.slotHoldRecorded = false
+        this.macroIndicatorView.cancelHoldProgress()
+        this.inlineCommandInputView?.clearInput()
+        this.inlineCommandInputView?.setVisible(false)
+        this.enteredByShift = false
+
+        const worldState = this.session.getWorldState()
+        this.lastRoomId = worldState.currentRoomId
+        this.roomView.mount(this, worldState, false)
+        this.hud?.destroy()
+        this.hud = new PhaserGameHud(this)
+        this.hud.update(worldState, this.session.inputMode)
     }
 
     private openCommandInput(byShift: boolean): void {

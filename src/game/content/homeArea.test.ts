@@ -199,7 +199,8 @@ describe('home area', () => {
     runFor(session, 2500)
     expect(plateDown(session, 'gateplate')).toBe(true)
     expect(exitOpen(session)).toBe(true)
-    walk(session, { x: 1500, y: 420 }, { x: EXIT.x, y: EXIT.y })
+    // Go over the cover wall (x 1230-1340, y 360-470) rather than through its corner.
+    walk(session, { x: 1285, y: 290 }, { x: 1500, y: 420 }, { x: EXIT.x, y: EXIT.y })
     expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.first)
   })
 

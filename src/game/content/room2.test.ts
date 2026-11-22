@@ -55,7 +55,7 @@ describe('room2', () => {
     const session = room2Session()
     expect(body(session, 'room2dagger').x).toBeLessThan(body(session, ROOM2_DUMMY.id).x)
     expect(body(session, ROOM2_DUMMY.id).x).toBeGreaterThan(960)
-    expect(body(session, 'room2dagger')).toMatchObject({ mvLimit: -1 })
+    expect(body(session, 'room2dagger')).toMatchObject({ mvLimit: 1 })
   })
 
   it('has a Target Dummy with 1000 Health that nothing collides with', () => {

@@ -112,7 +112,8 @@ describe('player movement', () => {
 
     runFor(session, 80)
     expect((stateOf(session, 'player').vx as number)).toBeLessThan(maxSpeed)
-    runFor(session, 1500)
+    // Checked soon after reversing: a longer run would reach the room's left wall, which zeroes vx.
+    runFor(session, 150)
     expect((stateOf(session, 'player').vx as number)).toBeLessThan(0)
   })
 

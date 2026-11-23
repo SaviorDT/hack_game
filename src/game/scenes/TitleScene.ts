@@ -29,6 +29,10 @@ import {
   COLOR_DIM,
   COLOR_MUTED,
   COLOR_PROMPT,
+  buildConfirmDialog,
+  CONFIRM_OPTIONS,
+  type ConfirmDialogRefs,
+  type ConfirmOption,
 } from './pauseSceneHelpers.ts'
 
 export {
@@ -44,6 +48,7 @@ export const ALL_TITLE_MENU_ITEMS = ['RESTART', 'RESUME', 'SETTING', 'HELP'] as 
 export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number] | (typeof ALL_TITLE_MENU_ITEMS)[number]
 
 export const TYPING_MODES: readonly CommandTypingMode[] = COMMAND_TYPING_MODES
+export { CONFIRM_OPTIONS }
 
 
 export class TitleScene extends Phaser.Scene {
@@ -69,6 +74,10 @@ export class TitleScene extends Phaser.Scene {
   private inHelp = false
   private inSettings = false
   private isTransitioning = false
+  private inConfirm = false
+  private confirmIndex = 1
+  private confirmDialog?: ConfirmDialogRefs
+  private confirmQuestion?: Phaser.GameObjects.Text
   private static readonly PLAYER_SPAWN_X = 424
   private static readonly PLAYER_SPAWN_Y = 439
 
@@ -86,6 +95,8 @@ export class TitleScene extends Phaser.Scene {
     this.inHelp = false
     this.inSettings = false
     this.isTransitioning = false
+    this.inConfirm = false
+    this.confirmIndex = 1
     this.cameras.main.setBackgroundColor('#000000')
 
     this.currentTypingMode = loadCommandTypingMode()
@@ -102,6 +113,7 @@ export class TitleScene extends Phaser.Scene {
     this.buildPrompt()
     this.buildHelpScreen()
     this.buildSettingScreen()
+    this.buildRestartConfirm()
     this.setupInput()
     this.updateSelection()
   }
@@ -146,6 +158,22 @@ export class TitleScene extends Phaser.Scene {
     return this.isTransitioning
   }
 
+  public isInRestartConfirm(): boolean {
+    return this.inConfirm
+  }
+
+  public isInConfirm(): boolean {
+    return this.inConfirm
+  }
+
+  public getConfirmChoice(): ConfirmOption {
+    return CONFIRM_OPTIONS[this.confirmIndex]
+  }
+
+  public getConfirmQuestionText(): string {
+    return this.confirmQuestion?.text ?? ''
+  }
+
   public showHelp(animated = true): void {
     this.transitionToSubscreen(this.helpScreenContainer, 'help', () => {
       this.inHelp = true
@@ -175,7 +203,9 @@ export class TitleScene extends Phaser.Scene {
   public confirmSelection(): TitleMenuItem {
     const choice = this.getSelectedChoice()
     console.log(`[TitleScene] selected: ${choice}`)
-    if (choice === 'START' || choice === 'RESTART') {
+    if (choice === 'RESTART') {
+      this.showRestartConfirm()
+    } else if (choice === 'START') {
       this.startWithAnimation()
     } else if (choice === 'RESUME') {
       this.resumeWithAnimation()
@@ -465,8 +495,51 @@ export class TitleScene extends Phaser.Scene {
     })
   }
 
+  private buildRestartConfirm(): void {
+    this.confirmDialog = buildConfirmDialog(
+      this,
+      this.mainMenuContainer,
+      'RESTART FROM THE\nBEGINNING?',
+      510,
+      600,
+    )
+    this.confirmQuestion = this.confirmDialog.question
+  }
+
+  public showRestartConfirm(): void {
+    if (this.isTransitioning) return
+    this.inConfirm = true
+    this.confirmIndex = 1
+    this.menuTexts.forEach((text) => text.setVisible(false))
+    this.confirmDialog?.show(1)
+  }
+
+  public cancelRestartConfirm(): void {
+    this.inConfirm = false
+    this.confirmIndex = 1
+    this.confirmDialog?.hide()
+    this.menuTexts.forEach((text) => text.setVisible(true))
+    this.updateSelection()
+  }
+
+  private handleConfirmKey(key: string, event: KeyboardEvent): void {
+    if (key === 'ARROWLEFT' || key === 'A' || key === 'ARROWRIGHT' || key === 'D') {
+      event.preventDefault()
+      this.confirmIndex = this.confirmIndex === 0 ? 1 : 0
+      this.confirmDialog?.updateSelection(this.confirmIndex)
+    } else if (key === 'ENTER') {
+      event.preventDefault()
+      if (this.getConfirmChoice() === 'YES') {
+        this.cancelRestartConfirm()
+        this.startWithAnimation()
+      } else {
+        this.cancelRestartConfirm()
+      }
+    }
+  }
+
   private moveSelection(delta: -1 | 1): void {
-    if (this.inHelp || this.inSettings || this.isTransitioning) return
+    if (this.inHelp || this.inSettings || this.inConfirm || this.isTransitioning) return
     const count = this.menuItems.length
     this.selectedIndex = (this.selectedIndex + delta + count) % count
     this.updateSelection()
@@ -485,6 +558,11 @@ export class TitleScene extends Phaser.Scene {
         event.preventDefault()
         this.exitHelp()
       }
+      return
+    }
+
+    if (this.inConfirm) {
+      this.handleConfirmKey(key, event)
       return
     }
 

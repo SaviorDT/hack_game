@@ -54,6 +54,8 @@ vi.mock('phaser', () => {
         return graphics
       }),
       text: vi.fn((_x: number, _y: number, _text: string | string[], _style?: Record<string, unknown>) => ({
+        text: _text,
+        style: _style,
         width: 304,
         setOrigin: vi.fn().mockReturnThis(),
         setText: vi.fn().mockReturnThis(),
@@ -67,9 +69,11 @@ vi.mock('phaser', () => {
         return { destroy: vi.fn() }
       }),
     }
-    tweens = { add: vi.fn((config: Record<string, unknown>) => {
-      if (typeof config.onComplete === 'function') config.onComplete()
-    }) }
+    tweens = {
+      add: vi.fn((config: Record<string, unknown>) => {
+        if (typeof config.onComplete === 'function') config.onComplete()
+      })
+    }
     input = { keyboard: { on: vi.fn(), off: vi.fn() } }
     events = { once: vi.fn() }
 
@@ -101,12 +105,12 @@ function setupScene(currentRoomId = 'tutorial3', hasSavedGame = true) {
   const scenePlugin = scene.scene as unknown as { get: ReturnType<typeof vi.fn> }
   scenePlugin.get.mockImplementation((key: string) => key === 'game'
     ? {
-        session: {
-          getWorldState: () => ({ currentRoomId }),
-          getCommandSlots: () => ({}),
-          hasSavedState: () => hasSavedGame,
-        },
-      }
+      session: {
+        getWorldState: () => ({ currentRoomId }),
+        getCommandSlots: () => ({}),
+        hasSavedState: () => hasSavedGame,
+      },
+    }
     : undefined)
   scene.create()
   const handleKeyDown = (scene as unknown as {
@@ -200,11 +204,11 @@ describe('PauseScene', () => {
   it('expands from the live player position when created', () => {
     const scene = new PauseScene()
     const containerFactory = vi.spyOn(scene.add, 'container')
-    ;(scene.scene.get as ReturnType<typeof vi.fn>).mockReturnValue({
-      session: {
-        getRenderPosition: vi.fn(() => ({ x: 400, y: 300 })),
-      },
-    })
+      ; (scene.scene.get as ReturnType<typeof vi.fn>).mockReturnValue({
+        session: {
+          getRenderPosition: vi.fn(() => ({ x: 400, y: 300 })),
+        },
+      })
 
     scene.create()
 
@@ -274,6 +278,7 @@ describe('PauseScene', () => {
       handleKeyDown(key('Enter'))
       expect(scene.isInTitleConfirm()).toBe(true)
       expect(scene.getConfirmChoice()).toBe('NO')
+      expect(scene.getConfirmQuestionText()).toBe('ABANDON RUN AND\nRETURN TO TITLE?')
 
       handleKeyDown(key('Enter'))
       expect(scene.isInTitleConfirm()).toBe(false)
@@ -450,7 +455,7 @@ describe('PauseScene', () => {
 
   it('suppresses navigation during transitions', () => {
     const { scene, handleKeyDown } = setupScene()
-    ;(scene as unknown as { isTransitioning: boolean }).isTransitioning = true
+      ; (scene as unknown as { isTransitioning: boolean }).isTransitioning = true
     const event = { key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent
     handleKeyDown(event)
     expect(event.preventDefault).toHaveBeenCalled()

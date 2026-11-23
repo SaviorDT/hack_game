@@ -26,6 +26,9 @@ import {
   TERMINAL_FONT,
   typeCommand,
   updateSettingDisplay,
+  buildConfirmDialog,
+  CONFIRM_OPTIONS,
+  type ConfirmDialogRefs,
 } from './pauseSceneHelpers.ts'
 import { buildRecordedCommandsBox } from './recordedCommandsBox.ts'
 import { loadCommandSlots } from '../application/commandSlots.ts'
@@ -34,7 +37,7 @@ import { getTutorialFeatureUnlocks, type TutorialFeatureUnlocks } from '../conte
 export const PAUSE_OVERLAY_ALPHA = 0.7
 export const PAUSE_MENU_ITEMS = ['RESUME', 'ROOM RESET', 'SETTING', 'HELP', 'TITLE'] as const
 export type PauseMenuItem = (typeof PAUSE_MENU_ITEMS)[number]
-export const TITLE_CONFIRM_OPTIONS = ['YES', 'NO'] as const
+export const TITLE_CONFIRM_OPTIONS = CONFIRM_OPTIONS
 
 export class PauseScene extends Phaser.Scene {
   private selectedIndex = 0
@@ -50,8 +53,8 @@ export class PauseScene extends Phaser.Scene {
   private settingsPromptCommand?: Phaser.GameObjects.Text
   private settingsReturnBtn?: Phaser.GameObjects.Text
   private settingModeTexts: Phaser.GameObjects.Text[] = []
-  private confirmTexts: Phaser.GameObjects.Text[] = []
   private confirmQuestion?: Phaser.GameObjects.Text
+  private confirmDialog?: ConfirmDialogRefs
   private confirmIndex = 1
   private inConfirm = false
   private settingDescText?: Phaser.GameObjects.Text
@@ -189,24 +192,19 @@ export class PauseScene extends Phaser.Scene {
   }
 
   private buildTitleConfirm(): void {
-    this.confirmQuestion = this.add.text(960, 470, 'ABANDON RUN AND\nRETURN TO TITLE?', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '18px',
-      color: COLOR_WHITE,
-      align: 'center',
-      lineSpacing: 12,
-    }).setOrigin(0.5, 0.5).setVisible(false)
-    this.confirmTexts = TITLE_CONFIRM_OPTIONS.map((option, index) =>
-      this.add.text(960 + (index === 0 ? -100 : 100), 580, `[ ${option} ]`, {
-        fontFamily: TERMINAL_FONT,
-        fontSize: '22px',
-        color: COLOR_DIM,
-        align: 'center',
-      }).setOrigin(0.5, 0.5).setVisible(false))
-    this.mainMenuContainer.add([this.confirmQuestion, ...this.confirmTexts])
+    this.confirmDialog = buildConfirmDialog(
+      this,
+      this.mainMenuContainer,
+      'ABANDON RUN AND\nRETURN TO TITLE?',
+      470,
+      580,
+    )
+    this.confirmQuestion = this.confirmDialog.question
   }
 
   public isInTitleConfirm(): boolean { return this.inConfirm }
+  public isInConfirm(): boolean { return this.inConfirm }
+  public getConfirmQuestionText(): string { return this.confirmQuestion?.text ?? '' }
   public getConfirmChoice(): (typeof TITLE_CONFIRM_OPTIONS)[number] { return TITLE_CONFIRM_OPTIONS[this.confirmIndex] }
 
   public showTitleConfirm(): void {
@@ -215,27 +213,19 @@ export class PauseScene extends Phaser.Scene {
     this.confirmIndex = 1
     this.menuTexts.forEach((text) => text.setVisible(false))
     this.recordedCommandsBox?.setVisible(false)
-    this.confirmQuestion?.setVisible(true)
-    this.confirmTexts.forEach((text) => text.setVisible(true))
-    this.updateConfirmSelection()
+    this.confirmDialog?.show(1)
   }
 
   public cancelTitleConfirm(): void {
     this.inConfirm = false
-    this.confirmQuestion?.setVisible(false)
-    this.confirmTexts.forEach((text) => text.setVisible(false))
+    this.confirmDialog?.hide()
     this.menuTexts.forEach((text) => text.setVisible(true))
     this.recordedCommandsBox?.setVisible(true)
     this.updateSelection()
   }
 
   private updateConfirmSelection(): void {
-    TITLE_CONFIRM_OPTIONS.forEach((option, index) => {
-      const text = this.confirmTexts[index]
-      if (!text) return
-      text.setText(index === this.confirmIndex ? `> [ ${option} ] <` : `  [ ${option} ]  `)
-      text.setColor(index === this.confirmIndex ? COLOR_WHITE : COLOR_DIM)
-    })
+    this.confirmDialog?.updateSelection(this.confirmIndex)
   }
 
   private handleConfirmKey(key: string, event: KeyboardEvent): void {

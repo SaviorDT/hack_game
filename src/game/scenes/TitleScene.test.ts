@@ -52,6 +52,8 @@ vi.mock('phaser', () => {
       })),
       text: vi.fn((_x: number, _y: number, _text: string | string[], _style?: Record<string, unknown>) => {
         const textObj = {
+          text: _text,
+          style: _style,
           width: 304,
           setOrigin: vi.fn().mockReturnThis(),
           setText: vi.fn().mockReturnThis(),
@@ -173,7 +175,35 @@ describe('TitleScene', () => {
     handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('RESTART')
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.isInRestartConfirm()).toBe(true)
+    expect(scene.getConfirmChoice()).toBe('NO')
+    expect(scene.getConfirmQuestionText()).toBe('RESTART FROM THE\nBEGINNING?')
+    handleKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getConfirmChoice()).toBe('YES')
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.scene.start).toHaveBeenCalledWith('game')
+  })
+
+  it('cancels restart by default and cycles confirmation choices', () => {
+    titleStorage.setItem('hack-game.save', JSON.stringify({
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      worldState: { currentRoomId: 'tutorial3' },
+    }))
+    const { scene, handleKeyDown } = setupScene()
+    handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+
+    expect(scene.isInConfirm()).toBe(true)
+    expect(scene.getConfirmChoice()).toBe('NO')
+    handleKeyDown({ key: 'a', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getConfirmChoice()).toBe('YES')
+    handleKeyDown({ key: 'd', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getConfirmChoice()).toBe('NO')
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+
+    expect(scene.isInConfirm()).toBe(false)
+    expect(scene.getSelectedChoice()).toBe('RESTART')
+    expect(scene.scene.start).not.toHaveBeenCalled()
   })
 
   it('hides Movement & Combat Help until a valid save exists', () => {

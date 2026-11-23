@@ -7,6 +7,7 @@ import {
   COLOR_MUTED,
   COLOR_PROMPT,
   COLOR_WHITE,
+  TEXT_COLOR,
   POPUP_DISPLAY_DURATION_MS,
   POPUP_FADE_DURATION_MS,
   TERMINAL_FONT,
@@ -18,6 +19,7 @@ export {
   COLOR_MUTED,
   COLOR_PROMPT,
   COLOR_WHITE,
+  TEXT_COLOR,
   POPUP_DISPLAY_DURATION_MS,
   POPUP_FADE_DURATION_MS,
   TERMINAL_FONT,
@@ -36,6 +38,64 @@ export const EXPAND_MS = 75
 export interface SubscreenChrome {
   bottomCommandText: Phaser.GameObjects.Text
   returnBtn: Phaser.GameObjects.Text
+}
+
+export const CONFIRM_OPTIONS = ['YES', 'NO'] as const
+export type ConfirmOption = (typeof CONFIRM_OPTIONS)[number]
+
+export interface ConfirmDialogRefs {
+  question: Phaser.GameObjects.Text
+  optionTexts: Phaser.GameObjects.Text[]
+  show: (initialIndex?: number) => void
+  hide: () => void
+  updateSelection: (selectedIndex: number) => void
+}
+
+export function buildConfirmDialog(
+  scene: Phaser.Scene,
+  container: Phaser.GameObjects.Container,
+  question: string,
+  questionY: number,
+  optionsY: number,
+): ConfirmDialogRefs {
+  const questionText = scene.add.text(960, questionY, question, {
+    fontFamily: TERMINAL_FONT,
+    fontSize: '18px',
+    color: TEXT_COLOR,
+    align: 'center',
+    lineSpacing: 12,
+  }).setOrigin(0.5, 0.5).setVisible(false)
+  const optionTexts = CONFIRM_OPTIONS.map((option, index) =>
+    scene.add.text(960 + (index === 0 ? -100 : 100), optionsY, `[ ${option} ]`, {
+      fontFamily: TERMINAL_FONT,
+      fontSize: '22px',
+      color: COLOR_DIM,
+      align: 'center',
+    }).setOrigin(0.5, 0.5).setVisible(false))
+
+  container.add([questionText, ...optionTexts])
+
+  const updateSelection = (selectedIndex: number): void => {
+    CONFIRM_OPTIONS.forEach((option, index) => {
+      optionTexts[index]?.setText(index === selectedIndex ? `> [ ${option} ] <` : `  [ ${option} ]  `)
+      optionTexts[index]?.setColor(index === selectedIndex ? COLOR_WHITE : COLOR_DIM)
+    })
+  }
+
+  return {
+    question: questionText,
+    optionTexts,
+    show: (initialIndex = 1) => {
+      questionText.setVisible(true)
+      optionTexts.forEach((text) => text.setVisible(true))
+      updateSelection(initialIndex)
+    },
+    hide: () => {
+      questionText.setVisible(false)
+      optionTexts.forEach((text) => text.setVisible(false))
+    },
+    updateSelection,
+  }
 }
 
 export interface HelpScreenRefs {

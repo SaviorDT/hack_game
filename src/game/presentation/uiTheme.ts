@@ -1,10 +1,12 @@
 export const TERMINAL_FONT = '"Press Start 2P", monospace'
 /** Reserved for active selections and hero titles, never standard content or list items. */
+
+// https://lospec.com/palette-list/optimized-grayscale-4 modified to be more readable on dark backgrounds
 export const COLOR_WHITE = '#ffffff'
-export const COLOR_DIM = '#606060'
+export const COLOR_DIM = '#505050'
 export const COLOR_MUTED = '#202020'
-export const COLOR_PROMPT = '#9f9f9f'
-export const TEXT_COLOR = '#d6d6d6'
+export const COLOR_PROMPT = '#a0a0a0'
+export const TEXT_COLOR = COLOR_PROMPT
 export const VALUE_COLOR = '#64ffda'
 
 export const TYPING_SPEED_MS = 15

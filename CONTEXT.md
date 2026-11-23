@@ -69,7 +69,7 @@ A hostile Character that obstructs the player's progress through a Room.
 _Avoid_: Enemy sprite (when referring to the character)
 
 **Boss**:
-A Hostile that guards the Exit of the last Room and alternates between several attacks of its own. It is not a Guard: it has its own attacks and is defeated to open the Exit.
+A Hostile that guards the Exit of the last Room and alternates between several attacks of its own. It is not a Guard: it has its own attacks and is defeated to open the Exit. It can be the target of `acc` but never its source.
 _Avoid_: Guard (a Guard has no attack pattern of its own), final enemy
 
 **Hostile**:

@@ -19,7 +19,7 @@ import {
   type CommandSlotMap,
 } from './commandSlots.ts'
 
-const SAVE_SCHEMA_VERSION = 4
+export const SAVE_SCHEMA_VERSION = 4
 
 export interface GameSessionDependencies {
   worldState: WorldState
@@ -184,6 +184,10 @@ export class GameSession {
 
   hasSavedState(): boolean {
     return this.readSavedSnapshot() !== null
+  }
+
+  getSavedCurrentRoomId(): string | null {
+    return this.readSavedSnapshot()?.worldState.currentRoomId ?? null
   }
 
   // Replaces the current world state with the saved one in place. Returns false (leaving

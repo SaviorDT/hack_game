@@ -1,5 +1,6 @@
 import type Phaser from 'phaser'
 import { COMMAND_TYPING_MODES, type CommandTypingMode } from '../application/gameSettings.ts'
+import type { TutorialFeatureUnlocks } from '../content/tutorialRooms.ts'
 import { focusForMode, SETTING_RETURN_FOCUS, type SettingFocus } from './settingsFocus.ts'
 import {
   COLOR_DIM,
@@ -261,27 +262,52 @@ const COMMAND_LINE_HELP: Record<CommandTypingMode, string[]> = {
   hybrid: [...HOLD_SHIFT_HELP, ...ENTER_STICKY_HELP],
 }
 
-export function getHelpLines(mode: CommandTypingMode): string[] {
+const ALL_TUTORIAL_FEATURES_UNLOCKED: TutorialFeatureUnlocks = {
+  commandInput: true,
+  recordedCommands: true,
+}
+
+export function getHelpLines(
+  mode: CommandTypingMode,
+  unlocks: TutorialFeatureUnlocks = ALL_TUTORIAL_FEATURES_UNLOCKED,
+  hasSavedGame = true,
+): string[] {
+  const commandHelp = unlocks.commandInput
+    ? [
+        '',
+        '-- COMMAND LINE --',
+        ...COMMAND_LINE_HELP[mode],
+        '',
+        '-- VIRTUAL COMMANDS --',
+        '  acc <src> <target>   Throw object towards target',
+        '  acc <src> $mouse     Throw object towards the mouse cursor',
+        '',
+        '-- TYPEING TIPS --',
+        '  TAB                  Auto-complete command name or object label',
+        '  CTRL+BACKSPACE       Delete previous word in prompt',
+        '  UP / DOWN            Browse command history',
+      ]
+    : []
+  const recordedCommandHelp = unlocks.recordedCommands
+    ? [
+        '  8, 9, 0              Execute recorded command',
+        '  HOLD 8, 9, 0         Record last executed command to slot (0.5s)',
+      ]
+    : []
+
   return [
-    '── MOVEMENT & COMBAT ──',
-    '  WASD                 Move hacker',
-    '  J                    Attack with equipped weapon (auto-pickup on touch)',
+    ...(hasSavedGame
+      ? [
+          '-- MOVEMENT & COMBAT --',
+          '  WASD                 Move hacker',
+          '  J                    Attack with equipped weapon (auto-pickup on touch)',
+          '',
+        ]
+      : []),
+    ...commandHelp,
     '',
-    '── COMMAND LINE ──',
-    ...COMMAND_LINE_HELP[mode],
-    '',
-    '── VIRTUAL COMMANDS ──',
-    '  acc <src> <target>   Throw object towards target',
-    '  acc <src> $mouse     Throw object towards the mouse cursor',
-    '',
-    '── TYPEING TIPS ──',
-    '  TAB                  Auto-complete command name or object label',
-    '  CTRL+BACKSPACE       Delete previous word in prompt',
-    '  UP / DOWN            Browse command history',
-    '',
-    '── SHORTCUTS ──',
-    '  8, 9, 0              Execute recorded command',
-    '  HOLD 8, 9, 0         Record last executed command to slot (0.5s)',
+    '-- SHORTCUTS --',
+    ...recordedCommandHelp,
     '  SPACE / P            Open pause menu',
     '  R                    Reset the current room to its last save',
   ]
@@ -291,6 +317,8 @@ export function buildHelpScreen(
   scene: Phaser.Scene,
   container: Phaser.GameObjects.Container,
   typingMode: CommandTypingMode,
+  unlocks: TutorialFeatureUnlocks = ALL_TUTORIAL_FEATURES_UNLOCKED,
+  hasSavedGame = true,
 ): HelpScreenRefs {
   const chrome = buildSubscreenChrome(scene, container, 'help', '<ENTER> CONFIRM')
   const manualText = scene.add.text(80, 125, '', {
@@ -309,11 +337,11 @@ export function buildHelpScreen(
   const originalSetText = manualText.setText.bind(manualText)
   manualText.setText = ((value: string | string[]) => {
     const lines = Array.isArray(value) ? value : [value]
-    descText.setText(lines.map((line) => line.startsWith('──') ? '' : line))
-    return originalSetText(lines.map((line) => line.startsWith('──') ? line : ''))
+    descText.setText(lines.map((line) => line.startsWith('-- ') ? '' : line))
+    return originalSetText(lines.map((line) => line.startsWith('-- ') ? line : ''))
   }) as typeof manualText.setText
 
-  manualText.setText(getHelpLines(typingMode))
+  manualText.setText(getHelpLines(typingMode, unlocks, hasSavedGame))
   container.add([manualText, descText])
 
   return { promptCommand: chrome.bottomCommandText, manualText, descText }
@@ -345,7 +373,7 @@ export function buildSettingScreen(
     './setting',
     '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM',
   )
-  const header = scene.add.text(80, 125, '── IN-GAME COMMAND TYPING MODE ──', {
+  const header = scene.add.text(80, 125, '-- IN-GAME COMMAND TYPING MODE --', {
     fontFamily: TERMINAL_FONT,
     fontSize: '15px',
     color: COLOR_PROMPT,

@@ -134,6 +134,25 @@ describe('GameScene key handling', () => {
     expect(result).toBe(false)
   })
 
+  it('unlocks all command entry controls when Tutorial2 is entered', () => {
+    const { scene, session, handleKeyDown, handleKeyUp } = setupScene()
+    session.getWorldState().currentRoomId = 'tutorial1'
+    scene.setCommandTypingMode('hybrid')
+    const enterCommandMode = vi.spyOn(session, 'enterCommandMode')
+
+    handleKeyDown({ key: 'Shift', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyUp({ key: 'Shift' } as unknown as KeyboardEvent)
+    handleKeyDown({ key: 'Enter', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+
+    expect(enterCommandMode).not.toHaveBeenCalled()
+    expect(session.inputMode).toBe('movement')
+
+    session.getWorldState().currentRoomId = 'tutorial2'
+    handleKeyDown({ key: 'Enter', repeat: false, preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(enterCommandMode).toHaveBeenCalledOnce()
+    expect(session.inputMode).toBe('command')
+  })
+
   it('does not re-enter command mode when Shift is repeated in movement mode', () => {
     const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
     const spy = vi.spyOn(session, 'enterCommandMode')
@@ -520,6 +539,24 @@ describe('GameScene key handling', () => {
   })
 
   describe('recorded commands (8, 9, 0)', () => {
+    it('does not execute a recorded slot before Tutorial3', () => {
+      const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      session.getWorldState().currentRoomId = 'tutorial2'
+      session.setCommandSlot(8, 'acc dagger guard')
+      const submitCommand = vi.spyOn(session, 'submitCommand')
+
+      handleKeyDown({
+        key: '8',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+      handleKeyUp({ key: '8' } as unknown as KeyboardEvent)
+
+      expect(delayedCalls).toHaveLength(0)
+      expect(submitCommand).not.toHaveBeenCalled()
+      expect(session.getWorldState().commandHistory).not.toContain('acc dagger guard')
+    })
+
     it('records last command when held for the hold duration in movement mode', () => {
       const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
       session.submitCommand('acc dagger guard')

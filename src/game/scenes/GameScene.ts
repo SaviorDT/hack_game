@@ -4,7 +4,7 @@ import type { MousePoint } from '../commands/CommandContext.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import { createRoomSession } from '../content/createRoomSession.ts'
 import { ROOM_OBJECTS } from '../content/room.ts'
-import { createGameWorldState } from '../content/tutorialRooms.ts'
+import { createGameWorldState, getTutorialFeatureUnlocks } from '../content/tutorialRooms.ts'
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.ts'
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
@@ -45,6 +45,7 @@ export class GameScene extends Phaser.Scene {
     private slotHoldRecorded = false
     private tutorial3RecordedSlot?: CommandSlot
     private tutorial3ExecutedSlot?: CommandSlot
+    private savedTutorialRoomId: string | null = null
     private readonly macroIndicatorView = new MacroIndicatorView()
     /** The cursor in Room coordinates, once it has been over the game; the source of the Mouse Target. */
     private mousePoint: MousePoint | undefined
@@ -81,12 +82,12 @@ export class GameScene extends Phaser.Scene {
             movementBindings: INPUT_BINDINGS.movement,
             worldState: createGameWorldState(ROOM_OBJECTS, this.startingRoomId),
         })
-        if (this.resumeFromSave) {
-            this.session.loadSavedState()
-        } else if (this.startingRoomId) {
+        const previouslySavedTutorialRoomId = this.session.getSavedCurrentRoomId()
+        if (!this.resumeFromSave || !this.session.loadSavedState()) {
             this.session.saveCurrentState()
         }
         const worldState = this.session.getWorldState()
+        this.savedTutorialRoomId = previouslySavedTutorialRoomId ?? this.session.getSavedCurrentRoomId()
         this.lastRoomId = worldState.currentRoomId
         this.cameras.main.setBackgroundColor('#0b141d')
         this.roomView.mount(this, worldState, false)
@@ -169,6 +170,7 @@ export class GameScene extends Phaser.Scene {
         const worldState = this.session.getWorldState()
         if (worldState.currentRoomId !== this.lastRoomId) {
             this.lastRoomId = worldState.currentRoomId
+            this.savedTutorialRoomId = this.session.getSavedCurrentRoomId()
             if (worldState.currentRoomId === 'tutorial3') {
                 this.tutorial3RecordedSlot = undefined
                 this.tutorial3ExecutedSlot = undefined
@@ -297,6 +299,11 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (this.session.inputMode === 'movement') {
+            const unlocks = getTutorialFeatureUnlocks(
+                this.session.getWorldState().currentRoomId,
+                this.savedTutorialRoomId,
+            )
+
             if ((key === ' ' || key === 'space' || key === 'p') && !this.outcomePanel?.menuActive) {
                 event.preventDefault()
                 if (!event.repeat) {
@@ -315,7 +322,7 @@ export class GameScene extends Phaser.Scene {
 
             if (key === 'shift') {
                 event.preventDefault()
-                if (shiftOpensCommandInput(this.commandTypingMode) && !event.repeat) {
+                if (unlocks.commandInput && shiftOpensCommandInput(this.commandTypingMode) && !event.repeat) {
                     this.openCommandInput(true)
                 }
                 return false
@@ -323,7 +330,7 @@ export class GameScene extends Phaser.Scene {
 
             if (key === 'enter') {
                 event.preventDefault()
-                if (enterOpensCommandInput(this.commandTypingMode) && !event.repeat) {
+                if (unlocks.commandInput && enterOpensCommandInput(this.commandTypingMode) && !event.repeat) {
                     this.openCommandInput(false)
                 }
                 return false
@@ -337,7 +344,7 @@ export class GameScene extends Phaser.Scene {
                 return false
             }
 
-            if (isValidCommandSlot(key)) {
+            if (isValidCommandSlot(key) && unlocks.recordedCommands) {
                 event.preventDefault()
                 if (event.repeat || this.heldSlotKey !== undefined) {
                     return false
@@ -411,6 +418,7 @@ export class GameScene extends Phaser.Scene {
         this.enteredByShift = false
 
         const worldState = this.session.getWorldState()
+        this.savedTutorialRoomId = this.session.getSavedCurrentRoomId()
         if (worldState.currentRoomId === 'tutorial3') {
             this.tutorial3RecordedSlot = undefined
             this.tutorial3ExecutedSlot = undefined

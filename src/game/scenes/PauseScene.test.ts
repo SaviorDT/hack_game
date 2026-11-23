@@ -94,9 +94,20 @@ vi.mock('phaser', () => {
 
 import { PauseScene, PAUSE_MENU_ITEMS } from './PauseScene.ts'
 import { EXPAND_MS, getHelpLines } from './pauseSceneHelpers.ts'
+import { getTutorialFeatureUnlocks } from '../content/tutorialRooms.ts'
 
-function setupScene() {
+function setupScene(currentRoomId = 'tutorial3', hasSavedGame = true) {
   const scene = new PauseScene()
+  const scenePlugin = scene.scene as unknown as { get: ReturnType<typeof vi.fn> }
+  scenePlugin.get.mockImplementation((key: string) => key === 'game'
+    ? {
+        session: {
+          getWorldState: () => ({ currentRoomId }),
+          getCommandSlots: () => ({}),
+          hasSavedState: () => hasSavedGame,
+        },
+      }
+    : undefined)
   scene.create()
   const handleKeyDown = (scene as unknown as {
     handleKeyDown: (event: KeyboardEvent) => void
@@ -105,6 +116,47 @@ function setupScene() {
 }
 
 describe('PauseScene', () => {
+  it('hides recorded-command UI and Help entries until Tutorial3 is entered', () => {
+    const { scene: tutorial1 } = setupScene('tutorial1')
+    const tutorial1Help = getHelpLines('hold-shift', (tutorial1 as any).tutorialUnlocks)
+    expect(tutorial1Help).not.toContain('-- COMMAND LINE --')
+
+    const { scene: tutorial2 } = setupScene('tutorial2')
+    const tutorial2Texts = (tutorial2.add.text as ReturnType<typeof vi.fn>).mock.calls
+      .map((call: unknown[]) => call[2])
+    expect(tutorial2Texts).not.toContain('── RECORDED COMMANDS ──')
+
+    const tutorial2Help = getHelpLines('hold-shift', (tutorial2 as any).tutorialUnlocks)
+    expect(tutorial2Help).toContain('-- COMMAND LINE --')
+    expect(tutorial2Help.some((line) => line.includes('Execute recorded command'))).toBe(false)
+
+    const { scene: tutorial3 } = setupScene('tutorial3')
+    const tutorial3Texts = (tutorial3.add.text as ReturnType<typeof vi.fn>).mock.calls
+      .map((call: unknown[]) => call[2])
+    expect(tutorial3Texts).toContain('── RECORDED COMMANDS ──')
+
+    const tutorial3Help = getHelpLines('hold-shift', (tutorial3 as any).tutorialUnlocks)
+    expect(tutorial3Help.some((line) => line.includes('Execute recorded command'))).toBe(true)
+  })
+
+  it('uses the shared save-based Movement & Combat Help visibility rule', () => {
+    const savedRun = setupScene('tutorial1', true).scene
+    const freshRun = setupScene('tutorial1', false).scene
+    const descriptionsFor = (scene: PauseScene): string[] => {
+      const textSpy = scene.add.text as ReturnType<typeof vi.fn>
+      const descIndex = textSpy.mock.calls.findIndex((call: unknown[]) =>
+        call[1] === 125 && (call[3] as { color?: string }).color === '#555555',
+      )
+      const descText = textSpy.mock.results[descIndex].value as {
+        setText: ReturnType<typeof vi.fn>
+      }
+      return descText.setText.mock.calls[0][0] as string[]
+    }
+
+    expect(descriptionsFor(savedRun).some((line) => line.includes('WASD'))).toBe(true)
+    expect(descriptionsFor(freshRun).some((line) => line.includes('WASD'))).toBe(false)
+  })
+
   it('starts with RESUME selected', () => {
     const { scene } = setupScene()
     expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'ROOM RESET', 'SETTING', 'HELP', 'TITLE'])
@@ -369,17 +421,31 @@ describe('PauseScene', () => {
   })
 
   it('displays SPACE / P in help screen', () => {
-    const lines = getHelpLines('hold-shift')
+    const lines = getHelpLines('hold-shift', getTutorialFeatureUnlocks('tutorial3'))
     expect(lines.some((line) => line.includes('SPACE / P') && line.includes('Open pause menu'))).toBe(true)
   })
 
   it('separates typing tips from general shortcuts in help screen', () => {
-    const lines = getHelpLines('hold-shift')
-    expect(lines).toContain('── TYPEING TIPS ──')
+    const lines = getHelpLines('hold-shift', getTutorialFeatureUnlocks('tutorial3'))
+    expect(lines).toContain('-- TYPEING TIPS --')
     expect(lines.some((line) => line.includes('TAB'))).toBe(true)
     expect(lines.some((line) => line.includes('CTRL+BACKSPACE'))).toBe(true)
     expect(lines.some((line) => line.includes('UP / DOWN'))).toBe(true)
-    expect(lines).toContain('── SHORTCUTS ──')
+    expect(lines).toContain('-- SHORTCUTS --')
+  })
+
+  it('wraps every visible Help section subtitle in the standard delimiters', () => {
+    const headings = getHelpLines('hold-shift', getTutorialFeatureUnlocks('tutorial3'))
+      .filter((line) => line.startsWith('-- '))
+
+    expect(headings).toEqual([
+      '-- MOVEMENT & COMBAT --',
+      '-- COMMAND LINE --',
+      '-- VIRTUAL COMMANDS --',
+      '-- TYPEING TIPS --',
+      '-- SHORTCUTS --',
+    ])
+    expect(headings.every((heading) => /^-- .+ --$/.test(heading))).toBe(true)
   })
 
   it('suppresses navigation during transitions', () => {

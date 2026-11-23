@@ -15,6 +15,34 @@ import { boulder, buildRooms, dagger, guard, ROOM_ENTRY, STANDS_FIRM, type RoomD
  */
 export { TUTORIAL_ROOM_IDS }
 
+export interface TutorialFeatureUnlocks {
+  commandInput: boolean
+  recordedCommands: boolean
+}
+
+const TUTORIAL_ROOM_ORDER = [
+  TUTORIAL_ROOM_IDS.move,
+  TUTORIAL_ROOM_IDS.throw,
+  TUTORIAL_ROOM_IDS.slowTime,
+]
+
+export function getTutorialFeatureUnlocks(
+  currentRoomId: string | null,
+  savedRoomId: string | null = null,
+): TutorialFeatureUnlocks {
+  const progressionIndex = Math.max(roomProgressIndex(currentRoomId), roomProgressIndex(savedRoomId))
+  return {
+    commandInput: progressionIndex >= 1,
+    recordedCommands: progressionIndex >= 2,
+  }
+}
+
+function roomProgressIndex(roomId: string | null): number {
+  if (roomId === null) return -1
+  const tutorialIndex = TUTORIAL_ROOM_ORDER.findIndex((candidate) => candidate === roomId)
+  return tutorialIndex < 0 ? TUTORIAL_ROOM_ORDER.length : tutorialIndex
+}
+
 export const TUTORIAL_ROOMS: RoomDefinition[] = [
   {
     id: TUTORIAL_ROOM_IDS.move,

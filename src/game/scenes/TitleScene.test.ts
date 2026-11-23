@@ -1,4 +1,25 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const titleStorage = (() => {
+  const values = new Map<string, string>()
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value) },
+    removeItem: (key: string) => { values.delete(key) },
+    clear: () => { values.clear() },
+    key: (index: number) => Array.from(values.keys())[index] ?? null,
+    get length() { return values.size },
+  } as Storage
+})()
+
+beforeEach(() => {
+  titleStorage.clear()
+  vi.stubGlobal('window', { localStorage: titleStorage })
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 vi.mock('phaser', () => {
   class MockScene {
@@ -95,9 +116,11 @@ vi.mock('phaser', () => {
 })
 
 import {
+  ALL_TITLE_MENU_ITEMS,
   TitleScene,
   TITLE_MENU_ITEMS,
 } from './TitleScene.ts'
+import { SAVE_SCHEMA_VERSION } from '../application/GameSession.ts'
 
 describe('TitleScene', () => {
   function setupScene() {
@@ -108,10 +131,59 @@ describe('TitleScene', () => {
   }
 
   it('initializes with START as the selected item', () => {
+    titleStorage.removeItem('hack-game.save')
     const { scene } = setupScene()
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('START')
+    expect(scene.getMenuItems()).toEqual(['START', 'SETTING', 'HELP'])
     expect(TITLE_MENU_ITEMS).toEqual(['START', 'SETTING', 'HELP'])
+  })
+
+  it('shows and selects RESUME when a valid save exists', () => {
+    titleStorage.setItem('hack-game.save', JSON.stringify({
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      worldState: { currentRoomId: 'tutorial3' },
+    }))
+    const { scene, handleKeyDown } = setupScene()
+
+    expect(scene.getMenuItems()).toEqual(['RESTART', 'RESUME', 'SETTING', 'HELP'])
+    expect(ALL_TITLE_MENU_ITEMS).toEqual(['RESTART', 'RESUME', 'SETTING', 'HELP'])
+    expect(scene.getSelectedIndex()).toBe(1)
+    expect(scene.getSelectedChoice()).toBe('RESUME')
+
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('SETTING')
+    handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('RESUME')
+    handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('RESTART')
+  })
+
+  it('restarts fresh or resumes based on the confirmed title choice', () => {
+    titleStorage.setItem('hack-game.save', JSON.stringify({
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      worldState: { currentRoomId: 'tutorial3' },
+    }))
+    const { scene, handleKeyDown } = setupScene()
+
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.scene.start).toHaveBeenCalledWith('game', { resumeFromSave: true })
+
+    ;(scene.scene.start as unknown as ReturnType<typeof vi.fn>).mockClear()
+    handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('RESTART')
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.scene.start).toHaveBeenCalledWith('game')
+  })
+
+  it('hides Movement & Combat Help until a valid save exists', () => {
+    titleStorage.removeItem('hack-game.save')
+    const { scene } = setupScene()
+    const lines = (scene as any).getHelpLines('hold-shift') as string[]
+
+    expect(lines).not.toContain('-- MOVEMENT & COMBAT --')
+    expect(lines.some((line: string) => line.includes('WASD'))).toBe(false)
+    expect(lines).toContain('-- SHORTCUTS --')
   })
 
   it('cycles downwards using ArrowDown and wraps around', () => {
@@ -292,6 +364,10 @@ describe('TitleScene', () => {
   })
 
   it('displays command line bindings in help screen matching the active typing mode', () => {
+    titleStorage.setItem('hack-game.save', JSON.stringify({
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      worldState: { currentRoomId: 'tutorial3' },
+    }))
     const { scene, handleKeyDown } = setupScene()
     const helpTextObj = (scene as any).helpManualText
 
@@ -326,12 +402,57 @@ describe('TitleScene', () => {
   })
 
   it('includes typing tips in the help screen', () => {
+    titleStorage.setItem('hack-game.save', JSON.stringify({
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      worldState: { currentRoomId: 'tutorial3' },
+    }))
     const { scene } = setupScene()
     const lines = (scene as any).getHelpLines('hold-shift')
-    expect(lines).toContain('── TYPEING TIPS ──')
+    expect(lines).toContain('-- MOVEMENT & COMBAT --')
+    expect(lines).toContain('-- TYPEING TIPS --')
     expect(lines.some((line: string) => line.includes('TAB'))).toBe(true)
     expect(lines.some((line: string) => line.includes('CTRL+BACKSPACE'))).toBe(true)
     expect(lines.some((line: string) => line.includes('UP / DOWN'))).toBe(true)
+  })
+
+  it('unlocks command and recorded-command Help from the saved tutorial room', () => {
+    const storageKey = 'hack-game.save'
+    const priorSnapshot = window.localStorage.getItem(storageKey)
+    const saveAt = (currentRoomId: string) => {
+      window.localStorage.setItem(storageKey, JSON.stringify({
+        schemaVersion: SAVE_SCHEMA_VERSION,
+        worldState: { currentRoomId },
+      }))
+    }
+
+    try {
+      saveAt('tutorial1')
+      const tutorial1 = new TitleScene()
+      tutorial1.create()
+      const lockedHelp = (tutorial1 as any).getHelpLines('hold-shift') as string[]
+      expect(lockedHelp).not.toContain('-- COMMAND LINE --')
+      expect(lockedHelp).not.toContain('-- VIRTUAL COMMANDS --')
+      expect(lockedHelp).not.toContain('-- TYPEING TIPS --')
+      expect(lockedHelp.some((line) => line.includes('Execute recorded command'))).toBe(false)
+
+      saveAt('tutorial2')
+      const tutorial2 = new TitleScene()
+      tutorial2.create()
+      const commandHelp = (tutorial2 as any).getHelpLines('hold-shift') as string[]
+      expect(commandHelp).toContain('-- COMMAND LINE --')
+      expect(commandHelp).toContain('-- VIRTUAL COMMANDS --')
+      expect(commandHelp).toContain('-- TYPEING TIPS --')
+      expect(commandHelp.some((line) => line.includes('Execute recorded command'))).toBe(false)
+
+      saveAt('tutorial3')
+      const tutorial3 = new TitleScene()
+      tutorial3.create()
+      const recordedCommandHelp = (tutorial3 as any).getHelpLines('hold-shift') as string[]
+      expect(recordedCommandHelp.some((line) => line.includes('Execute recorded command'))).toBe(true)
+    } finally {
+      if (priorSnapshot === null) window.localStorage.removeItem(storageKey)
+      else window.localStorage.setItem(storageKey, priorSnapshot)
+    }
   })
 
   it('ignores other keys like Space', () => {
@@ -453,9 +574,9 @@ describe('TitleScene', () => {
     const helpDescObj = (scene as any).helpDescText
     expect(helpDescObj.setText).toHaveBeenCalled()
     const descArg = (helpDescObj.setText as any).mock.calls[0][0]
-    expect(descArg.some((line: string) => line.includes('WASD'))).toBe(true)
+    expect(descArg.some((line: string) => line.includes('WASD'))).toBe(false)
     expect(descArg.some((line: string) => line.includes('SPACE / P'))).toBe(true)
-    expect(descArg.some((line: string) => line.includes('── MOVEMENT & COMBAT ──'))).toBe(false)
+    expect(descArg.some((line: string) => line.includes('-- MOVEMENT & COMBAT --'))).toBe(false)
   })
 
   it('types ./setting when entering settings and ./menu when returning to menu', () => {
@@ -505,5 +626,10 @@ describe('TitleScene', () => {
       call => call[1] === 70 && call[2] === './setting',
     )
     expect(topSettingPrompt).toBeDefined()
+
+    const settingSubtitle = textSpy.mock.calls.find(
+      call => call[1] === 125 && call[2] === '-- IN-GAME COMMAND TYPING MODE --',
+    )
+    expect(settingSubtitle).toBeDefined()
   })
 })

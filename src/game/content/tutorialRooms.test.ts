@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createRoomSession } from './createRoomSession.ts'
-import { createGameWorldState, TUTORIAL_ROOM_IDS } from './tutorialRooms.ts'
+import {
+  createGameWorldState,
+  getTutorialFeatureUnlocks,
+  TUTORIAL_ROOM_IDS,
+} from './tutorialRooms.ts'
 import { HOME_AREA_IDS } from './homeArea.ts'
 import { ROOM_OBJECTS } from './room.ts'
 import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
@@ -71,6 +75,20 @@ function walk(session: GameSession, ...waypoints: { x: number; y: number }[]): v
 const EXIT = ROOM_LAYOUT.exit
 
 describe('tutorial rooms', () => {
+  it('unlocks command input in tutorial2 and recorded commands in tutorial3', () => {
+    expect(getTutorialFeatureUnlocks(null)).toEqual({ commandInput: false, recordedCommands: false })
+    expect(getTutorialFeatureUnlocks(TUTORIAL_ROOM_IDS.move))
+      .toEqual({ commandInput: false, recordedCommands: false })
+    expect(getTutorialFeatureUnlocks(TUTORIAL_ROOM_IDS.throw))
+      .toEqual({ commandInput: true, recordedCommands: false })
+    expect(getTutorialFeatureUnlocks(TUTORIAL_ROOM_IDS.slowTime))
+      .toEqual({ commandInput: true, recordedCommands: true })
+    expect(getTutorialFeatureUnlocks(TUTORIAL_ROOM_IDS.move, TUTORIAL_ROOM_IDS.slowTime))
+      .toEqual({ commandInput: true, recordedCommands: true })
+    expect(getTutorialFeatureUnlocks(HOME_AREA_IDS.storage))
+      .toEqual({ commandInput: true, recordedCommands: true })
+  })
+
   it('starts the game in tutorial1 with the player there and nowhere else', () => {
     const state = createGameWorldState()
     expect(state.currentRoomId).toBe(TUTORIAL_ROOM_IDS.move)

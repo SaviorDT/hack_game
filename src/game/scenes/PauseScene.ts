@@ -29,6 +29,7 @@ import {
 } from './pauseSceneHelpers.ts'
 import { buildRecordedCommandsBox } from './recordedCommandsBox.ts'
 import { loadCommandSlots } from '../application/commandSlots.ts'
+import { getTutorialFeatureUnlocks, type TutorialFeatureUnlocks } from '../content/tutorialRooms.ts'
 
 export const PAUSE_OVERLAY_ALPHA = 0.7
 export const PAUSE_MENU_ITEMS = ['RESUME', 'ROOM RESET', 'SETTING', 'HELP', 'TITLE'] as const
@@ -40,6 +41,8 @@ export class PauseScene extends Phaser.Scene {
   private menuTexts: Phaser.GameObjects.Text[] = []
   private mainMenuContainer!: Phaser.GameObjects.Container
   private recordedCommandsBox?: Phaser.GameObjects.Container
+  private tutorialUnlocks: TutorialFeatureUnlocks = getTutorialFeatureUnlocks(null)
+  private hasSavedGame = false
   private helpScreenContainer!: Phaser.GameObjects.Container
   private settingsScreenContainer!: Phaser.GameObjects.Container
   private mainPromptCommand!: Phaser.GameObjects.Text
@@ -114,10 +117,20 @@ export class PauseScene extends Phaser.Scene {
     const gameSceneRef = this.scene.get('game') as unknown as {
       session?: {
         getCommandSlots?: () => Record<number, string>
+        getWorldState?: () => { currentRoomId: string | null }
+        getSavedCurrentRoomId?: () => string | null
+        hasSavedState?: () => boolean
       }
     }
+    this.hasSavedGame = gameSceneRef?.session?.hasSavedState?.() ?? false
+    this.tutorialUnlocks = getTutorialFeatureUnlocks(
+      gameSceneRef?.session?.getWorldState?.().currentRoomId ?? null,
+      gameSceneRef?.session?.getSavedCurrentRoomId?.() ?? null,
+    )
     const currentSlots = gameSceneRef?.session?.getCommandSlots?.() ?? loadCommandSlots()
-    this.recordedCommandsBox = buildRecordedCommandsBox(this, this.mainMenuContainer, currentSlots)
+    if (this.tutorialUnlocks.recordedCommands) {
+      this.recordedCommandsBox = buildRecordedCommandsBox(this, this.mainMenuContainer, currentSlots)
+    }
 
     this.buildTitleConfirm()
 
@@ -140,7 +153,13 @@ export class PauseScene extends Phaser.Scene {
     })
     this.mainMenuContainer.add([prompt, this.mainPromptCommand])
 
-    const help = buildHelpScreen(this, this.helpScreenContainer, this.currentTypingMode)
+    const help = buildHelpScreen(
+      this,
+      this.helpScreenContainer,
+      this.currentTypingMode,
+      this.tutorialUnlocks,
+      this.hasSavedGame,
+    )
     this.helpPromptCommand = help.promptCommand
     this.helpManualText = help.manualText
     const setting = buildSettingScreen(this, this.settingsScreenContainer, this.currentTypingMode)
@@ -449,7 +468,7 @@ export class PauseScene extends Phaser.Scene {
     this.currentTypingMode = choice
     saveCommandTypingMode(choice)
     this.updateSettingDisplay()
-    this.helpManualText?.setText(getHelpLines(choice))
+    this.helpManualText?.setText(getHelpLines(choice, this.tutorialUnlocks, this.hasSavedGame))
     const gameScene = this.scene.get('game') as unknown as {
       setCommandTypingMode?: (mode: CommandTypingMode) => void
     }

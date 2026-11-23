@@ -5,6 +5,9 @@ import {
   COMMAND_TYPING_MODES,
   type CommandTypingMode,
 } from '../application/gameSettings.ts'
+import { LocalStorageSaveRepository } from '../persistence/LocalStorageSaveRepository.ts'
+import { SAVE_SCHEMA_VERSION } from '../application/GameSession.ts'
+import { getTutorialFeatureUnlocks, type TutorialFeatureUnlocks } from '../content/tutorialRooms.ts'
 import {
   focusForMode,
   nextSettingFocus,
@@ -37,13 +40,15 @@ export {
 } from './pauseSceneHelpers.ts'
 
 export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
-export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number]
+export const ALL_TITLE_MENU_ITEMS = ['RESTART', 'RESUME', 'SETTING', 'HELP'] as const
+export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number] | (typeof ALL_TITLE_MENU_ITEMS)[number]
 
 export const TYPING_MODES: readonly CommandTypingMode[] = COMMAND_TYPING_MODES
 
 
 export class TitleScene extends Phaser.Scene {
   private selectedIndex = 0
+  private menuItems: readonly TitleMenuItem[] = TITLE_MENU_ITEMS
   private menuTexts: Phaser.GameObjects.Text[] = []
   private mainMenuContainer!: Phaser.GameObjects.Container
   private helpScreenContainer!: Phaser.GameObjects.Container
@@ -58,6 +63,8 @@ export class TitleScene extends Phaser.Scene {
   private helpManualText?: Phaser.GameObjects.Text
   private helpDescText?: Phaser.GameObjects.Text
   private currentTypingMode: CommandTypingMode = 'hold-shift'
+  private tutorialUnlocks: TutorialFeatureUnlocks = getTutorialFeatureUnlocks(null)
+  private hasSavedGame = false
   private settingFocusIndex: SettingFocus = 0
   private inHelp = false
   private inSettings = false
@@ -71,12 +78,18 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     this.selectedIndex = 0
+    this.hasSavedGame = this.hasValidSave()
+    this.menuItems = this.hasSavedGame
+      ? ALL_TITLE_MENU_ITEMS
+      : TITLE_MENU_ITEMS
+    this.selectedIndex = this.hasSavedGame ? this.menuItems.indexOf('RESUME') : 0
     this.inHelp = false
     this.inSettings = false
     this.isTransitioning = false
     this.cameras.main.setBackgroundColor('#000000')
 
     this.currentTypingMode = loadCommandTypingMode()
+    this.tutorialUnlocks = this.loadTutorialUnlocks()
     this.settingFocusIndex = focusForMode(this.currentTypingMode)
 
     this.mainMenuContainer = this.add.container(0, 0)
@@ -98,7 +111,11 @@ export class TitleScene extends Phaser.Scene {
   }
 
   public getSelectedChoice(): TitleMenuItem {
-    return TITLE_MENU_ITEMS[this.selectedIndex]
+    return this.menuItems[this.selectedIndex]
+  }
+
+  public getMenuItems(): readonly TitleMenuItem[] {
+    return this.menuItems
   }
 
   public isInHelp(): boolean {
@@ -158,8 +175,10 @@ export class TitleScene extends Phaser.Scene {
   public confirmSelection(): TitleMenuItem {
     const choice = this.getSelectedChoice()
     console.log(`[TitleScene] selected: ${choice}`)
-    if (choice === 'START') {
+    if (choice === 'START' || choice === 'RESTART') {
       this.startWithAnimation()
+    } else if (choice === 'RESUME') {
+      this.resumeWithAnimation()
     } else if (choice === 'HELP') {
       this.showHelp()
     } else if (choice === 'SETTING') {
@@ -168,7 +187,25 @@ export class TitleScene extends Phaser.Scene {
     return choice
   }
 
+  private hasValidSave(): boolean {
+    try {
+      const snapshot = new LocalStorageSaveRepository().load()
+      return snapshot?.schemaVersion === SAVE_SCHEMA_VERSION
+        && snapshot.worldState !== undefined
+    } catch {
+      return false
+    }
+  }
+
   private startWithAnimation(): void {
+    this.launchGameWithAnimation()
+  }
+
+  public resumeWithAnimation(): void {
+    this.launchGameWithAnimation({ resumeFromSave: true })
+  }
+
+  private launchGameWithAnimation(data?: { resumeFromSave?: boolean }): void {
     if (this.isTransitioning) return
     this.isTransitioning = true
     this.typeCommand(this.mainPromptCommand, './main', () => {
@@ -179,7 +216,11 @@ export class TitleScene extends Phaser.Scene {
           TitleScene.PLAYER_SPAWN_Y,
           () => {
             this.isTransitioning = false
-            this.scene.start('game')
+            if (data) {
+              this.scene.start('game', data)
+            } else {
+              this.scene.start('game')
+            }
           },
         )
       })
@@ -318,9 +359,9 @@ export class TitleScene extends Phaser.Scene {
     box.strokeRect(710, 430, 500, 270)
     this.mainMenuContainer.add(box)
 
-    const baseY = 510
+    const baseY = this.menuItems.length === 4 ? 485 : 510
     const gapY = 55
-    this.menuTexts = TITLE_MENU_ITEMS.map((item, index) => {
+    this.menuTexts = this.menuItems.map((item, index) => {
       const text = this.add.text(960, baseY + index * gapY, `[ ${item} ]`, {
         fontFamily: TERMINAL_FONT,
         fontSize: '22px',
@@ -358,7 +399,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private getHelpLines(mode: CommandTypingMode): string[] {
-    return getHelpLines(mode)
+    return getHelpLines(mode, this.tutorialUnlocks, this.hasSavedGame)
   }
 
   private updateHelpText(): void {
@@ -366,10 +407,27 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private buildHelpScreen(): void {
-    const refs = buildHelpScreen(this, this.helpScreenContainer, this.currentTypingMode)
+    const refs = buildHelpScreen(
+      this,
+      this.helpScreenContainer,
+      this.currentTypingMode,
+      this.tutorialUnlocks,
+      this.hasSavedGame,
+    )
     this.helpPromptCommand = refs.promptCommand
     this.helpManualText = refs.manualText
     this.helpDescText = refs.descText
+  }
+
+  private loadTutorialUnlocks(): TutorialFeatureUnlocks {
+    try {
+      const snapshot = new LocalStorageSaveRepository().load()
+      return getTutorialFeatureUnlocks(snapshot?.worldState?.currentRoomId ?? null)
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error
+      console.warn('Ignoring invalid saved game while loading tutorial unlocks.', error)
+      return getTutorialFeatureUnlocks(null)
+    }
   }
 
   private buildSettingScreen(): void {
@@ -396,7 +454,7 @@ export class TitleScene extends Phaser.Scene {
   private updateSelection(): void {
     this.menuTexts.forEach((textObj, index) => {
       const isSelected = index === this.selectedIndex
-      const label = TITLE_MENU_ITEMS[index]
+      const label = this.menuItems[index]
       if (isSelected) {
         textObj.setText(`> [ ${label} ] <`)
         textObj.setColor(COLOR_WHITE)
@@ -409,7 +467,7 @@ export class TitleScene extends Phaser.Scene {
 
   private moveSelection(delta: -1 | 1): void {
     if (this.inHelp || this.inSettings || this.isTransitioning) return
-    const count = TITLE_MENU_ITEMS.length
+    const count = this.menuItems.length
     this.selectedIndex = (this.selectedIndex + delta + count) % count
     this.updateSelection()
   }

@@ -66,6 +66,8 @@ export const boss = (id: string, x: number, y: number, extra: Partial<RoomObject
   createPieceFromPrefab('guard', id, x, y, {
     name: id,
     kind: 'boss',
+    // Built from the guard's look, but not an instance of it: editing the guard prefab must not resize or re-health the Boss.
+    prefabId: 'boss',
     speed: BOSS_CONFIG.chaseSpeed,
     maxHealth: BOSS_CONFIG.maxHealth,
     strikeDamage: BOSS_CONFIG.strikeDamage,

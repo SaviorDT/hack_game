@@ -10,6 +10,7 @@ import {
 } from './prefabRegistry.ts'
 import { getRoomObjectConfigs, resetAllRooms } from './roomRegistry.ts'
 import { ROOM_IDS } from './roomConstants.ts'
+import { ARENA_IDS } from './arena.ts'
 
 describe('Prefab Registry & Propagation', () => {
   beforeEach(() => {
@@ -22,6 +23,17 @@ describe('Prefab Registry & Propagation', () => {
     expect(prefabs.length).toBeGreaterThanOrEqual(7)
     expect(getPrefab('guard')).toBeDefined()
     expect(getPrefab('boulder')).toBeDefined()
+  })
+
+  it('does not resize or re-health the arena Boss when the guard prefab changes', () => {
+    const before = getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')!
+    propagatePrefabChanges('guard', { ...getPrefab('guard')!, maxHealth: 180, displayWidth: 190, displayHeight: 190, colliderWidth: 120 })
+    const after = getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')!
+    expect(after).toMatchObject({
+      maxHealth: before.maxHealth,
+      displayWidth: before.displayWidth,
+      colliderWidth: before.colliderWidth,
+    })
   })
 
   it('updates prefab in registry', () => {

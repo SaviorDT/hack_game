@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRoomSession } from './createRoomSession.ts'
 import { ARENA_DEFINITION, ARENA_IDS, ARENA_PLATES } from './arena.ts'
 import { BLADES_PER_BOSS, BLADES_PER_WAVE, BLADE_NAME_RULES, BOSS_CONFIG } from './bossConstants.ts'
-import { ROOM_IDS } from './roomConstants.ts'
+import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
 import { createGameWorldState } from './tutorialRooms.ts'
 import { getRoomDirectoryEntries } from '../commands/RoomDirectory.ts'
 import type { GameSession } from '../application/GameSession.ts'
@@ -127,19 +127,18 @@ describe('arena floor', () => {
     expect(ARENA_PLATES.map((plate) => plate.name)).toEqual(['t', 'tr', 'r', 'br', 'b', 'bl', 'l', 'tl'])
   })
 
-  it('puts the plates in the corners and the middle of each side, clear of the Exit', () => {
+  it('puts the plates flat against the walls: the corners and the middle of each side', () => {
     const session = arenaSession()
     const at = (name: string) => body(session, `arena${name}`)
-    expect(at('t').x).toBe(at('b').x)
-    expect(at('l').y).toBe(at('r').y)
+    const half = 40
+    expect(at('t').x).toBe((ROOM_LAYOUT.left + ROOM_LAYOUT.right) / 2)
+    expect(at('l').y).toBe((ROOM_LAYOUT.top + ROOM_LAYOUT.bottom) / 2)
+    for (const name of ['tl', 't', 'tr']) expect(at(name).y - half).toBe(ROOM_LAYOUT.top)
+    for (const name of ['bl', 'b', 'br']) expect(at(name).y + half).toBe(ROOM_LAYOUT.bottom)
+    for (const name of ['tl', 'l', 'bl']) expect(at(name).x - half).toBe(ROOM_LAYOUT.left)
+    for (const name of ['tr', 'r', 'br']) expect(at(name).x + half).toBe(ROOM_LAYOUT.right)
     expect(at('tl')).toMatchObject({ x: at('l').x, y: at('t').y })
     expect(at('br')).toMatchObject({ x: at('r').x, y: at('b').y })
-    expect(at('l').x).toBeLessThan(at('t').x)
-    expect(at('t').x).toBeLessThan(at('r').x)
-    expect(at('t').y).toBeLessThan(at('l').y)
-    expect(at('l').y).toBeLessThan(at('b').y)
-    const exit = createGameWorldState().rooms.find((room) => room.id === ARENA_IDS.room)!.exits[0]
-    expect(at('r').x + 40).toBeLessThan(exit.x - 30)
   })
 
   it('lets the player acc to a plate by name, in either case', () => {

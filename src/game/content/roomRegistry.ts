@@ -1,5 +1,6 @@
 import type { Box } from '../domain/CollisionWorld.ts'
 import type { RoomExit } from '../domain/Room.ts'
+import { ARENA_DEFINITION, ARENA_IDS } from './arena.ts'
 import { HOME_AREA_IDS, HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
 import { ROOM_IDS } from './roomConstants.ts'
@@ -17,6 +18,7 @@ export const EDITOR_ROOM_IDS = [
   HOME_AREA_IDS.lane,
   HOME_AREA_IDS.gate,
   ROOM_IDS.main,
+  ARENA_IDS.room,
 ] as const
 
 export type EditorRoomId = (typeof EDITOR_ROOM_IDS)[number]
@@ -33,6 +35,7 @@ export interface EditorRoomDefinition {
 // Deep clone snapshots taken at module evaluation for clean test resets
 const initialTutorialRoomsSnapshot = JSON.stringify(TUTORIAL_ROOMS)
 const initialHomeAreaRoomsSnapshot = JSON.stringify(HOME_AREA_ROOMS)
+const initialArenaObjectsSnapshot = JSON.stringify(ARENA_DEFINITION.objects)
 const initialRoomObjectsSnapshot = JSON.stringify(ROOM_OBJECTS)
 
 export function getEditorRoomIds(): readonly string[] {
@@ -92,6 +95,17 @@ export function getRoomDefinition(roomId: string): EditorRoomDefinition | undefi
     }
   }
 
+  if (roomId === ARENA_DEFINITION.id) {
+    return {
+      id: ARENA_DEFINITION.id,
+      title: ARENA_DEFINITION.id,
+      hint: ARENA_DEFINITION.hint,
+      goal: ARENA_DEFINITION.goal,
+      walls: ARENA_DEFINITION.walls,
+      exit: ARENA_DEFINITION.exit,
+    }
+  }
+
   return undefined
 }
 
@@ -133,6 +147,10 @@ export function getRoomObjectConfigs(roomId: string): RoomObjectConfig[] {
     return [...homeMatch.objects]
   }
 
+  if (roomId === ARENA_DEFINITION.id) {
+    return [...ARENA_DEFINITION.objects]
+  }
+
   return []
 }
 
@@ -169,6 +187,10 @@ export function setRoomObjectConfigs(roomId: string, objects: readonly RoomObjec
     homeMatch.objects = [...objects]
     return
   }
+
+  if (roomId === ARENA_DEFINITION.id) {
+    ARENA_DEFINITION.objects = [...objects]
+  }
 }
 
 export function resetAllRooms(): void {
@@ -185,6 +207,8 @@ export function resetAllRooms(): void {
       HOME_AREA_ROOMS[i].objects = parsedHome[i].objects
     }
   }
+
+  ARENA_DEFINITION.objects = JSON.parse(initialArenaObjectsSnapshot)
 
   const parsedRoom: RoomObjectConfig[] = JSON.parse(initialRoomObjectsSnapshot)
   ROOM_OBJECTS.length = 0

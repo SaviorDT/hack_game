@@ -7,8 +7,8 @@ export const ARENA_IDS = {
   boss: 'warden',
 } as const
 
-/** How far each plate's centre is from the room's bounds, so the right-hand one stays clear of the Exit. */
-const PLATE_INSET = 140
+/** Half a plate's side: a plate this far in from the room's bounds lies flat against the wall. */
+const PLATE_INSET = 40
 const LEFT = ROOM_BOUNDS.left + PLATE_INSET
 const RIGHT = ROOM_BOUNDS.right - PLATE_INSET
 const TOP = ROOM_BOUNDS.top + PLATE_INSET

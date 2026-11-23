@@ -78,9 +78,9 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
       wallFromEdges(1230, 360, 1340, 470),
     ],
     objects: [
-      dagger('gatedagger', 420, 600),
+      dagger('gatedagger', 370, 600),
       crate('gatecrate', 560, 420),
-      boulder('gateboulder', 520, 630),
+      boulder('gateboulder', 570, 630),
       plate('gateplate', 1560, 600),
       // Different speeds, so the guards arrive one after the other rather than together.
       guard('gateguard', 1450, 300, { speed: 190, maxHealth: 60 }),

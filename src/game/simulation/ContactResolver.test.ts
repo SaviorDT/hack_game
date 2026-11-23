@@ -244,10 +244,10 @@ describe('engine without a contact resolver', () => {
 describe('ContactResolver: thrown weapon touching a Target Dummy', () => {
   function setupTarget() {
     const { state, dagger, resolver, body } = setup()
-    const [dummyObject] = createRoomObjects([targetDummy('testdummy', dagger.x, dagger.y)], ROOM_IDS.first)
+    const [dummyObject] = createRoomObjects([targetDummy('testdummy', dagger.x, dagger.y)], ROOM_IDS.main)
     state.worldObjects.push(dummyObject)
     state.rooms = state.rooms.map((room) =>
-      room.id === ROOM_IDS.first ? { ...room, objectIds: [...room.objectIds, dummyObject.id] } : room,
+      room.id === ROOM_IDS.main ? { ...room, objectIds: [...room.objectIds, dummyObject.id] } : room,
     )
     return { state, dagger, resolver, dummy: body('testdummy') }
   }

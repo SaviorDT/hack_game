@@ -44,7 +44,7 @@ describe('AccCommandExecutor', () => {
 
   it('throws to a room exit', () => {
     const state = createInitialWorldState()
-    const result = executor.execute({ name: 'acc', arguments: ['dagger', 'tutorial5'], options: [] }, state)
+    const result = executor.execute({ name: 'acc', arguments: ['dagger', 'end'], options: [] }, state)
     expect(result.status).toBe('success')
     expect(getMutableWorldObjectState<MutableWorldObjectState>(
       state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!,

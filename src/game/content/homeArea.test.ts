@@ -84,27 +84,34 @@ describe('home area', () => {
   it('follows the tutorial and leads into room', () => {
     const state = createGameWorldState()
     const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0].targetRoomId
-    expect(exitOf(TUTORIAL_ROOM_IDS.slowTime)).toBe(HOME_AREA_IDS.home)
-    expect([exitOf('home'), exitOf('storage'), exitOf('yard'), exitOf('lane'), exitOf('gate')]).toEqual([
-      'storage',
+    expect(exitOf(TUTORIAL_ROOM_IDS.slowTime)).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
+    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow)).toBe(TUTORIAL_ROOM_IDS.flyAround)
+    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toBe('storage')
+    expect([exitOf('storage'), exitOf('yard'), exitOf('lane'), exitOf('gate')]).toEqual([
       'yard',
       'lane',
       'gate',
-      ROOM_IDS.first,
+      ROOM_IDS.main,
     ])
     expect(new Set(state.worldObjects.map((worldObject) => worldObject.id)).size).toBe(state.worldObjects.length)
     // Arrows are never something the player can list or name.
     expect(state.worldObjects.filter((worldObject) => worldObject.metadata.kind === 'arrow').length).toBe(9)
   })
 
-  it('home: the wall stops the player until the crate is shoved through the gap', () => {
-    const session = gameIn(HOME_AREA_IDS.home)
+  it('tutorial4: the wall stops the player until the boulder is thrown out of the gap with acc', () => {
+    const session = gameIn(TUTORIAL_ROOM_IDS.mouseThrow)
     walk(session, { x: 820, y: 250 })
     expect(body(session, 'player').x).toBeLessThan(880) // the wall holds the player back
-    walk(session, { x: 760, y: 400 }, { x: 1200, y: 400 })
-    expect(body(session, 'homecrate').x).toBeGreaterThan(960) // shoved out of the gap
-    walk(session, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(HOME_AREA_IDS.storage)
+    expect(session.getWorldState().rooms.find((room) => room.id === TUTORIAL_ROOM_IDS.mouseThrow)!.hint).toBe('move your mouse and type: acc boulder $mouse')
+    expect(body(session, 'tutorial4boulder').x).toBeLessThan(960) // plugs the gap
+    // The player stands on the near side and aims the throw at a point beyond the gap.
+    walk(session, { x: 760, y: 400 })
+    expect(session.submitCommand('acc boulder $mouse', { mouse: { x: 1300, y: 400 } }).status).toBe('success')
+    runFor(session, 2500)
+    expect(body(session, 'tutorial4boulder').x).toBeGreaterThan(960) // out of the gap
+    // The boulder landed on the far side; walk around it to the exit.
+    walk(session, { x: 1000, y: 400 }, { x: 1150, y: 250 }, { x: EXIT.x, y: EXIT.y })
+    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
   })
 
   it('storage: standing on the plate opens the exit only while you stay; a crate keeps it open', () => {
@@ -201,7 +208,7 @@ describe('home area', () => {
     expect(exitOpen(session)).toBe(true)
     // Go over the cover wall (x 1230-1340, y 360-470) rather than through its corner.
     walk(session, { x: 1285, y: 290 }, { x: 1500, y: 420 }, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.first)
+    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.main)
   })
 
   it('keeps arrows out of tab completion and acc', () => {

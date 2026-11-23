@@ -139,7 +139,7 @@ describe('player movement', () => {
 
     runFor(session, 1000)
 
-    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.second)
+    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.end)
     expect(session.getWorldState().outcome).toBe('congratulations')
   })
 })
@@ -422,12 +422,12 @@ describe('commands', () => {
     for (const id of ['guard', 'guard2', 'guard3', 'boulder']) {
       ; (stateOf(session, id) as unknown as { alive: boolean }).alive = false
     }
-    const result = session.submitCommand('acc hacker tutorial5')
+    const result = session.submitCommand('acc hacker end')
     expect(result.status).toBe('success')
 
-    // Run until player reaches tutorial5 exit
+    // Run until player reaches the end exit
     runFor(session, 6000)
-    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.second)
+    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.end)
     expect(session.getWorldState().outcome).toBe('congratulations')
   })
 

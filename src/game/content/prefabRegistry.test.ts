@@ -33,14 +33,14 @@ describe('Prefab Registry & Propagation', () => {
   it('finds instances of a prefab across rooms', () => {
     const guardInstances = getPrefabInstances('guard')
     expect(guardInstances.length).toBeGreaterThan(0)
-    const inRoom = guardInstances.filter((m) => m.roomId === ROOM_IDS.first)
+    const inRoom = guardInstances.filter((m) => m.roomId === ROOM_IDS.main)
     // In room there are guard, guard2, guard3
     expect(inRoom.length).toBe(3)
   })
 
   it('propagatePrefabChanges updates all instances across rooms while preserving coordinates and id', () => {
     const guardPrefab = getPrefab('guard')!
-    const playerWidthBefore = getRoomObjectConfigs(ROOM_IDS.first).find((o) => o.id === 'player')!.displayWidth
+    const playerWidthBefore = getRoomObjectConfigs(ROOM_IDS.main).find((o) => o.id === 'player')!.displayWidth
     const updatedPrefab = {
       ...guardPrefab,
       maxHealth: 180,
@@ -50,11 +50,11 @@ describe('Prefab Registry & Propagation', () => {
     }
 
     const result = propagatePrefabChanges('guard', updatedPrefab)
-    expect(result.affectedRooms).toContain(ROOM_IDS.first)
+    expect(result.affectedRooms).toContain(ROOM_IDS.main)
     expect(result.affectedInstanceCount).toBeGreaterThanOrEqual(3)
 
     // Verify room objects
-    const roomObjects = getRoomObjectConfigs(ROOM_IDS.first)
+    const roomObjects = getRoomObjectConfigs(ROOM_IDS.main)
     const g1 = roomObjects.find((o) => o.id === 'guard')!
     const g2 = roomObjects.find((o) => o.id === 'guard2')!
     const g3 = roomObjects.find((o) => o.id === 'guard3')!

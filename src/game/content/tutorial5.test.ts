@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { createRoomSession } from './createRoomSession.ts'
 import { ROOM_IDS } from './roomConstants.ts'
-import { TUTORIAL5_DEFINITION, TUTORIAL5_DUMMY, TUTORIAL5_HINT, END_ID } from './tutorial5.ts'
+import { TUTORIAL5_DEFINITION, TUTORIAL5_DUMMY, TUTORIAL5_HINT } from './tutorial5.ts'
+import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
+import { HOME_AREA_IDS } from './homeArea.ts'
 import { createGameWorldState } from './tutorialRooms.ts'
 import { getRoomDirectoryEntries } from '../commands/RoomDirectory.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import { collidesPhysically, colliderTagsOf } from '../domain/ColliderTag.ts'
 import { isExitOpen, isExitVisible, visibleExitsOf } from '../domain/RoomTravel.ts'
 import { SIMULATION_TICK_MS } from '../simulation/TickSimulationEngine.ts'
+
+const NEXT_ID = HOME_AREA_IDS.storage
 
 const bindings = { up: ['arrowup'], down: ['arrowdown'], left: ['arrowleft'], right: ['arrowright'] }
 const memoryStorage = { getItem: () => null, setItem: () => undefined } as unknown as Storage
@@ -18,7 +22,7 @@ function tutorial5Session(): GameSession {
   return createRoomSession({
     movementBindings: bindings,
     storage: memoryStorage,
-    worldState: createGameWorldState(undefined, ROOM_IDS.second),
+    worldState: createGameWorldState(undefined, TUTORIAL_ROOM_IDS.flyAround),
   })
 }
 
@@ -36,16 +40,18 @@ function runFor(session: GameSession, ms: number): void {
 
 function tutorial5Of(session: GameSession) {
   const state = session.getWorldState()
-  return { state, room: state.rooms.find((room) => room.id === ROOM_IDS.second)! }
+  return { state, room: state.rooms.find((room) => room.id === TUTORIAL_ROOM_IDS.flyAround)! }
 }
 
 describe('tutorial5', () => {
-  it('is reached from room instead of ending the game there', () => {
+  it('is reached from tutorial4, and room (not tutorial5) ends the game', () => {
     const state = createGameWorldState()
-    const roomExit = state.rooms.find((room) => room.id === ROOM_IDS.first)!.exits[0]
-    expect(roomExit.targetRoomId).toBe(ROOM_IDS.second)
-    expect(roomExit.endsGame).toBeUndefined()
-    expect(state.rooms.filter((room) => room.id === ROOM_IDS.second)).toHaveLength(1)
+    const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0]
+    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow).targetRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
+    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
+    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround).endsGame).toBeUndefined()
+    expect(exitOf(ROOM_IDS.main)).toMatchObject({ targetRoomId: ROOM_IDS.end, endsGame: true })
+    expect(state.rooms.filter((room) => room.id === TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(1)
   })
 
   it('holds only a dagger on the left and a Target Dummy on the right, with a hint', () => {
@@ -92,11 +98,11 @@ describe('tutorial5', () => {
     expect(Math.hypot(dagger.x - dummy.x, dagger.y - dummy.y)).toBeLessThan(20)
   })
 
-  it('hides the exit to end until the dummy is defeated, then shows it where the dummy stood', () => {
+  it('hides the exit to storage until the dummy is defeated, then shows it where the dummy stood', () => {
     const session = tutorial5Session()
     const { state, room } = tutorial5Of(session)
     const exit = room.exits[0]
-    expect(exit).toMatchObject({ targetRoomId: END_ID, x: TUTORIAL5_DUMMY.x, y: TUTORIAL5_DUMMY.y, endsGame: true })
+    expect(exit).toMatchObject({ targetRoomId: NEXT_ID, x: TUTORIAL5_DUMMY.x, y: TUTORIAL5_DUMMY.y })
     expect(isExitVisible(state, room, exit)).toBe(false)
     expect(visibleExitsOf(state, room)).toEqual([])
 
@@ -112,25 +118,25 @@ describe('tutorial5', () => {
   it('keeps the Hidden Exit out of the room listing, Tab completion and acc until it opens', () => {
     const session = tutorial5Session()
     const names = () => session.getCommandCompletionCandidates('acc dagger ', 'acc dagger '.length)
-    expect(names()).not.toContain(`${END_ID}/`)
+    expect(names()).not.toContain(`${NEXT_ID}/`)
     const { state, room } = tutorial5Of(session)
-    expect(getRoomDirectoryEntries(state, room, true)).not.toContain(END_ID)
+    expect(getRoomDirectoryEntries(state, room, true)).not.toContain(NEXT_ID)
 
-    const result = session.submitCommand(`acc dagger ${END_ID}`)
+    const result = session.submitCommand(`acc dagger ${NEXT_ID}`)
     expect(result.status).toBe('rejected')
-    expect(result.feedback).toEqual({ kind: 'popup', text: `Cannot find "${END_ID}".` })
+    expect(result.feedback).toEqual({ kind: 'popup', text: `Cannot find "${NEXT_ID}".` })
     expect(objectOf(session, 'tutorial5dagger').metadata.name).toBe('dagger')
   })
 
   it('targets the revealed exit with acc', () => {
     const session = tutorial5Session()
     body(session, TUTORIAL5_DUMMY.id).alive = false
-    expect(session.getCommandCompletionCandidates('acc dagger ', 'acc dagger '.length)).toContain(`${END_ID}/`)
-    expect(session.submitCommand(`acc dagger ${END_ID}`).status).toBe('success')
+    expect(session.getCommandCompletionCandidates('acc dagger ', 'acc dagger '.length)).toContain(`${NEXT_ID}/`)
+    expect(session.submitCommand(`acc dagger ${NEXT_ID}`).status).toBe('success')
     expect(objectOf(session, 'tutorial5dagger').metadata.name).toBe('dagger')
   })
 
-  it('ends the game when the player walks into the revealed exit', () => {
+  it('leads on to storage when the player walks into the revealed exit', () => {
     const session = tutorial5Session()
     body(session, TUTORIAL5_DUMMY.id).alive = false
     const player = body(session, 'player')
@@ -138,8 +144,8 @@ describe('tutorial5', () => {
     player.y = TUTORIAL5_DUMMY.y
     session.keyDown('arrowright')
     runFor(session, 1000)
-    expect(session.getWorldState().currentRoomId).toBe(END_ID)
-    expect(session.getWorldState().outcome).toBe('congratulations')
+    expect(session.getWorldState().currentRoomId).toBe(NEXT_ID)
+    expect(session.getWorldState().outcome).toBe('playing')
   })
 
   it('keeps the exit unreachable while the dummy lives', () => {
@@ -149,7 +155,7 @@ describe('tutorial5', () => {
     player.y = TUTORIAL5_DUMMY.y
     session.keyDown('arrowright')
     runFor(session, 1000)
-    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.second)
+    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
     expect(session.getWorldState().outcome).toBe('playing')
   })
 

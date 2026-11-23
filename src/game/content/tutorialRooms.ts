@@ -1,6 +1,6 @@
 import { wallFromEdges } from '../domain/Room.ts'
 import type { WorldState } from '../domain/WorldState.ts'
-import { HOME_AREA_IDS, HOME_AREA_ROOMS } from './homeArea.ts'
+import { HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
 import { ROOM_IDS } from './roomConstants.ts'
 import { TUTORIAL5_DEFINITION } from './tutorial5.ts'
@@ -90,7 +90,7 @@ export function createGameWorldState(
 
   // room only: `createInitialWorldState` also holds an empty `end` room, which the game does not use.
   const roomRooms = room.rooms
-    .filter((room) => room.id === ROOM_IDS.first)
+    .filter((room) => room.id === ROOM_IDS.main)
     .map((room) => ({
       ...room,
       objectIds: room.objectIds.filter((id) => id !== playerId),
@@ -118,7 +118,7 @@ export function createGameWorldState(
     playerObject.roomId = effectiveStartingRoomId
 
     let startPos = targetRoom?.entry ?? ROOM_ENTRY
-    if (effectiveStartingRoomId === ROOM_IDS.first && playerConfig) {
+    if (effectiveStartingRoomId === ROOM_IDS.main && playerConfig) {
       startPos = { x: playerConfig.x, y: playerConfig.y }
     } else {
       const allDefs = [...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS]

@@ -53,8 +53,8 @@ describe('MvCommandExecutor', () => {
       .toEqual({ kind: 'popup', text: '"$mouse" cannot be used as an object name.' })
     expect(executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state).feedback)
       .toEqual({ kind: 'popup', text: '"guard" already exists.' })
-    expect(executor.execute({ name: 'mv', arguments: ['dagger', 'tutorial5'], options: [] }, state).feedback)
-      .toEqual({ kind: 'popup', text: '"tutorial5" already exists.' })
+    expect(executor.execute({ name: 'mv', arguments: ['dagger', 'end'], options: [] }, state).feedback)
+      .toEqual({ kind: 'popup', text: '"end" already exists.' })
   })
 
   it('rejects self-renaming', () => {

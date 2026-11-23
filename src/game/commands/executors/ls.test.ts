@@ -62,10 +62,10 @@ describe('LsCommandExecutor', () => {
       const feedback = result.feedback[0]
       expect(feedback.text).toContain('dagger')
       expect(feedback.text).toContain('guard')
-      expect(feedback.text).toContain('tutorial5')
+      expect(feedback.text).toContain('end')
       expect(feedback.text).not.toContain('hacker')
       if (feedback.kind === 'popup') {
-        expect(feedback.reverseColorLines).toEqual(['tutorial5'])
+        expect(feedback.reverseColorLines).toEqual(['end'])
       }
     }
   })

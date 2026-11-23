@@ -18,7 +18,7 @@ describe('getRoomDirectoryEntries', () => {
 
     const entries = getRoomDirectoryEntries(state, room, false, true)
     expect(entries).toContain('hacker')
-    expect(entries).toContain('tutorial5')
+    expect(entries).toContain('end')
   })
 
   it('reflects updated player label when player is renamed', () => {

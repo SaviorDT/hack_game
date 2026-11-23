@@ -45,7 +45,7 @@ A projectile shot by an Archer that stops at the first Wall, Obstacle or Charact
 _Avoid_: Bullet
 
 **Tutorial Room**:
-One of the Rooms played before room that each teach one mechanic and have a Locked Exit until the player has used it.
+One of the first Rooms played (tutorial1 to tutorial5), each teaching one mechanic. Most have a Locked Exit until the player has used it.
 _Avoid_: Level, demo (when referring to these rooms in the game)
 
 **World Object**:

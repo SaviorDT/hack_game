@@ -82,7 +82,7 @@ describe('tutorial rooms', () => {
   })
 
   it('starts the game in specified startingRoomId with the player placed there and nowhere else', () => {
-    for (const targetId of [HOME_AREA_IDS.storage, HOME_AREA_IDS.yard, ROOM_IDS.first, ROOM_IDS.second, TUTORIAL_ROOM_IDS.throw]) {
+    for (const targetId of [HOME_AREA_IDS.storage, HOME_AREA_IDS.yard, ROOM_IDS.main, TUTORIAL_ROOM_IDS.flyAround, TUTORIAL_ROOM_IDS.throw]) {
       const state = createGameWorldState(ROOM_OBJECTS, targetId)
       expect(state.currentRoomId).toBe(targetId)
       const holders = state.rooms.filter((candidate) => candidate.objectIds.includes('player')).map((candidate) => candidate.id)
@@ -99,7 +99,7 @@ describe('tutorial rooms', () => {
     expect(holders).toEqual([TUTORIAL_ROOM_IDS.move])
   })
 
-  it('plays through every tutorial room into the home area using the taught mechanics', () => {
+  it('plays through tutorial1 to tutorial3 into tutorial4 using the taught mechanics', () => {
     const session = newGame()
 
     // tutorial1: pick up the dagger, beat the dummy, walk into the exit.
@@ -150,17 +150,17 @@ describe('tutorial rooms', () => {
     expect(body(session, 'runner').alive).toBe(false)
     walk(session, { x: EXIT.x, y: EXIT.y })
 
-    // The tutorial leads into the home area, with full Health.
+    // tutorial3 leads into tutorial4, with full Health.
     const state = session.getWorldState()
-    expect(state.currentRoomId).toBe('home')
+    expect(state.currentRoomId).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
     expect(body(session, 'player').health).toBe(body(session, 'player').maxHealth)
-    expect(state.rooms.find((candidate) => candidate.id === 'home')!.objectIds).toContain('player')
+    expect(state.rooms.find((candidate) => candidate.id === TUTORIAL_ROOM_IDS.mouseThrow)!.objectIds).toContain('player')
     expect(state.rooms.find((candidate) => candidate.id === TUTORIAL_ROOM_IDS.slowTime)!.objectIds).not.toContain('player')
   })
 
   it('keeps room on its own as before for the editors and older tests', () => {
     const session = createRoomSession({ movementBindings: bindings, storage: memoryStorage })
-    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.first)
-    expect(session.getWorldState().rooms.map((candidate) => candidate.id)).toEqual([ROOM_IDS.first, ROOM_IDS.second])
+    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.main)
+    expect(session.getWorldState().rooms.map((candidate) => candidate.id)).toEqual([ROOM_IDS.main, ROOM_IDS.end])
   })
 })

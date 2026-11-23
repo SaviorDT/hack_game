@@ -58,7 +58,8 @@ export class CombatService {
     }
 
     const targetState = characterState(target.worldObject)
-    targetState.health = Math.max(0, targetState.health - weapon.damage)
+    const damage = attackerState.strikeDamage ?? weapon.damage
+    targetState.health = Math.max(0, targetState.health - damage)
     targetState.alive = targetState.health > 0
     targetState.discovered = true
     attackerState.attackCooldownMs = weapon.cooldownMs
@@ -66,7 +67,7 @@ export class CombatService {
     attackerState.facing = targetState.x < attackerState.x ? 'left' : 'right'
     targetState.damageSequence = (targetState.damageSequence ?? 0) + 1
     targetState.lastDamageFromX = attackerState.x
-    return { status: 'hit', targetId: target.worldObject.id, damage: weapon.damage }
+    return { status: 'hit', targetId: target.worldObject.id, damage }
   }
 
   advanceCooldowns(state: WorldState, elapsedMs: number): void {

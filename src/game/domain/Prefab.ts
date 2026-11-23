@@ -161,7 +161,6 @@ export function inferPrefabId(obj: RoomObjectConfig): string {
   if (obj.kind === 'crate') return 'crate'
   if (obj.kind === 'plate') return 'plate'
   if (obj.kind === 'archer') return 'archer'
-  if (obj.kind === 'dummy') return 'dummy'
   if (obj.role === 'weapon') return 'dagger'
   if (obj.role === 'player' || obj.id === 'player') return 'player'
   if (

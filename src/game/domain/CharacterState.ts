@@ -24,6 +24,8 @@ export function isHostileRole(role: unknown): boolean {
 }
 
 export type CharacterCombatState = CharacterState & {
+  /** Overrides the equipped weapon's damage for this Character's attacks (Strike Damage). */
+  strikeDamage?: number
   attackSequence?: number
   damageSequence?: number
   lastDamageFromX?: number

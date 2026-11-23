@@ -320,6 +320,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
       alive: true,
       discovered: true,
       weaponId: 'guard-strike',
+      ...(obj.strikeDamage !== undefined ? { strikeDamage: obj.strikeDamage } : {}),
       attackCooldownMs: 0,
       alerted: false,
       chasing: false,

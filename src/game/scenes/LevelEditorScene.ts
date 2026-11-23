@@ -85,6 +85,7 @@ export interface SpawnObjectConfig extends PhysicsAttrConfig {
   kind?: ObjectKind
   passive?: boolean
   mvLimit?: number
+  strikeDamage?: number
   x?: number
   y?: number
   displayWidth?: number
@@ -111,6 +112,7 @@ export interface EditorObject extends ScalableMovableObject {
   kind?: ObjectKind
   passive?: boolean
   mvLimit?: number
+  strikeDamage?: number
   sprite: Phaser.GameObjects.Image
   outline: Phaser.GameObjects.Rectangle
   collisionBox?: ColliderOutline
@@ -535,6 +537,7 @@ export class LevelEditorScene extends Phaser.Scene {
     const kind = (roomObj?.kind ?? worldObject.metadata.kind) as ObjectKind | undefined
     const passive = roomObj?.passive
     const mvLimit = roomObj?.mvLimit
+    const strikeDamage = roomObj?.strikeDamage
 
     const attackDistance = isWeapon
       ? typeof state.weaponAttackDistance === 'number'
@@ -678,6 +681,7 @@ export class LevelEditorScene extends Phaser.Scene {
       kind,
       passive,
       mvLimit,
+      strikeDamage,
       role,
       sprite,
       outline,
@@ -2596,6 +2600,7 @@ export class LevelEditorScene extends Phaser.Scene {
           kind: reversed.snapshot.kind,
           passive: reversed.snapshot.passive,
           mvLimit: reversed.snapshot.mvLimit,
+          strikeDamage: reversed.snapshot.strikeDamage,
           x: reversed.snapshot.x,
           y: reversed.snapshot.y,
           displayWidth: reversed.snapshot.displayWidth,
@@ -2820,6 +2825,7 @@ export class LevelEditorScene extends Phaser.Scene {
         ...(obj.kind ? { kind: obj.kind } : {}),
         ...(obj.passive !== undefined ? { passive: obj.passive } : {}),
         ...(obj.mvLimit !== undefined ? { mvLimit: obj.mvLimit } : {}),
+        ...(obj.strikeDamage !== undefined ? { strikeDamage: obj.strikeDamage } : {}),
         x: Math.round(posX),
         y: Math.round(posY),
         displayWidth: Math.round(obj.displayWidth),
@@ -2963,6 +2969,7 @@ export class LevelEditorScene extends Phaser.Scene {
       if (config.kind !== undefined) existing.kind = config.kind
       if (config.passive !== undefined) existing.passive = config.passive
       if (config.mvLimit !== undefined) existing.mvLimit = config.mvLimit
+      if (config.strikeDamage !== undefined) existing.strikeDamage = config.strikeDamage
       if (config.x !== undefined) existing.x = config.x
       if (config.y !== undefined) existing.y = config.y
       if (config.displayWidth !== undefined) existing.displayWidth = config.displayWidth
@@ -3156,6 +3163,7 @@ export class LevelEditorScene extends Phaser.Scene {
       kind: config.kind,
       passive: config.passive,
       mvLimit: config.mvLimit,
+      strikeDamage: config.strikeDamage,
       role,
       sprite,
       outline,
@@ -3328,6 +3336,7 @@ export class LevelEditorScene extends Phaser.Scene {
       kind: obj.kind,
       passive: obj.passive,
       mvLimit: obj.mvLimit,
+      strikeDamage: obj.strikeDamage,
       x: savedPos ? savedPos.x : obj.x,
       y: savedPos ? savedPos.y : obj.y,
       displayWidth: obj.displayWidth,

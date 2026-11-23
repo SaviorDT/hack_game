@@ -70,6 +70,14 @@ describe('attack', () => {
     expect(stateOf(guard2).health).toBe(100)
   })
 
+  it("uses an attacker's own Strike Damage instead of its weapon's damage", () => {
+    const guard = character('guard', 'enemy', 0, { weaponId: 'guard-strike', strikeDamage: 40 })
+    const player = character('player', 'player', SIZE + 1)
+
+    expect(combat.attack(worldOf(guard, player), 'guard')).toMatchObject({ status: 'hit', damage: 40 })
+    expect(stateOf(player).health).toBe(60)
+  })
+
   it('still lets the player hit any hostile character', () => {
     const player = character('player', 'player', 0)
     const guard = character('guard', 'enemy', SIZE + 5)

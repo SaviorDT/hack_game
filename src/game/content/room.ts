@@ -48,6 +48,8 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   passive?: boolean
   /** How many more times it can be the source of an `acc` Throw; `-1` is unlimited. Defaults: 1 for a Weapon, else -1. */
   mvLimit?: number
+  /** Health a guard's melee hit takes from its target (Strike Damage); defaults to the guard-strike weapon's damage. */
+  strikeDamage?: number
   /** A special object: a pushable `crate`, a pressure `plate`, an `archer` enemy, or a Target `dummy`. */
   kind?: 'crate' | 'plate' | 'archer' | 'dummy'
   /** The prefab template ID this object was instantiated from. */
@@ -65,10 +67,10 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
     scaleX: 0.53,
     scaleY: 0.53,
     speed: {
-      acceleration: 3000,
+      acceleration: 4000,
       frictionAcceleration: 3000,
-      turnaroundAcceleration: 1600,
-      maxSpeed: 800,
+      turnaroundAcceleration: 10000,
+      maxSpeed: 500,
     },
     maxHealth: 100,
     colliderWidth: 50,
@@ -108,14 +110,15 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
   {
     id: "guard",
     role: "enemy",
-    x: 1490,
-    y: 365,
+    x: 1558,
+    y: 422,
     displayWidth: 176,
     displayHeight: 176,
     scaleX: 1,
     scaleY: 1,
     speed: 210,
     maxHealth: 100,
+    strikeDamage: 40,
     colliderWidth: 110,
     colliderHeight: 160,
     name: "guard",
@@ -123,14 +126,15 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
   {
     id: "guard2",
     role: "enemy",
-    x: 1012,
-    y: 410,
+    x: 1277,
+    y: 205,
     displayWidth: 176,
     displayHeight: 176,
     scaleX: 1,
     scaleY: 1,
     speed: 210,
     maxHealth: 100,
+    strikeDamage: 40,
     colliderWidth: 110,
     colliderHeight: 160,
     name: "guard2",
@@ -138,14 +142,15 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
   {
     id: "guard3",
     role: "enemy",
-    x: 1160,
-    y: 440,
+    x: 1221,
+    y: 563,
     displayWidth: 176,
     displayHeight: 176,
     scaleX: 1,
     scaleY: 1,
     speed: 210,
     maxHealth: 100,
+    strikeDamage: 40,
     colliderWidth: 110,
     colliderHeight: 160,
     name: "guard3",

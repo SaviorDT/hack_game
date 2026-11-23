@@ -119,6 +119,7 @@ export interface ScalableMovableObject {
   kind?: ObjectKind
   passive?: boolean
   mvLimit?: number
+  strikeDamage?: number
   x: number
   y: number
   displayWidth: number

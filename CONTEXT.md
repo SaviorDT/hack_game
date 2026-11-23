@@ -84,6 +84,9 @@ _Avoid_: Range, hitbox
 The game time that must pass after a target takes Impact Damage before the same target can take it again.
 _Avoid_: Attack Cooldown (that is the attacker's wait between its own attacks)
 
+**Strike Damage**:
+The Health a Guard's melee hit takes from its target. Each Guard can have its own; without one it uses the default of the Guard's weapon. It is distinct from Impact Damage.
+
 **Attack Cooldown**:
 The time a Character must wait after an attack before attacking again.
 _Avoid_: Delay

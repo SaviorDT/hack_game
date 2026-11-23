@@ -64,6 +64,9 @@ export function generateRoomSource(objects: RoomObjectConfig[]): string {
     if (obj.mvLimit !== undefined) {
       lines.push(`    mvLimit: ${obj.mvLimit},`)
     }
+    if (obj.strikeDamage !== undefined) {
+      lines.push(`    strikeDamage: ${obj.strikeDamage},`)
+    }
     if (obj.kind !== undefined) {
       lines.push(`    kind: ${JSON.stringify(obj.kind)},`)
     }
@@ -131,6 +134,8 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   passive?: boolean
   /** How many more times it can be the source of an \`acc\` Throw; \`-1\` is unlimited. Defaults: 1 for a Weapon, else -1. */
   mvLimit?: number
+  /** Health a guard's melee hit takes from its target; defaults to the guard-strike weapon's damage. */
+  strikeDamage?: number
   /** A special object: a pushable \`crate\`, a pressure \`plate\`, an \`archer\` enemy, or a Target \`dummy\`. */
   kind?: 'crate' | 'plate' | 'archer' | 'dummy'
   /** The prefab template ID this object was instantiated from. */

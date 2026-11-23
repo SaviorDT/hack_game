@@ -5,7 +5,7 @@ import type { GameOverChoice } from './GameOverMenu.ts'
 
 const MENU_LABELS: Record<GameOverChoice, string> = {
   restart: 'RESTART',
-  'load-save': 'LOAD SAVE',
+  'load-save': 'RESET ROOM',
 }
 const MENU_Y = 545
 const MENU_X: Record<GameOverChoice, number> = { restart: 760, 'load-save': 1160 }

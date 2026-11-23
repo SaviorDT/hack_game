@@ -71,7 +71,7 @@ export class PhaserGameHud {
       scene.add.text(x, y, text, { fontFamily: TERMINAL_FONT, fontSize: `${size}px`, color })
 
     this.roomText = label(96, 38, '', 16, COLOR_PROMPT)
-    const navigation = label(1824, 38, 'F1 Command   F2 Layout   F3 Speed   F4 AI', 13, COLOR_DIM).setOrigin(1, 0)
+    const navigation = label(1824, 38, 'press <space> to open menu', 13, COLOR_DIM).setOrigin(1, 0)
     this.hintBanner = createHintBanner(scene, '')
     this.movePromptBanner = createHintBanner(scene, TUTORIAL_MOVE_PROMPT)
     this.attackPromptBanner = createHintBanner(scene, TUTORIAL_ATTACK_PROMPT)

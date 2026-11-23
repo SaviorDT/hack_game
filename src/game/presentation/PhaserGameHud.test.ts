@@ -230,7 +230,6 @@ describe('PhaserGameHud', () => {
   function tutorial3WorldState(): WorldState {
     return {
       ...mockWorldState('tutorial3', '<Hold 8,9,0> record command'),
-      commandSlots: { 8: 'acc dagger hacker' },
     } as unknown as WorldState
   }
 

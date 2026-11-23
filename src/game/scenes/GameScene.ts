@@ -384,6 +384,11 @@ export class GameScene extends Phaser.Scene {
         return typeable
     }
 
+    /** Room Reset requested from the pause menu; same guard and effect as pressing R. */
+    public resetRoomFromMenu(): void {
+        if (this.canResetRoom()) this.resetRoom()
+    }
+
     private canResetRoom(): boolean {
         return this.session.getWorldState().outcome === 'playing' && !this.isCommandEditorOpen()
     }

@@ -13,12 +13,13 @@ import type { WorldState } from '../domain/WorldState.ts'
 import { startDaggerAttackAnimation } from '../content/weaponConstants.ts'
 import type { InputMode, InputModeController } from './InputModeController.ts'
 import {
+  loadCommandSlots,
   saveCommandSlots,
   type CommandSlot,
   type CommandSlotMap,
 } from './commandSlots.ts'
 
-const SAVE_SCHEMA_VERSION = 3
+const SAVE_SCHEMA_VERSION = 4
 
 export interface GameSessionDependencies {
   worldState: WorldState
@@ -35,6 +36,8 @@ export interface GameSessionDependencies {
 
 export class GameSession {
   private readonly dependencies: GameSessionDependencies
+  // Recorded Commands live outside the world: Room Reset, Save Points and Game Over never touch them.
+  private readonly commandSlots: CommandSlotMap = loadCommandSlots()
 
   constructor(dependencies: GameSessionDependencies) {
     this.dependencies = dependencies
@@ -148,19 +151,16 @@ export class GameSession {
   }
 
   getCommandSlots(): Readonly<CommandSlotMap> {
-    return this.dependencies.worldState.commandSlots ?? {}
+    return this.commandSlots
   }
 
   getCommandSlot(slot: CommandSlot): string | undefined {
-    return this.dependencies.worldState.commandSlots?.[slot]
+    return this.commandSlots[slot]
   }
 
   setCommandSlot(slot: CommandSlot, command: string): void {
-    if (!this.dependencies.worldState.commandSlots) {
-      this.dependencies.worldState.commandSlots = {}
-    }
-    this.dependencies.worldState.commandSlots[slot] = command
-    saveCommandSlots(this.dependencies.worldState.commandSlots)
+    this.commandSlots[slot] = command
+    saveCommandSlots(this.commandSlots)
   }
 
   recordLastCommandToSlot(slot: CommandSlot): { success: boolean; command?: string } {

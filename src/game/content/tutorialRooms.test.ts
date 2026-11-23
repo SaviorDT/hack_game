@@ -75,7 +75,7 @@ describe('tutorial rooms', () => {
     const state = createGameWorldState()
     expect(state.currentRoomId).toBe(TUTORIAL_ROOM_IDS.move)
     expect(state.rooms.find((room) => room.id === TUTORIAL_ROOM_IDS.slowTime)?.hint)
-      .toBe('<Hold 8,9,0> record command')
+      .toBe('<Hold 8,9,0> record command. Press 8, 9, 0 to replay command. Press R to Room Reset.')
     const holders = state.rooms.filter((candidate) => candidate.objectIds.includes('player')).map((candidate) => candidate.id)
     expect(holders).toEqual([TUTORIAL_ROOM_IDS.move])
     expect(new Set(state.worldObjects.map((worldObject) => worldObject.id)).size).toBe(state.worldObjects.length)

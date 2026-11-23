@@ -48,7 +48,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   },
   {
     id: TUTORIAL_ROOM_IDS.slowTime,
-    hint: '<Hold 8,9,0> record command',
+    hint: '<Hold 8,9,0> record command. Press 8, 9, 0 to replay command. Press R to Room Reset.',
     goal: 'Defeat the fast guard.',
     objects: [
       dagger('tutorial3dagger', 430, 600),
@@ -66,7 +66,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     hint: 'move your mouse and type: acc boulder $mouse',
     goal: 'Get through to the far side.',
     walls: [wallFromEdges(880, 80, 940, 330), wallFromEdges(880, 470, 940, 700)],
-    objects: [boulder('tutorial4boulder', 910, 400), dagger('tutorial4dagger', 520, 600)],
+    objects: [boulder('tutorial4boulder', 910, 400)],
     exit: { targetRoomId: TUTORIAL_ROOM_IDS.flyAround, label: TUTORIAL_ROOM_IDS.flyAround },
   },
   TUTORIAL5_DEFINITION,

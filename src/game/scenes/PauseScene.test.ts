@@ -107,7 +107,7 @@ function setupScene() {
 describe('PauseScene', () => {
   it('starts with RESUME selected', () => {
     const { scene } = setupScene()
-    expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'SETTING', 'HELP', 'TITLE'])
+    expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'ROOM RESET', 'SETTING', 'HELP', 'TITLE'])
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('RESUME')
   })
@@ -182,6 +182,8 @@ describe('PauseScene', () => {
   it('cycles menu selection and wraps', () => {
     const { scene, handleKeyDown } = setupScene()
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('ROOM RESET')
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('SETTING')
     handleKeyDown({ key: 's', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('HELP')
@@ -195,7 +197,7 @@ describe('PauseScene', () => {
     const key = (name: string) => ({ key: name, preventDefault: vi.fn() }) as unknown as KeyboardEvent
 
     function selectTitle(handleKeyDown: (event: KeyboardEvent) => void) {
-      for (let i = 0; i < 3; i += 1) handleKeyDown(key('ArrowDown'))
+      for (let i = 0; i < 4; i += 1) handleKeyDown(key('ArrowDown'))
     }
 
     it('ignores Escape in the main menu and does not resume', () => {
@@ -266,12 +268,13 @@ describe('PauseScene', () => {
       expect(scene.isInTitleConfirm()).toBe(false)
 
       handleKeyDown(key('ArrowDown'))
-      expect(scene.getSelectedChoice()).toBe('SETTING')
+      expect(scene.getSelectedChoice()).toBe('ROOM RESET')
     })
   })
 
   it('opens setting and help subscreens', () => {
     const { scene, handleKeyDown } = setupScene()
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.isInSettings()).toBe(true)
@@ -310,7 +313,7 @@ describe('PauseScene', () => {
     const { scene, handleKeyDown } = setupScene()
     const resumeSpy = vi.spyOn(scene, 'resumeGame')
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
+    expect(scene.getSelectedChoice()).toBe('ROOM RESET')
     handleKeyDown({ key: 'p', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(resumeSpy).toHaveBeenCalledTimes(1)
   })

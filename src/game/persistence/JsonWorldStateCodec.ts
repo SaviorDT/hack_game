@@ -18,7 +18,6 @@ export class JsonWorldStateCodec implements WorldStateCodec {
       processInstances: structuredClone(state.processInstances),
       currentRoomId: state.currentRoomId,
       commandHistory: [...state.commandHistory],
-      commandSlots: state.commandSlots ? { ...state.commandSlots } : undefined,
       simulationTick: state.simulationTick,
       outcome: state.outcome,
     }
@@ -40,7 +39,6 @@ export class JsonWorldStateCodec implements WorldStateCodec {
       processInstances: [...structuredClone(snapshot.processInstances)],
       currentRoomId: snapshot.currentRoomId,
       commandHistory: [...snapshot.commandHistory],
-      commandSlots: snapshot.commandSlots ? { ...snapshot.commandSlots } : {},
       simulationTick: snapshot.simulationTick ?? 0,
       outcome: snapshot.outcome ?? 'playing',
     }

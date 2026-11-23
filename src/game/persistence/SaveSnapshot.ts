@@ -1,4 +1,3 @@
-import type { CommandSlotMap } from '../application/commandSlots.ts'
 import type { Room } from '../domain/Room.ts'
 import type { JsonValue } from '../domain/JsonValue.ts'
 import type { RoomId, WorldObjectId } from '../domain/ids.ts'
@@ -20,7 +19,6 @@ export interface WorldStateSnapshot {
   readonly processInstances: readonly ProcessInstance[]
   readonly currentRoomId: RoomId | null
   readonly commandHistory: readonly string[]
-  readonly commandSlots?: CommandSlotMap
   readonly simulationTick: number
   readonly outcome: 'playing' | 'game-over' | 'congratulations'
 }

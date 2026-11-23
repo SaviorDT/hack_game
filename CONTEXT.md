@@ -185,7 +185,7 @@ The player's setting for how Command Mode is entered and left: Hold Shift, Enter
 _Avoid_: Input mode (that names Movement Mode and Command Mode)
 
 **Pause Menu**:
-The overlay that suspends the game world and offers Resume, Setting, Help and Title. Choosing Title abandons the current run but leaves the Save Slot untouched.
+The overlay that suspends the game world and offers Resume, Room Reset, Setting, Help and Title. Choosing Title abandons the current run but leaves the Save Slot untouched.
 _Avoid_: Esc menu, game menu
 
 **Time Scale**:
@@ -201,7 +201,7 @@ A moment in play at which the game writes the Save Slot. Entering a Room is a Sa
 _Avoid_: Autosave (when referring to the moment itself)
 
 **Room Reset**:
-The player's own choice, without being defeated, to put the current Room back as it was when the Player Character entered it. It returns to the Save Slot's record without replacing it, and leaves the player's settings alone. When the Save Slot holds no record it starts the game over from the beginning. It is not a Game Over Choice, which is offered only after defeat.
+The player's own choice, without being defeated, to put the current Room back as it was when the Player Character entered it. It returns to the Save Slot's record without replacing it, and leaves the player's settings and Recorded Commands alone. It is triggered by the R key or the Pause Menu's Room Reset choice. When the Save Slot holds no record it starts the game over from the beginning. It is not a Game Over Choice, which is offered only after defeat.
 _Avoid_: Restart (that names the Game Over Choice), retry, level restart
 
 **Game Over Choice**:

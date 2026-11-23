@@ -31,7 +31,7 @@ import { buildRecordedCommandsBox } from './recordedCommandsBox.ts'
 import { loadCommandSlots } from '../application/commandSlots.ts'
 
 export const PAUSE_OVERLAY_ALPHA = 0.7
-export const PAUSE_MENU_ITEMS = ['RESUME', 'SETTING', 'HELP', 'TITLE'] as const
+export const PAUSE_MENU_ITEMS = ['RESUME', 'ROOM RESET', 'SETTING', 'HELP', 'TITLE'] as const
 export type PauseMenuItem = (typeof PAUSE_MENU_ITEMS)[number]
 export const TITLE_CONFIRM_OPTIONS = ['YES', 'NO'] as const
 
@@ -98,7 +98,7 @@ export class PauseScene extends Phaser.Scene {
 
     const box = this.add.graphics()
     box.lineStyle(2, 0x333333, 1)
-    box.strokeRect(710, 380, 500, 290)
+    box.strokeRect(710, 380, 500, 345)
     this.mainMenuContainer.add(box)
     this.menuTexts = PAUSE_MENU_ITEMS.map((item, index) => {
       const text = this.add.text(960, 455 + index * 55, `[ ${item} ]`, {
@@ -251,6 +251,12 @@ export class PauseScene extends Phaser.Scene {
   public isInSettings(): boolean { return this.inSettings }
   public isMenuTransitioning(): boolean { return this.isTransitioning }
 
+  /** Same effect as pressing R in the game: a Room Reset, issued after the overlay closes. */
+  private resetRoomOnGameScene(): void {
+    const gameScene = this.scene.get('game') as unknown as { resetRoomFromMenu?: () => void }
+    gameScene?.resetRoomFromMenu?.()
+  }
+
   public resumeGame(): void {
     const gameScene = this.scene.get('game') as unknown as { resumeFromPause?: () => void }
     gameScene?.resumeFromPause?.()
@@ -292,12 +298,13 @@ export class PauseScene extends Phaser.Scene {
 
   private confirmSelection(): void {
     if (this.getSelectedChoice() === 'RESUME') this.resumeWithAnimation()
+    if (this.getSelectedChoice() === 'ROOM RESET') this.resumeWithAnimation(() => this.resetRoomOnGameScene())
     if (this.getSelectedChoice() === 'SETTING') this.showSettings()
     if (this.getSelectedChoice() === 'HELP') this.showHelp()
     if (this.getSelectedChoice() === 'TITLE') this.showTitleConfirm()
   }
 
-  private resumeWithAnimation(): void {
+  private resumeWithAnimation(afterResume?: () => void): void {
     if (this.isTransitioning) return
     this.isTransitioning = true
 
@@ -315,6 +322,7 @@ export class PauseScene extends Phaser.Scene {
         shrinkToPoint(this, targetX, targetY, () => {
           this.isTransitioning = false
           this.resumeGame()
+          afterResume?.()
         })
       })
     })

@@ -529,6 +529,16 @@ describe('saved state', () => {
     expect(session.inputMode).toBe('movement')
   })
 
+  it('keeps Recorded Commands when the Save Slot record is restored', () => {
+    const session = createRoomSession({ movementBindings: bindings, storage: storageStub() })
+    session.saveCurrentState()
+    session.setCommandSlot(8, 'acc dagger guard')
+
+    session.loadSavedState()
+
+    expect(session.getCommandSlot(8)).toBe('acc dagger guard')
+  })
+
   it('restores the simulation tick with the saved world, and leaves the record in place', () => {
     const storage = storageStub()
     const session = createRoomSession({ movementBindings: bindings, storage })

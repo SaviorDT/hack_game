@@ -47,7 +47,8 @@ function bodyOf(worldObject: WorldObject): BodyState {
 function applyImpactDamage(actor: WorldObject, actorTag: WeaponColliderTag, subject: WorldObject, context: ContactContext): void {
   const actorState = bodyOf(actor)
   const target = getMutableWorldObjectState<CharacterState>(subject)
-  if (!actorState.thrown || !target.alive) {
+  // A Blade never hurts the Character that last threw it (`immuneId`); other Weapons have none.
+  if (!actorState.thrown || !target.alive || actorState.immuneId === subject.id) {
     return
   }
   // `lastImpactTick` is the simulation tick of the last Impact Damage taken; unset until the first.

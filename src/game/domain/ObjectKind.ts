@@ -5,4 +5,4 @@
  */
 
 /** The special objects a room can hold besides the plain boulder, dagger, guard and player. */
-export type ObjectKind = 'crate' | 'plate' | 'archer' | 'dummy'
+export type ObjectKind = 'crate' | 'plate' | 'archer' | 'dummy' | 'boss'

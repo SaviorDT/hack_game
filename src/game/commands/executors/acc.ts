@@ -8,6 +8,7 @@ import { isMouseTarget, MOUSE_TARGET } from '../CommandContext.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import { isDestroyed, spendMvLimit } from '../../domain/MvLimit.ts'
 import { visibleExitsOf } from '../../domain/RoomTravel.ts'
+import { WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import { displayName, findObjectInRoom, wildcardToRegExp } from './commandHelpers.ts'
 
 export class AccCommandExecutor implements CommandExecutor {
@@ -114,6 +115,10 @@ export class AccCommandExecutor implements CommandExecutor {
         sourceState.vx = (sourceState.vx as number | undefined) ?? 0
         sourceState.vy = (sourceState.vy as number | undefined) ?? 0
         sourceState.thrown = { targetX, targetY, targetObjectId: targetObjectId ?? null }
+        if ('immuneId' in sourceState) {
+          // A Blade the player throws spares the player, and so hurts the Boss that launched it.
+          sourceState.immuneId = WORLD_OBJECT_IDS.player
+        }
       }
     }
 

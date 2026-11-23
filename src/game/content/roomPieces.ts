@@ -9,6 +9,7 @@ import {
 } from '../domain/Prefab.ts'
 import { ROOM_LAYOUT } from './roomConstants.ts'
 import { createRoomObjects } from './roomWorldState.ts'
+import { BOSS_CONFIG } from './bossConstants.ts'
 
 /** Building blocks for rooms beyond room: object presets and turning room definitions into Rooms. */
 
@@ -59,6 +60,24 @@ export const plate = (id: string, x: number, y: number, name = 'plate'): RoomObj
 /** An archer: stands where it is and shoots arrows at the player. */
 export const archer = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>
   createPieceFromPrefab('archer', id, x, y, { name: 'archer', mass: STANDS_FIRM, ...extra })
+
+/** A Boss: a guard one and a half times as big that alternates between chasing, a fan of Blades and a dash. */
+export const boss = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>
+  createPieceFromPrefab('guard', id, x, y, {
+    name: id,
+    kind: 'boss',
+    // Built from the guard's look, but not an instance of it: editing the guard prefab must not resize or re-health the Boss.
+    prefabId: 'boss',
+    speed: BOSS_CONFIG.chaseSpeed,
+    maxHealth: BOSS_CONFIG.maxHealth,
+    strikeDamage: BOSS_CONFIG.strikeDamage,
+    displayWidth: 264,
+    displayHeight: 264,
+    colliderWidth: 165,
+    colliderHeight: 240,
+    mass: STANDS_FIRM,
+    ...extra,
+  })
 
 /** A Target Dummy: nothing Collides with it, but a Weapon in flight hurts it. */
 export const targetDummy = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>

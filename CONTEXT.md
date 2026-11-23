@@ -44,6 +44,10 @@ _Avoid_: Ranged guard
 A projectile shot by an Archer that stops at the first Wall, Obstacle or Character it reaches and hurts a Character it hits. The player cannot list or name arrows.
 _Avoid_: Bullet
 
+**Blade**:
+A projectile a Boss launches. It is named like `dagger3` or `shiv7`, so the player can list it and name it as the source of `acc`, but it cannot be picked up. It passes through Characters, hurting each one it touches by Impact Damage, except the Character that last threw it, and ends at a Wall or Obstacle. It is not a Weapon.
+_Avoid_: Dagger (that is the Weapon the player picks up), Knife, Arrow (an Archer's projectile)
+
 **Tutorial Room**:
 One of the first Rooms played (tutorial1 to tutorial5), each teaching one mechanic. Most have a Locked Exit until the player has used it.
 _Avoid_: Level, demo (when referring to these rooms in the game)
@@ -64,8 +68,12 @@ _Avoid_: Player (when referring to the in-world Character)
 A hostile Character that obstructs the player's progress through a Room.
 _Avoid_: Enemy sprite (when referring to the character)
 
+**Boss**:
+A Hostile that guards the Exit of the last Room and alternates between several attacks of its own. It is not a Guard: it has its own attacks and is defeated to open the Exit.
+_Avoid_: Guard (a Guard has no attack pattern of its own), final enemy
+
 **Hostile**:
-A Character that opposes the Player Character, such as a Guard or an Archer. A Hostile never attacks another Hostile in melee; its Arrows still hurt any Character they hit.
+A Character that opposes the Player Character, such as a Guard, an Archer or a Boss. A Hostile never attacks another Hostile in melee; its Arrows still hurt any Character they hit.
 _Avoid_: Enemy (when referring to the glossary term), faction
 
 **Weapon**:

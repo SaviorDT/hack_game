@@ -136,8 +136,8 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   mvLimit?: number
   /** Health a guard's melee hit takes from its target; defaults to the guard-strike weapon's damage. */
   strikeDamage?: number
-  /** A special object: a pushable \`crate\`, a pressure \`plate\`, an \`archer\` enemy, or a Target \`dummy\`. */
-  kind?: 'crate' | 'plate' | 'archer' | 'dummy'
+  /** A special object: a pushable \`crate\`, a pressure \`plate\`, an \`archer\` enemy, a Target \`dummy\`, or a \`boss\`. */
+  kind?: 'crate' | 'plate' | 'archer' | 'dummy' | 'boss'
   /** The prefab template ID this object was instantiated from. */
   prefabId?: string
 }

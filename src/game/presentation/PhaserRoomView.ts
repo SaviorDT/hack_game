@@ -66,7 +66,12 @@ const KIND_TEXTURES: Readonly<Record<string, string>> = {
   crate: 'crate',
   plate: 'plate',
   dummy: GUARD_TEXTURE_KEY,
+  boss: GUARD_TEXTURE_KEY,
+  blade: DAGGER_TEXTURE_KEY,
 }
+
+/** A Boss is drawn with the guard sprite, tinted red. */
+const BOSS_TINT = 0xff8080
 
 interface DisplayState {
   x?: unknown
@@ -270,7 +275,10 @@ export class PhaserRoomView {
       if (kind === 'plate') {
         this.setTexturePreservingSize(sprite, isPlatePressed(state, worldObject) ? 'plate-pressed' : 'plate')
       }
-      if (kind === 'arrow' && typeof sprite.setAngle === 'function') {
+      if (kind === 'boss' && typeof sprite.setTint === 'function') {
+        sprite.setTint(BOSS_TINT)
+      }
+      if ((kind === 'arrow' || kind === 'blade') && typeof sprite.setAngle === 'function') {
         sprite.setAngle(typeof objectState.angle === 'number' ? objectState.angle : 0)
       }
       if ((role === 'player' || role === 'guard') && kind === undefined) {
@@ -299,7 +307,7 @@ export class PhaserRoomView {
       sprite.setVisible(visible)
 
       if (typeof sprite.setFlipX === 'function') {
-        sprite.setFlipX(kind === 'arrow' ? false : shouldFlip)
+        sprite.setFlipX(kind === 'arrow' || kind === 'blade' ? false : shouldFlip)
       }
 
       const isWeapon = worldObject.metadata.role === 'weapon' || worldObject.id === WORLD_OBJECT_IDS.dagger

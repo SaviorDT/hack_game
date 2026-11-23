@@ -37,6 +37,7 @@ import {
 import { ROOM_IDS } from '../content/roomConstants.ts'
 import { TUTORIAL_ROOM_IDS } from '../content/tutorialRooms.ts'
 import { HOME_AREA_IDS } from '../content/homeArea.ts'
+import { ARENA_IDS } from '../content/arena.ts'
 import { wouldOverlapAnyEditorObject } from './levelEditorHistory.ts'
 import { LevelEditorScene } from './LevelEditorScene.ts'
 import { SceneManager } from './SceneManager.ts'
@@ -61,8 +62,9 @@ describe('LevelEditorScene & Room Registry', () => {
         HOME_AREA_IDS.lane,           // lane
         HOME_AREA_IDS.gate,           // gate
         ROOM_IDS.main,                // room
+        ARENA_IDS.room,               // arena
       ])
-      expect(roomIds.length).toBe(10)
+      expect(roomIds.length).toBe(11)
     })
 
     it('returns valid room definitions for all editor rooms', () => {
@@ -127,11 +129,15 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getNextRoomId(current)
       expect(current).toBe(ROOM_IDS.main)
       current = getNextRoomId(current)
+      expect(current).toBe(ARENA_IDS.room)
+      current = getNextRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.move)
     })
 
     it('navigates sequentially backward through all rooms and wraps around', () => {
       let current: string = TUTORIAL_ROOM_IDS.move
+      current = getPreviousRoomId(current)
+      expect(current).toBe(ARENA_IDS.room)
       current = getPreviousRoomId(current)
       expect(current).toBe(ROOM_IDS.main)
       current = getPreviousRoomId(current)
@@ -182,11 +188,25 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(roomObjs.some((o) => o.role === 'weapon')).toBe(true)
     })
 
-    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and a Hidden Exit', () => {
+    it('serves the arena from its definition, keeping the Boss and its settings through setRoomObjectConfigs', () => {
+      const objects = getRoomObjectConfigs(ARENA_IDS.room)
+      expect(objects.filter((o) => o.kind === 'boss')).toHaveLength(1)
+      expect(objects.filter((o) => o.kind === 'plate').map((o) => o.name).sort()).toEqual(['b', 'bl', 'br', 'l', 'r', 't', 'tl', 'tr'])
+      expect(getRoomDefinition(ARENA_IDS.room)?.exit).toMatchObject({ targetRoomId: ROOM_IDS.end, endsGame: true })
+
+      const moved = objects.map((o) => (o.kind === 'boss' ? { ...o, x: 900 } : o))
+      setRoomObjectConfigs(ARENA_IDS.room, moved)
+      expect(getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')).toMatchObject({ x: 900, maxHealth: 300, strikeDamage: 40 })
+
+      resetAllRooms()
+      expect(getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')?.x).not.toBe(900)
+    })
+
+    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and an Exit on the right wall', () => {
       const objects = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)
       expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
       expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(200)
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage, hiddenUntilOpen: true })
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
 
       setRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround, [])
       expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(0)

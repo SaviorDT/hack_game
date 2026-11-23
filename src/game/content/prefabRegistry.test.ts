@@ -10,6 +10,7 @@ import {
 } from './prefabRegistry.ts'
 import { getRoomObjectConfigs, resetAllRooms } from './roomRegistry.ts'
 import { ROOM_IDS } from './roomConstants.ts'
+import { ARENA_IDS } from './arena.ts'
 
 describe('Prefab Registry & Propagation', () => {
   beforeEach(() => {
@@ -22,6 +23,17 @@ describe('Prefab Registry & Propagation', () => {
     expect(prefabs.length).toBeGreaterThanOrEqual(7)
     expect(getPrefab('guard')).toBeDefined()
     expect(getPrefab('boulder')).toBeDefined()
+  })
+
+  it('does not resize or re-health the arena Boss when the guard prefab changes', () => {
+    const before = getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')!
+    propagatePrefabChanges('guard', { ...getPrefab('guard')!, maxHealth: 180, displayWidth: 190, displayHeight: 190, colliderWidth: 120 })
+    const after = getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')!
+    expect(after).toMatchObject({
+      maxHealth: before.maxHealth,
+      displayWidth: before.displayWidth,
+      colliderWidth: before.colliderWidth,
+    })
   })
 
   it('updates prefab in registry', () => {
@@ -49,6 +61,12 @@ describe('Prefab Registry & Propagation', () => {
       colliderWidth: 120,
     }
 
+    const positionsBefore = Object.fromEntries(
+      getRoomObjectConfigs(ROOM_IDS.main)
+        .filter((o) => ['guard', 'guard2', 'guard3'].includes(o.id))
+        .map((o) => [o.id, { x: o.x, y: o.y }]),
+    )
+
     const result = propagatePrefabChanges('guard', updatedPrefab)
     expect(result.affectedRooms).toContain(ROOM_IDS.main)
     expect(result.affectedInstanceCount).toBeGreaterThanOrEqual(3)
@@ -72,9 +90,9 @@ describe('Prefab Registry & Propagation', () => {
     expect(g3.colliderWidth).toBe(120)
 
     // Positions should remain unchanged
-    expect(g1.x).toBe(1490)
-    expect(g2.x).toBe(1012)
-    expect(g3.x).toBe(1160)
+    expect({ x: g1.x, y: g1.y }).toEqual(positionsBefore.guard)
+    expect({ x: g2.x, y: g2.y }).toEqual(positionsBefore.guard2)
+    expect({ x: g3.x, y: g3.y }).toEqual(positionsBefore.guard3)
 
     // Non-guard objects should NOT be changed
     const player = roomObjects.find((o) => o.id === 'player')!

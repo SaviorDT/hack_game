@@ -1,0 +1,11 @@
+---
+status: accepted
+---
+
+# The Boss runs its own state machine, and its Blades are thrown Weapon-tagged objects
+
+The last Room has a Boss (`warden`) with three attacks: chase and strike, a fan of Blades, and a retreat followed by a straight dash. The game already has a Behavior Tree subsystem with a boss preset, but it is only wired into the F4 AI editor; no World Object in the real game runs one, and it has no node for launching projectiles or for a dash that goes straight until it hits something. We gave the Boss a dedicated `BossProcess` (a small state machine in `simulation/room/`, like `ArcherProcess`) instead of extending the Behavior Tree and wiring it into the game. The Behavior Tree and its editor are untouched. The trade-off is that the Boss's pattern is code, not data the AI editor can edit, and a second boss means a second process (or a refactor into a shared one) rather than a new tree.
+
+A Blade is a World Object pooled with the Boss (like an Archer's arrows) but, unlike an arrow, it is a real, listable, nameable object so the player can send it back with `acc`. It carries the `weapon` Collider Tag with a lower `impactDamageRate`, and the Boss launches it as an ordinary Throw towards a far point, so flight, walls, Obstacles and Impact Damage reuse the existing rules instead of a second set of projectile rules. It is role `object` with no `weaponId`, so it cannot be picked up, and has Mv Limit 1: the Boss's launch is free, the player's `acc` is the one throw. A Blade whose Throw has ended (wall, Obstacle) or that has left the room is Destroyed by `BladeProcess`, and a Destroyed Blade is reused by the pool. Because Impact Damage would otherwise hurt the Boss with its own Blades, a Blade records the Character it must not hurt (`immuneId`): the Boss when it launches it, the Player Character when `acc` throws it.
+
+Alternatives were arrow-like projectiles that stop at the first Character (a second damage rule, and a Blade the player could not meaningfully send back), creating Blades on demand (the view and save format would need dynamic objects, which ADR 0013 avoided), and a global rule that a Weapon never hurts its thrower (it would remove the graze the player takes from a held dagger that other tests and rooms rely on).

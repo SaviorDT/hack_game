@@ -19,6 +19,7 @@ import type { PlayerSpeedConfig } from '../../content/room.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { ShapeCollisionWorld, boxFromState } from '../../domain/CollisionWorld.ts'
 import { ArcherProcess, ArrowFlightProcess } from './RangedProcesses.ts'
+import { BladeProcess, BossProcess } from './BossProcesses.ts'
 import { currentRoomOf, isExitOpen, isPlayerAtExit, travelThroughExit } from '../../domain/RoomTravel.ts'
 import { CombatService } from '../../domain/CombatService.ts'
 import { PICKUP_REACH, PickUpService } from '../../domain/PickUpService.ts'
@@ -355,4 +356,6 @@ export const ROOM_PROCESSES: readonly WorldObjectProcess[] = [
   new BoulderProcess(),
   new ArcherProcess(),
   new ArrowFlightProcess(),
+  new BossProcess(),
+  new BladeProcess(),
 ]

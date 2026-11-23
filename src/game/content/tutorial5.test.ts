@@ -69,7 +69,7 @@ describe('tutorial5', () => {
     const dummy = objectOf(session, TUTORIAL5_DUMMY.id)
     expect(colliderTagsOf(dummy)).toEqual([{ class: 'target' }])
     expect(dummy.metadata.name).toBe('dummy')
-    expect(body(session, TUTORIAL5_DUMMY.id)).toMatchObject({ health: 1000, maxHealth: 1000, alive: true })
+    expect(body(session, TUTORIAL5_DUMMY.id)).toMatchObject({ health: TUTORIAL5_DUMMY.maxHealth, maxHealth: TUTORIAL5_DUMMY.maxHealth, alive: true })
     for (const other of session.getWorldState().worldObjects) {
       expect(collidesPhysically(dummy, other)).toBe(false)
     }

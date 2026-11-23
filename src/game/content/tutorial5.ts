@@ -3,7 +3,7 @@ import { HOME_AREA_IDS } from './homeArea.ts'
 import { dagger, targetDummy, type RoomDefinition } from './roomPieces.ts'
 
 /** Where tutorial5's Target Dummy stands; the Hidden Exit appears on the same spot once it is defeated. */
-export const TUTORIAL5_DUMMY = { id: 'dummy2', x: 1490, y: 365 } as const
+export const TUTORIAL5_DUMMY = { id: 'dummy2', x: 1490, y: 365, maxHealth: 200 } as const
 
 export const TUTORIAL5_HINT = "One throw won't be enough. Maybe you can make the dagger fly around with you?"
 
@@ -17,7 +17,7 @@ export const TUTORIAL5_DEFINITION: RoomDefinition = {
   goal: 'Defeat the dummy, then walk into the exit.',
   objects: [
     dagger('tutorial5dagger', 614, 611),
-    targetDummy(TUTORIAL5_DUMMY.id, TUTORIAL5_DUMMY.x, TUTORIAL5_DUMMY.y),
+    targetDummy(TUTORIAL5_DUMMY.id, TUTORIAL5_DUMMY.x, TUTORIAL5_DUMMY.y, { maxHealth: TUTORIAL5_DUMMY.maxHealth }),
   ],
   exit: {
     targetRoomId: HOME_AREA_IDS.storage,

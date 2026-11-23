@@ -516,7 +516,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const isWeapon = role === 'weapon'
     const isCharacter = role === 'player' || role === 'enemy'
-    const maxHealth = isCharacter && typeof state.maxHealth === 'number' ? state.maxHealth : (isCharacter ? 100 : undefined)
+    const maxHealth = typeof state.maxHealth === 'number' ? state.maxHealth : (isCharacter ? 100 : undefined)
     const speed = isCharacter
       ? (typeof state.speed === 'number' || (typeof state.speed === 'object' && state.speed !== null))
         ? (state.speed as number | PlayerSpeedConfig)

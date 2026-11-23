@@ -7,6 +7,7 @@ import type { CommandContext } from '../CommandContext.ts'
 import { isMouseTarget, MOUSE_TARGET } from '../CommandContext.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import { isDestroyed, spendMvLimit } from '../../domain/MvLimit.ts'
+import { canBeThrown } from '../../domain/Throwable.ts'
 import { visibleExitsOf } from '../../domain/RoomTravel.ts'
 import { WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import { displayName, findObjectInRoom, wildcardToRegExp } from './commandHelpers.ts'
@@ -49,6 +50,7 @@ export class AccCommandExecutor implements CommandExecutor {
         currentRoom.objectIds.includes(obj.id) &&
         obj.metadata.hidden !== true &&
         !isDestroyed(obj) &&
+        canBeThrown(obj) &&
         obj.id !== targetObject?.id &&
         matcher.test(displayName(obj)),
       )
@@ -59,6 +61,9 @@ export class AccCommandExecutor implements CommandExecutor {
       const sourceObject = findObjectInRoom(state, label1)
       if (!sourceObject) {
         return { status: 'rejected', feedback: { kind: 'popup', text: `Cannot find "${label1}".` } }
+      }
+      if (!canBeThrown(sourceObject)) {
+        return { status: 'rejected', feedback: { kind: 'popup', text: `"${label1}" cannot be thrown.` } }
       }
       sources = [sourceObject]
     }

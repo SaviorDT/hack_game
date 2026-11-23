@@ -3,6 +3,8 @@ import { AccCommandExecutor } from './acc.ts'
 import { createInitialWorldState } from '../../content/roomWorldState.ts'
 import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
+import { createGameWorldState } from '../../content/tutorialRooms.ts'
+import { ARENA_IDS } from '../../content/arena.ts'
 import { TickSimulationEngine } from '../../simulation/TickSimulationEngine.ts'
 import { ROOM_PROCESSES } from '../../simulation/room/RoomProcesses.ts'
 
@@ -138,5 +140,25 @@ describe('AccCommandExecutor', () => {
     executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state)
     new TickSimulationEngine(ROOM_PROCESSES).advance(state, 100)
     expect(daggerState.x as number).not.toBe(initialX)
+  })
+  describe('Boss', () => {
+    const arena = () => createGameWorldState(undefined, ARENA_IDS.room)
+    const run = (state: ReturnType<typeof arena>, a: string, b: string) =>
+      executor.execute({ name: 'acc', arguments: [a, b], options: [] }, state)
+
+    it('cannot be a source but can be a target', () => {
+      const state = arena()
+      expect(run(state, 'warden', 'tl').feedback).toEqual({ kind: 'popup', text: '"warden" cannot be thrown.' })
+      expect(run(state, 'warden', 'tl').status).toBe('rejected')
+      expect(run(state, 'excalibur', 'warden').status).toBe('success')
+    })
+
+    it('is skipped by a wildcard source, which then finds nothing if only the Boss matches', () => {
+      const state = arena()
+      expect(run(state, 'war*', 'tl').feedback).toEqual({ kind: 'popup', text: 'Cannot find "war*".' })
+      expect(run(state, '*', 'tl').status).toBe('success')
+      const boss = state.worldObjects.find((obj) => (obj.state as { bossMode?: string }).bossMode)!
+      expect((boss.state as { thrown?: unknown }).thrown ?? null).toBeNull()
+    })
   })
 })

@@ -13,6 +13,7 @@ import {
   TYPING_SPEED_MS,
 } from './uiTheme.ts'
 import { SCROLL_SPEED_MS } from './uiTransitions.ts'
+import type { CommandTypingMode } from '../application/gameSettings.ts'
 
 describe('PhaserGameHud', () => {
   function setupMockScene(hasWebGlFilters = true) {
@@ -219,6 +220,20 @@ describe('PhaserGameHud', () => {
     } as unknown as WorldState
   }
 
+  function tutorial2WorldState(commandHistory: string[] = []): WorldState {
+    return {
+      ...mockWorldState('tutorial2', 'type: acc dagger guard'),
+      commandHistory,
+    } as unknown as WorldState
+  }
+
+  function tutorial3WorldState(): WorldState {
+    return {
+      ...mockWorldState('tutorial3', '<Hold 8,9,0> record command'),
+      commandSlots: { 8: 'acc dagger hacker' },
+    } as unknown as WorldState
+  }
+
   it('creates UI elements with terminal font and color palette matching main UI', () => {
     const { mockScene, createdTexts, createdRects } = setupMockScene()
     const hud = new PhaserGameHud(mockScene)
@@ -256,7 +271,7 @@ describe('PhaserGameHud', () => {
     const hud = new PhaserGameHud(mockScene)
 
     const hint = 'WASD to move.'
-    const state = mockWorldState('tutorial2', hint)
+    const state = mockWorldState('home_empty', hint)
 
     hud.update(state)
 
@@ -288,6 +303,85 @@ describe('PhaserGameHud', () => {
     hud.destroy()
   })
 
+  it.each([
+    ['hold-shift', true, '<Hold SHIFT> open command', '<Release SHIFT> execute command'],
+    ['hybrid', true, '<Hold SHIFT / Press ENTER> open command', '<Release SHIFT> execute command'],
+    ['hybrid', false, '<Hold SHIFT / Press ENTER> open command', '<Press ENTER> execute command'],
+    ['enter-sticky', false, '<Press ENTER> open command', '<Press ENTER> execute command'],
+  ] as const)(
+    'progresses tutorial2 for %s mode after open, exact command, and submit',
+    (typingMode: CommandTypingMode, openedByShift: boolean, openPrompt: string, executePrompt: string) => {
+      const { mockScene, createdTexts, createdContainers, tweenConfigs, timerCallbacks } = setupMockScene()
+      const hud = new PhaserGameHud(mockScene)
+      const state = tutorial2WorldState()
+
+      hud.update(state, 'movement', typingMode)
+      expect(createdTexts[3].obj.text).toBe('')
+      for (let index = 0; index < openPrompt.length; index++) timerCallbacks[0]()
+      expect(createdTexts[3].obj.text).toBe(openPrompt)
+
+      hud.update(state, 'command', typingMode, { commandOpenedByShift: openedByShift })
+      expect(tweenConfigs).toHaveLength(1)
+      tweenConfigs[0].onComplete?.()
+      const commandPrompt = 'type: acc dagger guard'
+      for (let index = 0; index < commandPrompt.length; index++) timerCallbacks[1]()
+      expect(createdTexts[4].obj.text).toBe(commandPrompt)
+
+      hud.update(state, 'command', typingMode, {
+        commandDraft: 'acc dagger',
+        commandOpenedByShift: openedByShift,
+      })
+      expect(tweenConfigs).toHaveLength(1)
+
+      hud.update(state, 'command', typingMode, {
+        commandDraft: 'acc dagger guard',
+        commandOpenedByShift: openedByShift,
+      })
+      expect(tweenConfigs).toHaveLength(2)
+      tweenConfigs[1].onComplete?.()
+      for (let index = 0; index < executePrompt.length; index++) timerCallbacks[2]()
+      expect(createdTexts[3].obj.text).toBe(executePrompt)
+
+      hud.update(tutorial2WorldState(['acc dagger guard']), 'movement', typingMode, {
+        commandOpenedByShift: false,
+      })
+      expect(tweenConfigs[2]).toEqual(expect.objectContaining({
+        targets: createdContainers[3],
+        alpha: 0,
+        duration: POPUP_FADE_DURATION_MS,
+      }))
+
+      hud.destroy()
+    },
+  )
+
+  it('shows tutorial3 slot execution only after recording during this visit, then fades after execution', () => {
+    const { mockScene, createdTexts, createdContainers, tweenConfigs, timerCallbacks } = setupMockScene()
+    const hud = new PhaserGameHud(mockScene)
+    const state = tutorial3WorldState()
+    const recordPrompt = '<Hold 8,9,0> record command'
+    const executePrompt = '<8,9,0> execute recorded command'
+
+    hud.update(state)
+    for (let index = 0; index < recordPrompt.length; index++) timerCallbacks[0]()
+    expect(createdTexts[3].obj.text).toBe(recordPrompt)
+
+    hud.update(state, 'movement', 'hold-shift', { recordedSlot: 9 })
+    expect(tweenConfigs).toHaveLength(1)
+    tweenConfigs[0].onComplete?.()
+    for (let index = 0; index < executePrompt.length; index++) timerCallbacks[1]()
+    expect(createdTexts[4].obj.text).toBe(executePrompt)
+
+    hud.update(state, 'movement', 'hold-shift', { recordedSlot: 9, executedSlot: 9 })
+    expect(tweenConfigs[1]).toEqual(expect.objectContaining({
+      targets: createdContainers[5],
+      alpha: 0,
+      duration: POPUP_FADE_DURATION_MS,
+    }))
+
+    hud.destroy()
+  })
+
   it('keeps typing the room hint across later updates in the same room', () => {
     const { mockScene, activeTimers } = setupMockScene()
     const hud = new PhaserGameHud(mockScene)
@@ -309,7 +403,7 @@ describe('PhaserGameHud', () => {
     const { mockScene, createdTexts, createdRects, activeTimers } = setupMockScene()
     const hud = new PhaserGameHud(mockScene)
 
-    hud.update(mockWorldState('tutorial2', 'Type something.'))
+    hud.update(mockWorldState('home_empty', 'Type something.'))
     expect(activeTimers.length).toBe(1)
     const timer = activeTimers[0]
 
@@ -327,7 +421,7 @@ describe('PhaserGameHud', () => {
     const { mockScene, createdContainers, activeTimers } = setupMockScene()
     const hud = new PhaserGameHud(mockScene)
 
-    hud.update(mockWorldState('tutorial2', 'Type something.'))
+    hud.update(mockWorldState('home_empty', 'Type something.'))
     expect(activeTimers.length).toBe(1)
     const timer = activeTimers[0]
 

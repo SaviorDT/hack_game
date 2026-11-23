@@ -1,6 +1,12 @@
 import type Phaser from 'phaser'
 import type { WorldState } from '../domain/WorldState.ts'
 import type { InputMode } from '../application/InputModeController.ts'
+import { DEFAULT_COMMAND_TYPING_MODE, type CommandTypingMode } from '../application/gameSettings.ts'
+import {
+  StagedTutorialPrompts,
+  type TutorialHudContext,
+  type TutorialPromptBanner,
+} from './StagedTutorialPrompts.ts'
 import {
   COLOR_DIM,
   COLOR_PROMPT,
@@ -24,13 +30,7 @@ const TUTORIAL_MOVE_PROMPT = '<W A S D> Move'
 const TUTORIAL_ATTACK_PROMPT = '<J> Attack'
 
 type TutorialPromptStage = 'move' | 'attack' | 'complete' | null
-
-interface HintBanner {
-  container: Phaser.GameObjects.Container
-  textContainer: Phaser.GameObjects.Container
-  panel: Phaser.GameObjects.Rectangle
-  text: Phaser.GameObjects.Text
-}
+type HintBanner = TutorialPromptBanner
 
 function createHintBanner(scene: Phaser.Scene, initialText: string): HintBanner {
   const panel = scene.add.rectangle(960, BANNER_TOP, BANNER_WIDTH, BANNER_HEIGHT, PANEL_BG, PANEL_BG_ALPHA)
@@ -46,7 +46,6 @@ function createHintBanner(scene: Phaser.Scene, initialText: string): HintBanner 
   container.add([panel, textContainer])
   return { container, textContainer, panel, text }
 }
-
 /** Main-game chrome. World coordinates and editor layouts remain independent. */
 export class PhaserGameHud {
   private readonly scene: Phaser.Scene
@@ -57,7 +56,9 @@ export class PhaserGameHud {
   private readonly attackPromptBanner: HintBanner
   private readonly popupMaskGraphics: Phaser.GameObjects.Graphics
   private readonly popupGeometryMask: Phaser.Display.Masks.GeometryMask
+  private readonly stagedTutorialPrompts: StagedTutorialPrompts
   private shownHintRoomId: string | null | undefined
+  private shownHintText: string | undefined
   private tutorialPromptStage: TutorialPromptStage | undefined
   private typingTimer?: Phaser.Time.TimerEvent
   private scrollTween?: Phaser.Tweens.Tween
@@ -74,6 +75,12 @@ export class PhaserGameHud {
     this.hintBanner = createHintBanner(scene, '')
     this.movePromptBanner = createHintBanner(scene, TUTORIAL_MOVE_PROMPT)
     this.attackPromptBanner = createHintBanner(scene, TUTORIAL_ATTACK_PROMPT)
+    this.stagedTutorialPrompts = new StagedTutorialPrompts(
+      scene,
+      [this.movePromptBanner, this.attackPromptBanner],
+      (text, value) => this.typeText(text, value),
+      () => this.clearTypingTimer(),
+    )
     this.popupMaskGraphics = scene.make.graphics({})
       .fillStyle(0xffffff, 1)
       .fillRect(BANNER_LEFT, BANNER_TOP, BANNER_WIDTH, BANNER_HEIGHT)
@@ -101,26 +108,52 @@ export class PhaserGameHud {
     }
   }
 
-  update(state: WorldState, _mode?: InputMode): void {
+  update(
+    state: WorldState,
+    mode?: InputMode,
+    commandTypingMode: CommandTypingMode = DEFAULT_COMMAND_TYPING_MODE,
+    tutorialContext: TutorialHudContext = {},
+  ): void {
     this.roomText.setText(`ROOM  /  ${state.currentRoomId ?? 'unknown'}`)
 
     const room = state.rooms.find((candidate) => candidate.id === state.currentRoomId)
     if (room?.id === 'tutorial1') {
+      this.stagedTutorialPrompts.reset()
       this.updateTutorialPrompt(state)
       return
     }
 
     this.resetTutorialPrompt()
+    if (room?.id === 'tutorial2' || room?.id === 'tutorial3') {
+      if (this.shownHintRoomId !== room.id) {
+        this.clearTypingTimer()
+        this.shownHintRoomId = room.id
+        this.hideHintBanner()
+      }
+      this.stagedTutorialPrompts.update(
+        room.id,
+        room.hint ?? '',
+        state,
+        mode,
+        commandTypingMode,
+        tutorialContext,
+      )
+      return
+    }
+
+    this.stagedTutorialPrompts.reset()
     this.updateRoomHint(room)
   }
 
   private updateRoomHint(room: WorldState['rooms'][number] | undefined): void {
-    if (room?.id === this.shownHintRoomId) return
+    const hint = room?.hint
+    if (room?.id === this.shownHintRoomId && hint === this.shownHintText) return
     this.shownHintRoomId = room?.id
+    this.shownHintText = hint
     this.clearTypingTimer()
 
-    if (room?.hint) {
-      this.hintBanner.text.setText(room.hint)
+    if (hint) {
+      this.hintBanner.text.setText(hint)
       const bannerHeight = Math.max(92, this.hintBanner.text.height + 30)
       this.hintBanner.panel.setSize(BANNER_WIDTH, bannerHeight)
       this.hintBanner.text.setPosition(HINT_TEXT_X, BANNER_TOP + bannerHeight / 2)
@@ -128,13 +161,19 @@ export class PhaserGameHud {
       this.hintBanner.panel.setVisible(true)
       this.hintBanner.text.setVisible(true)
 
-      this.typeText(this.hintBanner.text, room.hint)
+      this.typeText(this.hintBanner.text, hint)
     } else {
       this.hintBanner.text.setText('')
       this.hintBanner.container.setVisible(false)
       this.hintBanner.panel.setVisible(false)
       this.hintBanner.text.setVisible(false)
     }
+  }
+
+  private hideHintBanner(): void {
+    this.hintBanner.container.setVisible(false)
+    this.hintBanner.panel.setVisible(false)
+    this.hintBanner.text.setVisible(false)
   }
 
   private updateTutorialPrompt(state: WorldState): void {
@@ -226,8 +265,7 @@ export class PhaserGameHud {
   }
 
   private resetTutorialPrompt(): void {
-    // Without a tutorial prompt in play, any typing timer belongs to the room hint and must keep running.
-    if (this.tutorialPromptStage === undefined && !this.scrollTween && !this.fadeTween) return
+    if (this.tutorialPromptStage === undefined) return
     this.clearTypingTimer()
     this.scrollTween?.stop()
     this.scrollTween = undefined
@@ -238,6 +276,7 @@ export class PhaserGameHud {
   }
 
   destroy(): void {
+    this.stagedTutorialPrompts.reset()
     this.clearTypingTimer()
     this.scrollTween?.stop()
     this.scrollTween = undefined

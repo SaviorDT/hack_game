@@ -35,9 +35,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   },
   {
     id: TUTORIAL_ROOM_IDS.throw,
-    hint:
-      'acc <thing> <target> throws a thing at a target. This guard hits hard up close, so pick up the dagger and ' +
-      'throw it from a distance: acc dagger guard. acc boulder hacker pulls the boulder over to you.',
+    hint: 'type: acc dagger guard',
     goal: 'Defeat the guard. Try throwing the dagger with acc.',
     objects: [
       dagger('tutorial2dagger', 420, 600),
@@ -52,9 +50,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   },
   {
     id: TUTORIAL_ROOM_IDS.slowTime,
-    hint:
-      'Typing a command slows time, but it never stops. This guard is faster than you and charges once ' +
-      'you cross the middle of the room. Grab the dagger, and when the guard comes, type acc dagger guard.',
+    hint: '<Hold 8,9,0> record command',
     goal: 'Defeat the fast guard.',
     objects: [
       dagger('tutorial3dagger', 430, 600),

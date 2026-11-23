@@ -101,8 +101,6 @@ describe('LevelEditorScene & Room Registry', () => {
 
     it('returns hints for tutorial rooms and room1', () => {
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.move)?.hint).toContain('WASD')
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.throw)?.hint).toContain('acc dagger guard')
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.slowTime)?.hint).toContain('slows time')
       expect(getRoomDefinition(ROOM_IDS.first)?.hint).toContain('reach room2')
     })
   })
@@ -301,7 +299,7 @@ describe('LevelEditorScene & Room Registry', () => {
       const scene = new LevelEditorScene()
       scene.init({ roomId: HOME_AREA_IDS.yard })
       const startMock = vi.fn()
-      ;(scene as any).scene = { key: 'level-editor', start: startMock }
+        ; (scene as any).scene = { key: 'level-editor', start: startMock }
 
       scene.returnToGame()
       expect(startMock).toHaveBeenCalledWith('game', { startingRoomId: HOME_AREA_IDS.yard })

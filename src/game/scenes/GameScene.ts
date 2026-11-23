@@ -10,6 +10,7 @@ import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.t
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
 import { InlineCommandInputView } from '../presentation/InlineCommandInputView.ts'
 import { MacroIndicatorView } from '../presentation/MacroIndicatorView.ts'
+import type { TutorialHudContext } from '../presentation/StagedTutorialPrompts.ts'
 import {
     isValidCommandSlot,
     RECORD_HOLD_DURATION_MS,
@@ -40,7 +41,10 @@ export class GameScene extends Phaser.Scene {
     private enteredByShift = false
     private slotHoldTimer?: Phaser.Time.TimerEvent
     private heldSlotKey?: string
+    private slotHoldStartedRoomId?: string
     private slotHoldRecorded = false
+    private tutorial3RecordedSlot?: CommandSlot
+    private tutorial3ExecutedSlot?: CommandSlot
     private readonly macroIndicatorView = new MacroIndicatorView()
     /** The cursor in Room coordinates, once it has been over the game; the source of the Mouse Target. */
     private mousePoint: MousePoint | undefined
@@ -71,6 +75,8 @@ export class GameScene extends Phaser.Scene {
 
     create(): void {
         this.commandTypingMode = this.customCommandTypingMode ?? loadCommandTypingMode()
+        this.tutorial3RecordedSlot = undefined
+        this.tutorial3ExecutedSlot = undefined
         this.session = createRoom1Session({
             movementBindings: INPUT_BINDINGS.movement,
             worldState: createGameWorldState(ROOM1_OBJECTS, this.startingRoomId),
@@ -85,7 +91,12 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#0b141d')
         this.roomView.mount(this, worldState, false)
         this.hud = new PhaserGameHud(this)
-        this.hud.update(worldState, this.session.inputMode)
+        this.hud.update(
+            worldState,
+            this.session.inputMode,
+            this.commandTypingMode,
+            this.getTutorialHudContext(),
+        )
         this.outcomePanel = new PhaserGameOutcomePanel(
             this,
             () => this.session.hasSavedState(),
@@ -158,6 +169,10 @@ export class GameScene extends Phaser.Scene {
         const worldState = this.session.getWorldState()
         if (worldState.currentRoomId !== this.lastRoomId) {
             this.lastRoomId = worldState.currentRoomId
+            if (worldState.currentRoomId === 'tutorial3') {
+                this.tutorial3RecordedSlot = undefined
+                this.tutorial3ExecutedSlot = undefined
+            }
             // Entering a room is a Save Point, so a defeat there offers LOAD SAVE from the room's start.
             if (worldState.outcome === 'playing') {
                 this.session.saveCurrentState()
@@ -179,13 +194,19 @@ export class GameScene extends Phaser.Scene {
 
         this.roomView.update(worldState, (objectId) => this.session.getRenderPosition(objectId), delta)
         this.outcomePanel?.update(worldState)
-        this.hud?.update(worldState, this.session.inputMode)
+        this.hud?.update(
+            worldState,
+            this.session.inputMode,
+            this.commandTypingMode,
+            this.getTutorialHudContext(),
+        )
         this.commandEditor?.update(delta)
 
         if (worldState.outcome === 'game-over') {
             this.slotHoldTimer?.remove()
             this.slotHoldTimer = undefined
             this.heldSlotKey = undefined
+            this.slotHoldStartedRoomId = undefined
             this.slotHoldRecorded = false
             this.macroIndicatorView.cancelHoldProgress()
             if (this.session.inputMode === 'command') {
@@ -234,6 +255,7 @@ export class GameScene extends Phaser.Scene {
         this.slotHoldTimer?.remove()
         this.slotHoldTimer = undefined
         this.heldSlotKey = undefined
+        this.slotHoldStartedRoomId = undefined
         this.slotHoldRecorded = false
         this.macroIndicatorView.cancelHoldProgress()
         ;(this.session as unknown as {
@@ -322,7 +344,9 @@ export class GameScene extends Phaser.Scene {
                 }
                 const slot = Number(key) as CommandSlot
                 this.heldSlotKey = key
+                this.slotHoldStartedRoomId = this.session.getWorldState().currentRoomId ?? undefined
                 this.slotHoldRecorded = false
+                const slotHoldStartedRoomId = this.slotHoldStartedRoomId
                 this.macroIndicatorView.startHoldProgress(
                     slot,
                     RECORD_HOLD_DURATION_MS,
@@ -333,6 +357,12 @@ export class GameScene extends Phaser.Scene {
                     this.slotHoldRecorded = true
                     const result = this.session.recordLastCommandToSlot(slot)
                     if (result.success && result.command) {
+                        if (
+                            slotHoldStartedRoomId === 'tutorial3' &&
+                            this.session.getWorldState().currentRoomId === 'tutorial3'
+                        ) {
+                            this.tutorial3RecordedSlot = slot
+                        }
                         this.macroIndicatorView.showRecordSuccess(slot, result.command)
                     } else {
                         this.macroIndicatorView.showRecordEmpty()
@@ -368,6 +398,7 @@ export class GameScene extends Phaser.Scene {
         this.slotHoldTimer?.remove()
         this.slotHoldTimer = undefined
         this.heldSlotKey = undefined
+        this.slotHoldStartedRoomId = undefined
         this.slotHoldRecorded = false
         this.macroIndicatorView.cancelHoldProgress()
         this.inlineCommandInputView?.clearInput()
@@ -375,11 +406,29 @@ export class GameScene extends Phaser.Scene {
         this.enteredByShift = false
 
         const worldState = this.session.getWorldState()
+        if (worldState.currentRoomId === 'tutorial3') {
+            this.tutorial3RecordedSlot = undefined
+            this.tutorial3ExecutedSlot = undefined
+        }
         this.lastRoomId = worldState.currentRoomId
         this.roomView.mount(this, worldState, false)
         this.hud?.destroy()
         this.hud = new PhaserGameHud(this)
-        this.hud.update(worldState, this.session.inputMode)
+        this.hud.update(
+            worldState,
+            this.session.inputMode,
+            this.commandTypingMode,
+            this.getTutorialHudContext(),
+        )
+    }
+
+    private getTutorialHudContext(): TutorialHudContext {
+        return {
+            commandDraft: this.inlineCommandInputView?.getValue(),
+            commandOpenedByShift: this.enteredByShift,
+            recordedSlot: this.tutorial3RecordedSlot,
+            executedSlot: this.tutorial3ExecutedSlot,
+        }
     }
 
     private openCommandInput(byShift: boolean): void {
@@ -406,6 +455,7 @@ export class GameScene extends Phaser.Scene {
         if (this.heldSlotKey && key === this.heldSlotKey) {
             this.slotHoldTimer?.remove()
             this.slotHoldTimer = undefined
+            const slotHoldStartedRoomId = this.slotHoldStartedRoomId
             if (!this.slotHoldRecorded) {
                 this.macroIndicatorView.cancelHoldProgress()
                 if (this.session.inputMode === 'movement') {
@@ -413,6 +463,13 @@ export class GameScene extends Phaser.Scene {
                     const command = this.session.getCommandSlot(slot)
                     if (command) {
                         this.session.submitCommand(command, { mouse: this.mousePoint })
+                        if (
+                            slotHoldStartedRoomId === 'tutorial3' &&
+                            this.session.getWorldState().currentRoomId === 'tutorial3' &&
+                            this.tutorial3RecordedSlot !== undefined
+                        ) {
+                            this.tutorial3ExecutedSlot = slot
+                        }
                         this.macroIndicatorView.showExecutedCommand(slot, command)
                     } else {
                         this.macroIndicatorView.showSlotEmpty(slot)
@@ -420,6 +477,7 @@ export class GameScene extends Phaser.Scene {
                 }
             }
             this.heldSlotKey = undefined
+            this.slotHoldStartedRoomId = undefined
             this.slotHoldRecorded = false
         }
     }
@@ -429,6 +487,7 @@ export class GameScene extends Phaser.Scene {
         this.slotHoldTimer?.remove()
         this.slotHoldTimer = undefined
         this.heldSlotKey = undefined
+        this.slotHoldStartedRoomId = undefined
         this.slotHoldRecorded = false
         this.macroIndicatorView.cancelHoldProgress()
         if (this.enteredByShift && this.session.inputMode === 'command') {

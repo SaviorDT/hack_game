@@ -589,6 +589,39 @@ describe('GameScene key handling', () => {
       expect(session.inputMode).toBe('movement')
     })
 
+    it('advances tutorial3 slot guidance only after recording there and then executing a slot', () => {
+      const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
+      session.getWorldState().currentRoomId = 'tutorial3'
+      session.submitCommand('acc dagger hacker')
+      session.setCommandSlot(8, 'acc dagger hacker')
+
+      handleKeyDown({
+        key: '8',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+      handleKeyUp({ key: '8' } as unknown as KeyboardEvent)
+      expect((scene as any).tutorial3ExecutedSlot).toBeUndefined()
+
+      handleKeyDown({
+        key: '9',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+      delayedCalls[0].callback()
+      expect((scene as any).tutorial3RecordedSlot).toBe(9)
+      handleKeyUp({ key: '9' } as unknown as KeyboardEvent)
+      expect((scene as any).tutorial3ExecutedSlot).toBeUndefined()
+
+      handleKeyDown({
+        key: '9',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+      handleKeyUp({ key: '9' } as unknown as KeyboardEvent)
+      expect((scene as any).tutorial3ExecutedSlot).toBe(9)
+    })
+
     it('cancels hold progress when opening pause menu while holding slot key', () => {
       const { scene, handleKeyDown } = setupScene()
       Object.assign((scene as any).scene, {

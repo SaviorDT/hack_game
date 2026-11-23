@@ -359,7 +359,7 @@ describe('PhaserGameHud', () => {
     const hud = new PhaserGameHud(mockScene)
     const state = tutorial3WorldState()
     const recordPrompt = '<Hold 8,9,0> record command'
-    const executePrompt = '<8,9,0> execute recorded command'
+    const replayPrompt = '<8,9,0> replay command'
 
     hud.update(state)
     for (let index = 0; index < recordPrompt.length; index++) timerCallbacks[0]()
@@ -368,8 +368,8 @@ describe('PhaserGameHud', () => {
     hud.update(state, 'movement', 'hold-shift', { recordedSlot: 9 })
     expect(tweenConfigs).toHaveLength(1)
     tweenConfigs[0].onComplete?.()
-    for (let index = 0; index < executePrompt.length; index++) timerCallbacks[1]()
-    expect(createdTexts[4].obj.text).toBe(executePrompt)
+    for (let index = 0; index < replayPrompt.length; index++) timerCallbacks[1]()
+    expect(createdTexts[4].obj.text).toBe(replayPrompt)
 
     hud.update(state, 'movement', 'hold-shift', { recordedSlot: 9, executedSlot: 9 })
     expect(tweenConfigs[1]).toEqual(expect.objectContaining({

@@ -6,7 +6,7 @@ import type { CommandTypingMode } from '../application/gameSettings.ts'
 import { POPUP_FADE_DURATION_MS } from './uiTheme.ts'
 import { fadeOut, scrollTransition } from './uiTransitions.ts'
 
-const TUTORIAL3_EXECUTE_PROMPT = '<8,9,0> execute recorded command'
+const TUTORIAL3_REPLAY_PROMPT = '<8,9,0> replay command'
 
 type TutorialRoomId = 'tutorial2' | 'tutorial3'
 type TutorialStage =
@@ -208,7 +208,7 @@ function getTutorial2Prompt(
 }
 
 function getTutorial3Prompt(stage: TutorialStage, commandHint: string): string {
-  return stage === 'execute-slot' ? TUTORIAL3_EXECUTE_PROMPT : commandHint
+  return stage === 'execute-slot' ? TUTORIAL3_REPLAY_PROMPT : commandHint
 }
 
 function getCommandEntryHint(mode: CommandTypingMode): string {

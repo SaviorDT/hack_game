@@ -77,7 +77,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
   },
   {
     id: TUTORIAL_ROOM_IDS.slowTime,
-    hint: '<Hold 8,9,0> record command. Press 8, 9, 0 to replay command. Press R to Room Reset.',
+    hint: '<Hold 8,9,0> record command',
     goal: 'Defeat the fast guard.',
     objects: [
       dagger('tutorial3dagger', 430, 600),

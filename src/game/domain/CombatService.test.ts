@@ -50,6 +50,33 @@ function stateOf(worldObject: WorldObject): CharacterState {
 describe('attack', () => {
   const combat = new CombatService()
 
+  it('never lets a hostile character attack another hostile character', () => {
+    const guard1 = character('guard1', 'enemy', 0)
+    const guard2 = character('guard2', 'guard', SIZE + 5)
+
+    expect(combat.attack(worldOf(guard1, guard2), 'guard1')).toEqual({ status: 'no-target' })
+    expect(stateOf(guard2).health).toBe(100)
+  })
+
+  it('lets a hostile character skip a nearer hostile and hit the player in reach', () => {
+    const guard1 = character('guard1', 'enemy', 0)
+    const guard2 = character('guard2', 'enemy', SIZE + 1)
+    const player = character('player', 'player', -(SIZE + 5))
+
+    expect(combat.attack(worldOf(guard1, guard2, player), 'guard1')).toMatchObject({
+      status: 'hit',
+      targetId: 'player',
+    })
+    expect(stateOf(guard2).health).toBe(100)
+  })
+
+  it('still lets the player hit any hostile character', () => {
+    const player = character('player', 'player', 0)
+    const guard = character('guard', 'enemy', SIZE + 5)
+
+    expect(combat.attack(worldOf(player, guard), 'player')).toMatchObject({ status: 'hit', targetId: 'guard' })
+  })
+
   it('deals unarmed damage to a character within unarmed reach', () => {
     const player = character('player', 'player', 0)
     const guard = character('guard', 'guard', SIZE + 5)

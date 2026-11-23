@@ -174,6 +174,37 @@ describe('RoomProcesses collisionbox overlap prevention', () => {
     expect(collisionWorld.overlaps(playerBox, guardBox)).toBe(false)
   })
 
+  it('keeps guards from attacking each other while the player is out of reach', () => {
+    const state = createInitialWorldState()
+    const guards = state.worldObjects.filter((o) => o.metadata.role === 'enemy' || o.metadata.role === 'guard')
+    expect(guards.length).toBeGreaterThanOrEqual(2)
+    const player = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.player)!
+    const playerState = getMutableWorldObjectState<MutableWorldObjectState>(player)
+    playerState.x = ROOM_LAYOUT.rightHalfStartX + 50
+    playerState.y = 100
+    playerState.moveX = 0
+    playerState.moveY = 0
+
+    // Stack the guards side by side, within Reach of each other.
+    guards.forEach((guard, index) => {
+      const guardState = getMutableWorldObjectState<MutableWorldObjectState>(guard)
+      guardState.x = 1400
+      guardState.y = 500 + index * 40
+      guardState.vx = 0
+      guardState.vy = 0
+    })
+    const healthBefore = guards.map((g) => getMutableWorldObjectState<MutableWorldObjectState>(g).health)
+
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
+    for (let i = 0; i < 20; i++) {
+      engine.advance(state, 16.67)
+    }
+
+    guards.forEach((guard, index) => {
+      expect(getMutableWorldObjectState<MutableWorldObjectState>(guard).health).toBe(healthBefore[index])
+    })
+  })
+
   it('prevents guard from overlapping boulder when pursuing player', () => {
     const state = createInitialWorldState()
     const player = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.player)!

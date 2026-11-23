@@ -94,7 +94,7 @@ Characters start with 100 Health. Weapon definitions scale cooldowns with simula
 | Dagger | 35 | 0.5s | 10 px | Single-target |
 | Guard | 20 | 1.0s | 5 px | Hostile guard attack |
 
-Attacks damage nearest character within Reach (bounding-box gap). Items (including Dagger) are automatically picked up when within `PICKUP_REACH = 10` px; both actions mark undiscovered targets discovered. Hitboxes scale proportionally via `scaleX`/`scaleY` from base dimensions (`CHARACTER_SIZE` 110×160, `DAGGER_SIZE` 72×72, `BOULDER_SIZE` 120×120); Reach and pick-up gaps are measured to a circle's edge for circle colliders.
+Attacks damage the nearest character within Reach (bounding-box gap). `CombatService.attack` skips Hostile targets (`isHostileRole` in `domain/CharacterState.ts`: roles `enemy` and legacy `guard`) when the attacker is itself Hostile, so Guards and behavior-tree melee never hit each other; the Player Character's attack still picks any character. Arrow hits are not filtered, so an Archer can still hurt Guards. Items (including Dagger) are automatically picked up when within `PICKUP_REACH = 10` px; both actions mark undiscovered targets discovered. Hitboxes scale proportionally via `scaleX`/`scaleY` from base dimensions (`CHARACTER_SIZE` 110×160, `DAGGER_SIZE` 72×72, `BOULDER_SIZE` 120×120); Reach and pick-up gaps are measured to a circle's edge for circle colliders.
 
 #### Collider Tags and Impact Damage
 

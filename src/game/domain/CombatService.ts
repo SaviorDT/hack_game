@@ -1,6 +1,6 @@
 import { ShapeCollisionWorld, boxFromState } from './CollisionWorld.ts'
 import type { CollisionWorld } from './CollisionWorld.ts'
-import { CHARACTER_ROLES } from './CharacterState.ts'
+import { CHARACTER_ROLES, isHostileRole } from './CharacterState.ts'
 import type { CharacterCombatState } from './CharacterState.ts'
 import { weaponFor } from './WeaponDefinition.ts'
 import type { WorldObject } from './WorldObject.ts'
@@ -39,13 +39,16 @@ export class CombatService {
     }
 
     const weapon = weaponFor(attackerState.weaponId)
+    const attackerIsHostile = isHostileRole(attacker.metadata.role)
     const candidates = state.worldObjects
       .filter(
         (worldObject) =>
           worldObject !== attacker &&
           worldObject.roomId === state.currentRoomId &&
           CHARACTER_ROLES.includes(String(worldObject.metadata.role)) &&
-          characterState(worldObject).alive,
+          characterState(worldObject).alive &&
+          // A Hostile Character never attacks another Hostile Character.
+          !(attackerIsHostile && isHostileRole(worldObject.metadata.role)),
       )
       .map((worldObject) => ({ worldObject, box: boxOf(worldObject) }))
 

@@ -64,6 +64,10 @@ _Avoid_: Player (when referring to the in-world Character)
 A hostile Character that obstructs the player's progress through a Room.
 _Avoid_: Enemy sprite (when referring to the character)
 
+**Hostile**:
+A Character that opposes the Player Character, such as a Guard or an Archer. A Hostile never attacks another Hostile in melee; its Arrows still hurt any Character they hit.
+_Avoid_: Enemy (when referring to the glossary term), faction
+
 **Weapon**:
 A World Object that a Character can equip and use to defeat another Character.
 _Avoid_: Equipment (when referring specifically to an object used in combat)

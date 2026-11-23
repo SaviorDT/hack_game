@@ -16,6 +16,13 @@ export interface CharacterState extends MutableWorldObjectState {
 
 export const CHARACTER_ROLES: readonly string[] = ['player', 'enemy', 'guard']
 
+/** Roles of Hostile Characters (`guard` is the legacy name of `enemy`). */
+export const HOSTILE_ROLES: readonly string[] = ['enemy', 'guard']
+
+export function isHostileRole(role: unknown): boolean {
+  return HOSTILE_ROLES.includes(String(role))
+}
+
 export type CharacterCombatState = CharacterState & {
   attackSequence?: number
   damageSequence?: number

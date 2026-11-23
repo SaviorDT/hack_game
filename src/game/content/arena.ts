@@ -1,25 +1,45 @@
-import { wallFromEdges } from '../domain/Room.ts'
 import { BOSS_CONFIG } from './bossConstants.ts'
 import { ROOM_IDS } from './roomConstants.ts'
-import { boss, boulder, dagger, type RoomDefinition } from './roomPieces.ts'
+import { ROOM_BOUNDS, boss, dagger, plate, type RoomDefinition } from './roomPieces.ts'
 
 export const ARENA_IDS = {
   room: 'arena',
   boss: 'blademaster',
 } as const
 
+/** How far each plate's centre is from the room's bounds, so the right-hand one stays clear of the Exit. */
+const PLATE_INSET = 140
+const LEFT = ROOM_BOUNDS.left + PLATE_INSET
+const RIGHT = ROOM_BOUNDS.right - PLATE_INSET
+const TOP = ROOM_BOUNDS.top + PLATE_INSET
+const BOTTOM = ROOM_BOUNDS.bottom - PLATE_INSET
+const CENTER_X = (ROOM_BOUNDS.left + ROOM_BOUNDS.right) / 2
+const CENTER_Y = (ROOM_BOUNDS.top + ROOM_BOUNDS.bottom) / 2
+
+/** Eight plates in the corners and the middle of each side, named after where they are, for the player to `acc` to. */
+export const ARENA_PLATES = [
+  { name: 't', x: CENTER_X, y: TOP },
+  { name: 'tr', x: RIGHT, y: TOP },
+  { name: 'r', x: RIGHT, y: CENTER_Y },
+  { name: 'br', x: RIGHT, y: BOTTOM },
+  { name: 'b', x: CENTER_X, y: BOTTOM },
+  { name: 'bl', x: LEFT, y: BOTTOM },
+  { name: 'l', x: LEFT, y: CENTER_Y },
+  { name: 'tl', x: LEFT, y: TOP },
+] as const
+
 /**
- * The last room, played after room: a Boss that chases, fans out Blades and dashes. Two pillars and a boulder are
- * cover from the Blades and the dash. Defeating the Boss opens the Exit at the right wall, which ends the game.
+ * The last room, played after room: a bare floor, so a Boss that chases, fans out Blades and dashes has nothing to
+ * hide behind but the walls. Eight plates give the player places to `acc` to. Defeating the Boss opens the Exit at
+ * the right wall, which ends the game.
  */
 export const ARENA_DEFINITION: RoomDefinition = {
   id: ARENA_IDS.room,
   goal: 'Defeat the blademaster, then walk into the exit.',
-  walls: [wallFromEdges(760, 200, 840, 280), wallFromEdges(760, 520, 840, 600)],
   objects: [
     dagger('arenadagger', 360, 600),
-    boulder('arenaboulder', 1000, 400),
     boss(ARENA_IDS.boss, 1500, 365, { maxHealth: BOSS_CONFIG.maxHealth }),
+    ...ARENA_PLATES.map(({ name, x, y }) => plate(`arena${name}`, x, y, name)),
   ],
   exit: {
     targetRoomId: ROOM_IDS.end,

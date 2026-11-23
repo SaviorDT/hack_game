@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRoomSession } from './createRoomSession.ts'
-import { ARENA_DEFINITION, ARENA_IDS } from './arena.ts'
+import { ARENA_DEFINITION, ARENA_IDS, ARENA_PLATES } from './arena.ts'
 import { BLADES_PER_BOSS, BLADES_PER_WAVE, BLADE_NAME_RULES, BOSS_CONFIG } from './bossConstants.ts'
 import { ROOM_IDS } from './roomConstants.ts'
 import { createGameWorldState } from './tutorialRooms.ts'
@@ -111,6 +111,44 @@ describe('arena', () => {
     const after = Math.hypot(body(session, 'player').x - boss.x, body(session, 'player').y - boss.y)
     expect(after).toBeLessThan(before - 100)
     expect(Math.hypot(boss.vx, boss.vy)).toBeLessThanOrEqual(BOSS_CONFIG.chaseSpeed + 1)
+  })
+})
+
+describe('arena floor', () => {
+  it('has no walls and no boulder, only the dagger, the Boss and eight named plates', () => {
+    const session = arenaSession()
+    const room = session.getWorldState().rooms.find((candidate) => candidate.id === ARENA_IDS.room)!
+    expect(room.walls ?? []).toHaveLength(0)
+    const names = room.objectIds
+      .map((id) => objectOf(session, id))
+      .filter((worldObject) => worldObject.metadata.kind !== 'blade' && worldObject.id !== 'player')
+      .map((worldObject) => String(worldObject.metadata.name))
+    expect(names.sort()).toEqual(['b', 'bl', 'blademaster', 'br', 'dagger', 'l', 'r', 't', 'tl', 'tr'].sort())
+    expect(ARENA_PLATES.map((plate) => plate.name)).toEqual(['t', 'tr', 'r', 'br', 'b', 'bl', 'l', 'tl'])
+  })
+
+  it('puts the plates in the corners and the middle of each side, clear of the Exit', () => {
+    const session = arenaSession()
+    const at = (name: string) => body(session, `arena${name}`)
+    expect(at('t').x).toBe(at('b').x)
+    expect(at('l').y).toBe(at('r').y)
+    expect(at('tl')).toMatchObject({ x: at('l').x, y: at('t').y })
+    expect(at('br')).toMatchObject({ x: at('r').x, y: at('b').y })
+    expect(at('l').x).toBeLessThan(at('t').x)
+    expect(at('t').x).toBeLessThan(at('r').x)
+    expect(at('t').y).toBeLessThan(at('l').y)
+    expect(at('l').y).toBeLessThan(at('b').y)
+    const exit = createGameWorldState().rooms.find((room) => room.id === ARENA_IDS.room)!.exits[0]
+    expect(at('r').x + 40).toBeLessThan(exit.x - 30)
+  })
+
+  it('lets the player acc to a plate by name, in either case', () => {
+    const session = arenaSession()
+    const player = body(session, 'player')
+    expect(session.submitCommand('acc hacker TL').status).toBe('success')
+    runFor(session, 3000)
+    const target = body(session, 'arenatl')
+    expect(Math.hypot(player.x - target.x, player.y - target.y)).toBeLessThan(40)
   })
 })
 
@@ -245,7 +283,7 @@ describe('boss retreat and dash', () => {
     expect(session.getWorldState().outcome).toBe('game-over')
   })
 
-  it('does not turn: a player who steps aside is missed, and a wall or Obstacle stuns the Boss', () => {
+  it('does not turn: a player who steps aside is missed, and the wall stuns the Boss', () => {
     rollNext(START_RETREAT)
     const session = arenaSession()
     placeFacing(session)
@@ -255,7 +293,7 @@ describe('boss retreat and dash', () => {
     expect(boss.bossMode).toBe('dash')
 
     Object.assign(player, { x: 1200, y: 640 })
-    runFor(session, 1500)
+    runFor(session, 2500)
     expect(player.health).toBe(100_000)
     expect(boss.bossMode).toBe('recover')
     expect(Math.abs(boss.y - 365)).toBeLessThan(60)

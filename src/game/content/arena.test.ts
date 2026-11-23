@@ -99,7 +99,7 @@ describe('arena', () => {
     const room = world.rooms.find((candidate) => candidate.id === ARENA_IDS.room)!
     const listed = getRoomDirectoryEntries(world, room, true)
     expect(listed).toContain(ARENA_IDS.boss)
-    expect(listed.some((entry) => BLADE_NAME.test(entry) || entry.includes('blademasterblade'))).toBe(false)
+    expect(listed.some((entry) => BLADE_NAME.test(entry) || entry.includes('wardenblade'))).toBe(false)
   })
 
   it('chases the player', () => {
@@ -115,7 +115,7 @@ describe('arena', () => {
 })
 
 describe('arena floor', () => {
-  it('has no walls and no boulder, only the dagger, the Boss and eight named plates', () => {
+  it('has no walls and no boulder, only Excalibur, the Boss and eight named plates', () => {
     const session = arenaSession()
     const room = session.getWorldState().rooms.find((candidate) => candidate.id === ARENA_IDS.room)!
     expect(room.walls ?? []).toHaveLength(0)
@@ -123,7 +123,7 @@ describe('arena floor', () => {
       .map((id) => objectOf(session, id))
       .filter((worldObject) => worldObject.metadata.kind !== 'blade' && worldObject.id !== 'player')
       .map((worldObject) => String(worldObject.metadata.name))
-    expect(names.sort()).toEqual(['b', 'bl', 'blademaster', 'br', 'dagger', 'l', 'r', 't', 'tl', 'tr'].sort())
+    expect(names.sort()).toEqual(['b', 'bl', 'warden', 'br', 'excalibur', 'l', 'r', 't', 'tl', 'tr'].sort())
     expect(ARENA_PLATES.map((plate) => plate.name)).toEqual(['t', 'tr', 'r', 'br', 'b', 'bl', 'l', 'tl'])
   })
 
@@ -229,7 +229,7 @@ describe('boss volley', () => {
     runFor(session, BOSS_CONFIG.volleyWindUpMs + 100)
     const [first, second] = liveBlades(session)
     second.rename(first.metadata.name as string)
-    expect(() => session.submitCommand(`acc ${first.metadata.name as string} blademaster`)).not.toThrow()
+    expect(() => session.submitCommand(`acc ${first.metadata.name as string} warden`)).not.toThrow()
     expect(() => runFor(session, 3000)).not.toThrow()
   })
 
@@ -243,7 +243,7 @@ describe('boss volley', () => {
     const name = first.metadata.name as string
     const rule = BLADE_NAME_RULES.find((candidate) => name.startsWith(candidate))!
 
-    const result = session.submitCommand(`acc ${rule}* blademaster`)
+    const result = session.submitCommand(`acc ${rule}* warden`)
     expect(result.status).toBe('success')
     for (const blade of [first, second]) {
       expect((blade.state as unknown as Body).thrown).toMatchObject({ targetObjectId: ARENA_IDS.boss })

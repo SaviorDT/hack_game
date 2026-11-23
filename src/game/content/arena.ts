@@ -4,7 +4,7 @@ import { ROOM_BOUNDS, boss, dagger, plate, type RoomDefinition } from './roomPie
 
 export const ARENA_IDS = {
   room: 'arena',
-  boss: 'blademaster',
+  boss: 'warden',
 } as const
 
 /** How far each plate's centre is from the room's bounds, so the right-hand one stays clear of the Exit. */
@@ -35,9 +35,9 @@ export const ARENA_PLATES = [
  */
 export const ARENA_DEFINITION: RoomDefinition = {
   id: ARENA_IDS.room,
-  goal: 'Defeat the blademaster, then walk into the exit.',
+  goal: 'Defeat the warden, then walk into the exit.',
   objects: [
-    dagger('arenadagger', 360, 600),
+    dagger('arenaexcalibur', 360, 600, { name: 'excalibur' }),
     boss(ARENA_IDS.boss, 1500, 365, { maxHealth: BOSS_CONFIG.maxHealth }),
     ...ARENA_PLATES.map(({ name, x, y }) => plate(`arena${name}`, x, y, name)),
   ],

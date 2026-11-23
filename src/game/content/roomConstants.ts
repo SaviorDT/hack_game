@@ -1,11 +1,11 @@
 export const ROOM_IDS = {
-  first: 'room1',
-  second: 'room2',
+  main: 'room',
+  end: 'end',
 } as const
 
 export const ROOM_NAMES: Readonly<Record<string, string>> = {
-  [ROOM_IDS.first]: 'room1',
-  [ROOM_IDS.second]: 'room2',
+  [ROOM_IDS.main]: 'room',
+  [ROOM_IDS.end]: 'end',
 }
 
 export const WORLD_OBJECT_IDS = {

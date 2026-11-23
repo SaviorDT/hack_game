@@ -7,16 +7,16 @@ import type { ObjectKind } from '../domain/ObjectKind.ts'
 import { generatePrefabSource } from '../domain/prefabSerializer.ts'
 import { GAME_PHYSICS_CONFIG } from '../simulation/physicsConstants.ts'
 import { generatePhysicsConstantsSource } from '../simulation/physicsSerializer.ts'
-import { ROOM1_OBJECTS, type RoomObjectConfig } from './room1.ts'
-import { generateRoom1Source } from './room1Serializer.ts'
+import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
+import { generateRoomSource } from './roomSerializer.ts'
 
 /**
- * The editors save by overwriting whole source files from a template (`room1.ts`, `Prefab.ts`,
+ * The editors save by overwriting whole source files from a template (`room.ts`, `Prefab.ts`,
  * `physicsConstants.ts`, `mvConstants.ts`, `commandModeConstants.ts`). Anything another module imports from one
  * of them that the template does not write breaks the whole game the next time the editor saves.
  */
 const GENERATED = [
-  { module: 'room1', source: () => generateRoom1Source(ROOM1_OBJECTS) },
+  { module: 'room', source: () => generateRoomSource(ROOM_OBJECTS) },
   { module: 'Prefab', source: () => generatePrefabSource(DEFAULT_PREFABS) },
   { module: 'physicsConstants', source: () => generatePhysicsConstantsSource(GAME_PHYSICS_CONFIG) },
   { module: 'mvConstants', source: () => generateMvConstantsSource({ ...GAME_MV_CONFIG, commandTimeScale: 0.25 } as never) },

@@ -5,7 +5,7 @@ import { collidesPhysically, colliderTagsOf, defaultColliderTags, isSolidTagged,
 function objectWithRole(role: 'player' | 'enemy' | 'weapon' | 'object', alive?: boolean) {
   return new BasicWorldObject(
     role,
-    'room1',
+    'room',
     { name: role, role, colliderTags: defaultColliderTags(role) },
     [],
     { x: 0, y: 0, width: 10, height: 10, ...(alive === undefined ? {} : { alive }) },
@@ -37,7 +37,7 @@ describe('collidesPhysically', () => {
   })
 
   it('does not collide with an object that carries no tag', () => {
-    const untagged = new BasicWorldObject('x', 'room1', { name: 'x', role: 'object' }, [], { x: 0, y: 0 })
+    const untagged = new BasicWorldObject('x', 'room', { name: 'x', role: 'object' }, [], { x: 0, y: 0 })
     expect(collidesPhysically(untagged, player)).toBe(false)
   })
 })
@@ -57,7 +57,7 @@ describe('rolesCollide', () => {
 })
 
 describe('Target tag', () => {
-  const target = new BasicWorldObject('t', 'room1', { name: 't', role: 'object', colliderTags: [{ class: 'target' }] }, [], {
+  const target = new BasicWorldObject('t', 'room', { name: 't', role: 'object', colliderTags: [{ class: 'target' }] }, [], {
     x: 0,
     y: 0,
     width: 10,

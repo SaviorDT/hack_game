@@ -18,7 +18,7 @@ import daggerImageUrl from '../../assets/game/items/weapons/dagger-horizontal.pn
 import boulderImageUrl from '../../assets/game/objects/boulder-retro.png'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import type { WorldState } from '../domain/WorldState.ts'
-import { WORLD_OBJECT_IDS, ROOM_LAYOUT, ROOM_NAMES } from '../content/room1Constants.ts'
+import { WORLD_OBJECT_IDS, ROOM_LAYOUT, ROOM_NAMES } from '../content/roomConstants.ts'
 import { isExitOpen } from '../domain/RoomTravel.ts'
 import { isPlatePressed } from '../domain/PressurePlate.ts'
 import { WorldObjectViewRegistry } from './WorldObjectViewRegistry.ts'

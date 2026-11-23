@@ -11,7 +11,7 @@ export default defineConfig({
     {
       name: 'save-file-handlers',
       configureServer(server) {
-        server.middlewares.use('/api/save-room1', (req, res) => {
+        server.middlewares.use('/api/save-room', (req, res) => {
           if (req.method === 'POST') {
             let body = ''
             req.on('data', (chunk: Buffer) => {
@@ -21,7 +21,7 @@ export default defineConfig({
               try {
                 const parsed = JSON.parse(body)
                 const content = typeof parsed.content === 'string' ? parsed.content : ''
-                const filePath = path.resolve(__dirname, 'src/game/content/room1.ts')
+                const filePath = path.resolve(__dirname, 'src/game/content/room.ts')
                 fs.writeFileSync(filePath, content, 'utf-8')
                 res.writeHead(200, { 'Content-Type': 'application/json' })
                 res.end(JSON.stringify({ success: true, path: filePath }))

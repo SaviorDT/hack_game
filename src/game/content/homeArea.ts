@@ -1,15 +1,14 @@
 import { wallFromEdges } from '../domain/Room.ts'
-import { ROOM_IDS } from './room1Constants.ts'
+import { ROOM_IDS } from './roomConstants.ts'
 import { archer, boulder, crate, dagger, guard, plate, type RoomDefinition } from './roomPieces.ts'
 
 /**
- * The first area after the tutorial, played before room1. There are no hint banners: each room poses one
+ * The first area after the tutorial, played before room. There are no hint banners: each room poses one
  * problem that its layout makes solvable, and the last combines them.
  *
- * home → storage → yard → lane → gate → room1
+ * storage → yard → lane → gate → room
  */
 export const HOME_AREA_IDS = {
-  home: 'home',
   storage: 'storage',
   yard: 'yard',
   lane: 'lane',
@@ -17,14 +16,6 @@ export const HOME_AREA_IDS = {
 } as const
 
 export const HOME_AREA_ROOMS: RoomDefinition[] = [
-  {
-    // A wall splits the room; the only gap is plugged by a crate. Shove it through, or `acc` it out of the way.
-    id: HOME_AREA_IDS.home,
-    goal: 'Get through to the far side.',
-    walls: [wallFromEdges(880, 80, 940, 330), wallFromEdges(880, 470, 940, 700)],
-    objects: [crate('homecrate', 910, 400), dagger('homedagger', 520, 600)],
-    exit: { targetRoomId: HOME_AREA_IDS.storage, label: HOME_AREA_IDS.storage },
-  },
   {
     // The exit needs the plate held down. Standing on it works, but then nobody can walk out: a crate must stay on it.
     id: HOME_AREA_IDS.storage,
@@ -97,8 +88,8 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
       archer('gatearcher', 1700, 200),
     ],
     exit: {
-      targetRoomId: ROOM_IDS.first,
-      label: ROOM_IDS.first,
+      targetRoomId: ROOM_IDS.main,
+      label: ROOM_IDS.main,
       requires: [
         { kind: 'pressed', plateIds: ['gateplate'] },
         { kind: 'defeat', objectIds: ['gateguard', 'gateguard2'] },

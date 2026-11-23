@@ -8,20 +8,20 @@ import type { WorldState } from './WorldState.ts'
 const SIZE = 10
 
 function player(x: number, weaponId: string | null = null): WorldObject {
-  return new BasicWorldObject('player', 'room1', { role: 'player' }, [], {
+  return new BasicWorldObject('player', 'room', { role: 'player' }, [], {
     x, y: 0, width: SIZE, height: SIZE, weaponId, discovered: true,
   })
 }
 
 function dagger(x: number, extra: Record<string, string | number | boolean | null> = {}): WorldObject {
-  return new BasicWorldObject('dagger', 'room1', { role: 'weapon', weaponId: 'dagger' }, [], {
+  return new BasicWorldObject('dagger', 'room', { role: 'weapon', weaponId: 'dagger' }, [], {
     x, y: 0, width: SIZE, height: SIZE, discovered: false, equippedBy: null, ...extra,
   })
 }
 
 function worldOf(...worldObjects: WorldObject[]): WorldState {
   return {
-    rooms: [], worldObjects, processInstances: [], currentRoomId: 'room1',
+    rooms: [], worldObjects, processInstances: [], currentRoomId: 'room',
     commandHistory: [], simulationTick: 0, outcome: 'playing',
   }
 }
@@ -72,7 +72,7 @@ describe('pickUp', () => {
   })
 
   it('supports picking up non-weapon items with role "item" or pickUpAble metadata', () => {
-    const item = new BasicWorldObject('potion', 'room1', { role: 'item', pickUpAble: true }, [], {
+    const item = new BasicWorldObject('potion', 'room', { role: 'item', pickUpAble: true }, [], {
       x: SIZE + 1, y: 0, width: SIZE, height: SIZE, discovered: false, equippedBy: null,
     })
 

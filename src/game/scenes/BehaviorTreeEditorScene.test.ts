@@ -15,7 +15,7 @@ import {
   updateNode,
 } from '../ai/behaviorTree/BehaviorTreeModel.ts'
 import { createAiEditorSession } from './aiEditorSession.ts'
-import { WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
 
 describe('BehaviorTreeEditorScene Logic & Presets', () => {
   it('provides all required built-in enemy and boss presets', () => {

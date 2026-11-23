@@ -5,7 +5,7 @@ import {
   applyPrefabToObject,
   type PrefabDefinition,
 } from './Prefab.ts'
-import type { RoomObjectConfig } from '../content/room1.ts'
+import type { RoomObjectConfig } from '../content/room.ts'
 
 describe('Prefab Domain', () => {
   describe('DEFAULT_PREFABS', () => {

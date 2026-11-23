@@ -2,12 +2,12 @@ import Phaser from 'phaser'
 import {
   ROOM_LAYOUT,
   WORLD_OBJECT_IDS,
-} from '../content/room1Constants.ts'
+} from '../content/roomConstants.ts'
 import {
-  ROOM1_OBJECTS,
+  ROOM_OBJECTS,
   type PlayerSpeedConfig,
-} from '../content/room1.ts'
-import { generateRoom1Source } from '../content/room1Serializer.ts'
+} from '../content/room.ts'
+import { generateRoomSource } from '../content/roomSerializer.ts'
 import { GameSession } from '../application/GameSession.ts'
 import {
   PhaserRoomView,
@@ -69,7 +69,7 @@ export class SpeedEditorScene extends Phaser.Scene {
     this.isPromptOpen = false
 
     // Initialize player speed
-    this.playerSpeed = getPlayerSpeedFromObjects(ROOM1_OBJECTS)
+    this.playerSpeed = getPlayerSpeedFromObjects(ROOM_OBJECTS)
 
     // Create session reusing main game movement code
     const bundle = createSpeedEditorSession({
@@ -499,10 +499,10 @@ export class SpeedEditorScene extends Phaser.Scene {
       if (newSpeed.turnaroundAcceleration !== undefined) state.turnaroundAcceleration = newSpeed.turnaroundAcceleration
     }
 
-    // Update in-memory ROOM1_OBJECTS array so other scenes reflect changes
-    const room1Player = ROOM1_OBJECTS.find((o) => o.role === 'player' || o.id === WORLD_OBJECT_IDS.player)
-    if (room1Player) {
-      room1Player.speed = { ...this.playerSpeed }
+    // Update in-memory ROOM_OBJECTS array so other scenes reflect changes
+    const roomPlayer = ROOM_OBJECTS.find((o) => o.role === 'player' || o.id === WORLD_OBJECT_IDS.player)
+    if (roomPlayer) {
+      roomPlayer.speed = { ...this.playerSpeed }
     }
 
     this.refreshSpeedPanelFields()
@@ -541,9 +541,9 @@ export class SpeedEditorScene extends Phaser.Scene {
     const player = this.worldState.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.player)
     if (player) {
       const state = player.state as Record<string, unknown>
-      const room1Player = ROOM1_OBJECTS.find((o) => o.role === 'player' || o.id === WORLD_OBJECT_IDS.player)
-      state.x = room1Player?.x ?? ROOM_LAYOUT.playerStart.x
-      state.y = room1Player?.y ?? ROOM_LAYOUT.playerStart.y
+      const roomPlayer = ROOM_OBJECTS.find((o) => o.role === 'player' || o.id === WORLD_OBJECT_IDS.player)
+      state.x = roomPlayer?.x ?? ROOM_LAYOUT.playerStart.x
+      state.y = roomPlayer?.y ?? ROOM_LAYOUT.playerStart.y
       state.vx = 0
       state.vy = 0
       state.facing = 'right'
@@ -553,9 +553,9 @@ export class SpeedEditorScene extends Phaser.Scene {
     const dagger = this.worldState.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.dagger)
     if (dagger) {
       const state = dagger.state as Record<string, unknown>
-      const room1Dagger = ROOM1_OBJECTS.find((o) => o.role === 'weapon' || o.id === WORLD_OBJECT_IDS.dagger)
-      state.x = room1Dagger?.x ?? ROOM_LAYOUT.daggerStart.x
-      state.y = room1Dagger?.y ?? ROOM_LAYOUT.daggerStart.y
+      const roomDagger = ROOM_OBJECTS.find((o) => o.role === 'weapon' || o.id === WORLD_OBJECT_IDS.dagger)
+      state.x = roomDagger?.x ?? ROOM_LAYOUT.daggerStart.x
+      state.y = roomDagger?.y ?? ROOM_LAYOUT.daggerStart.y
       state.vx = 0
       state.vy = 0
       state.thrown = null
@@ -567,29 +567,29 @@ export class SpeedEditorScene extends Phaser.Scene {
   }
 
   public async saveSpeed(): Promise<boolean> {
-    const player = ROOM1_OBJECTS.find((o) => o.role === 'player' || o.id === WORLD_OBJECT_IDS.player)
+    const player = ROOM_OBJECTS.find((o) => o.role === 'player' || o.id === WORLD_OBJECT_IDS.player)
     if (player) {
       player.speed = { ...this.playerSpeed }
     }
 
-    const room1Source = generateRoom1Source(ROOM1_OBJECTS)
+    const roomSource = generateRoomSource(ROOM_OBJECTS)
     const bg = this.saveButton?.getAt(0) as Phaser.GameObjects.Rectangle | undefined
     const label = this.saveButton?.getAt(1) as Phaser.GameObjects.Text | undefined
 
     try {
-      const room1Response = await fetch('/api/save-room1', {
+      const roomResponse = await fetch('/api/save-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: room1Source }),
+        body: JSON.stringify({ content: roomSource }),
       })
 
-      if (!room1Response.ok) {
-        throw new Error(`Server returned ${room1Response.status} on save-room1: ${room1Response.statusText}`)
+      if (!roomResponse.ok) {
+        throw new Error(`Server returned ${roomResponse.status} on save-room: ${roomResponse.statusText}`)
       }
 
-      const room1Result = await room1Response.json()
-      if (!room1Result.success) {
-        throw new Error(room1Result.error ?? 'Unknown save-room1 error')
+      const roomResult = await roomResponse.json()
+      if (!roomResult.success) {
+        throw new Error(roomResult.error ?? 'Unknown save-room error')
       }
 
       if (bg && label) {

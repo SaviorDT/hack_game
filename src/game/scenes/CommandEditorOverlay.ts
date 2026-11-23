@@ -22,7 +22,7 @@ import { GAME_COMMAND_MODE_CONFIG } from '../commands/commandModeConstants.ts'
 import { generateCommandModeConstantsSource } from '../commands/commandModeSerializer.ts'
 import { generateMvConstantsSource } from '../commands/mvSerializer.ts'
 import { generatePhysicsConstantsSource } from '../simulation/physicsSerializer.ts'
-import { WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import type { CommandResult } from '../commands/CommandResult.ts'
 
@@ -136,7 +136,7 @@ export class CommandEditorOverlay {
 
     const worldState = this.session.getWorldState()
     this.roomText = this.scene.add
-      .text(620, 14, `ROOM: ${worldState.currentRoomId ?? 'room1'}`, {
+      .text(620, 14, `ROOM: ${worldState.currentRoomId ?? 'room'}`, {
         fontFamily: FONT_FAMILY,
         fontSize: 12,
         color: '#b7d9d1',

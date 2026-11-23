@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { LsCommandExecutor } from './ls.ts'
-import { createInitialWorldState } from '../../content/room1WorldState.ts'
+import { createInitialWorldState } from '../../content/roomWorldState.ts'
 import type { ParsedCommand } from '../ParsedCommand.ts'
 
 describe('LsCommandExecutor', () => {
@@ -62,10 +62,10 @@ describe('LsCommandExecutor', () => {
       const feedback = result.feedback[0]
       expect(feedback.text).toContain('dagger')
       expect(feedback.text).toContain('guard')
-      expect(feedback.text).toContain('room2')
+      expect(feedback.text).toContain('tutorial5')
       expect(feedback.text).not.toContain('hacker')
       if (feedback.kind === 'popup') {
-        expect(feedback.reverseColorLines).toEqual(['room2'])
+        expect(feedback.reverseColorLines).toEqual(['tutorial5'])
       }
     }
   })

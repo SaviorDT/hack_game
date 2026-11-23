@@ -12,7 +12,7 @@ const TICK_MS = 1000 / 60
 const DT = TICK_MS / 1000
 
 function bodyAt(x: number, y: number, fields: Record<string, unknown> = {}) {
-  const object = new BasicWorldObject('body', 'room1', { name: 'body', role: 'enemy' }, [], {
+  const object = new BasicWorldObject('body', 'room', { name: 'body', role: 'enemy' }, [], {
     x,
     y,
     width: 100,

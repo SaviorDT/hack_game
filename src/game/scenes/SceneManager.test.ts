@@ -63,10 +63,10 @@ describe('SceneManager', () => {
       expect(manager.isEditorScene('speed-editor')).toBe(true)
       expect(manager.isEditorScene('behavior-tree-editor')).toBe(true)
       expect(manager.isEditorScene('game')).toBe(false)
-      expect(manager.isEditorScene('room2')).toBe(false)
+      expect(manager.isEditorScene('tutorial5')).toBe(false)
 
       expect(manager.isPlayableScene('game')).toBe(true)
-      expect(manager.isPlayableScene('room2')).toBe(true)
+      expect(manager.isPlayableScene('tutorial5')).toBe(true)
       expect(manager.isPlayableScene('level-editor')).toBe(false)
       expect(manager.isPlayableScene('speed-editor')).toBe(false)
       expect(manager.isPlayableScene('behavior-tree-editor')).toBe(false)
@@ -144,7 +144,7 @@ describe('SceneManager', () => {
     it('can access other editors from inside an editor (e.g. F3 or F4 from LevelEditor)', () => {
       const syncSpy = vi.fn()
       const levelEditorScene = createMockScene('level-editor', {
-        syncToRoom1Objects: syncSpy,
+        syncToRoomObjects: syncSpy,
       })
       const mockGame = createMockGame(levelEditorScene)
       const manager = new SceneManager(mockGame)
@@ -195,7 +195,7 @@ describe('SceneManager', () => {
     it('exits LevelEditor when pressing F2 to active playable scene', () => {
       const syncSpy = vi.fn()
       const levelEditorScene = createMockScene('level-editor', {
-        syncToRoom1Objects: syncSpy,
+        syncToRoomObjects: syncSpy,
       })
       const mockGame = createMockGame(levelEditorScene)
       const manager = new SceneManager(mockGame)
@@ -212,7 +212,7 @@ describe('SceneManager', () => {
     it('exits LevelEditor via F2 passing startingRoomId when scene provides getCurrentRoomId', () => {
       const syncSpy = vi.fn()
       const levelEditorScene = createMockScene('level-editor', {
-        syncToRoom1Objects: syncSpy,
+        syncToRoomObjects: syncSpy,
         getCurrentRoomId: () => 'storage',
       })
       const mockGame = createMockGame(levelEditorScene)
@@ -253,15 +253,15 @@ describe('SceneManager', () => {
       expect(aiEditorScene.scene.start).toHaveBeenCalledWith('game')
     })
 
-    it('preserves custom active playable scene (e.g. room2) when exiting editors', () => {
+    it('preserves custom active playable scene (e.g. tutorial5) when exiting editors', () => {
       const levelEditorScene = createMockScene('level-editor')
       const mockGame = createMockGame(levelEditorScene)
       const manager = new SceneManager(mockGame)
-      manager.setActivePlayableScene('room2')
+      manager.setActivePlayableScene('tutorial5')
 
       const event = createMockKeyboardEvent('F2')
       expect(manager.handleKeyDown(event)).toBe(true)
-      expect(levelEditorScene.scene.start).toHaveBeenCalledWith('room2')
+      expect(levelEditorScene.scene.start).toHaveBeenCalledWith('tutorial5')
     })
 
     it('does NOT intercept Escape anywhere (Escape has no utility)', () => {
@@ -309,7 +309,7 @@ describe('SceneManager', () => {
     it('exits an editor to playable game scene with openCommandEditor when F1 is pressed in editor', () => {
       const syncSpy = vi.fn()
       const levelEditorScene = createMockScene('level-editor', {
-        syncToRoom1Objects: syncSpy,
+        syncToRoomObjects: syncSpy,
       })
       const mockGame = createMockGame(levelEditorScene)
       const manager = new SceneManager(mockGame)

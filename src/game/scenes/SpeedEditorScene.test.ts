@@ -8,11 +8,11 @@ import {
   GAME_PHYSICS_CONFIG,
   applyTuningConfig,
 } from './speedEditorSession.ts'
-import { WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
-import { generateRoom1Source } from '../content/room1Serializer.ts'
+import { WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
+import { generateRoomSource } from '../content/roomSerializer.ts'
 import { generateMvConstantsSource } from '../commands/mvSerializer.ts'
 import { generatePhysicsConstantsSource } from '../simulation/physicsSerializer.ts'
-import type { RoomObjectConfig } from '../content/room1.ts'
+import type { RoomObjectConfig } from '../content/room.ts'
 
 describe('SpeedEditorScene', () => {
   describe('getPlayerSpeedFromObjects', () => {
@@ -248,7 +248,7 @@ describe('SpeedEditorScene', () => {
   })
 
   describe('source code serialization with updated speed', () => {
-    it('serializes updated speed parameters correctly for room1.ts', () => {
+    it('serializes updated speed parameters correctly for room.ts', () => {
       const objects: RoomObjectConfig[] = [
         {
           id: 'player',
@@ -269,18 +269,18 @@ describe('SpeedEditorScene', () => {
         },
       ]
 
-      const source = generateRoom1Source(objects)
+      const source = generateRoomSource(objects)
       expect(source).toContain('acceleration: 2600,')
       expect(source).toContain('frictionAcceleration: 3100,')
       expect(source).toContain('turnaroundAcceleration: 1700,')
       expect(source).toContain('maxSpeed: 320,')
     })
 
-    it('does not couple mv speed to room1 serialization', () => {
+    it('does not couple mv speed to room serialization', () => {
       const objects: RoomObjectConfig[] = []
-      const source = generateRoom1Source(objects)
+      const source = generateRoomSource(objects)
 
-      expect(source).not.toContain('ROOM1_MV_SPEED')
+      expect(source).not.toContain('ROOM_MV_SPEED')
       expect(source).not.toContain('MvSpeedConfig')
     })
 

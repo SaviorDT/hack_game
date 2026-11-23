@@ -34,13 +34,13 @@ import {
   getNextRoomId,
   getPreviousRoomId,
 } from '../content/roomRegistry.ts'
-import { ROOM_IDS } from '../content/room1Constants.ts'
+import { ROOM_IDS } from '../content/roomConstants.ts'
 import { TUTORIAL_ROOM_IDS } from '../content/tutorialRooms.ts'
 import { HOME_AREA_IDS } from '../content/homeArea.ts'
 import { wouldOverlapAnyEditorObject } from './levelEditorHistory.ts'
 import { LevelEditorScene } from './LevelEditorScene.ts'
 import { SceneManager } from './SceneManager.ts'
-import type { RoomObjectConfig } from '../content/room1.ts'
+import type { RoomObjectConfig } from '../content/room.ts'
 
 describe('LevelEditorScene & Room Registry', () => {
   beforeEach(() => {
@@ -48,7 +48,7 @@ describe('LevelEditorScene & Room Registry', () => {
   })
 
   describe('room registry enumeration and metadata', () => {
-    it('enumerates all tutorial rooms, home area rooms, room1, and room2 in progression order', () => {
+    it('enumerates all tutorial rooms, home area rooms, room, and tutorial5 in progression order', () => {
       const roomIds = getEditorRoomIds()
       expect(roomIds).toEqual([
         TUTORIAL_ROOM_IDS.move,       // tutorial1
@@ -59,8 +59,8 @@ describe('LevelEditorScene & Room Registry', () => {
         HOME_AREA_IDS.yard,           // yard
         HOME_AREA_IDS.lane,           // lane
         HOME_AREA_IDS.gate,           // gate
-        ROOM_IDS.first,               // room1
-        ROOM_IDS.second,              // room2
+        ROOM_IDS.first,               // room
+        ROOM_IDS.second,              // tutorial5
       ])
       expect(roomIds.length).toBe(10)
     })
@@ -99,9 +99,9 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(gateDef!.walls!.length).toBeGreaterThan(0)
     })
 
-    it('returns hints for tutorial rooms and room1', () => {
+    it('returns hints for tutorial rooms and room', () => {
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.move)?.hint).toContain('WASD')
-      expect(getRoomDefinition(ROOM_IDS.first)?.hint).toContain('reach room2')
+      expect(getRoomDefinition(ROOM_IDS.first)?.hint).toContain('reach tutorial5')
     })
   })
 
@@ -175,18 +175,18 @@ describe('LevelEditorScene & Room Registry', () => {
       const yardObjs = getRoomObjectConfigs(HOME_AREA_IDS.yard)
       expect(yardObjs.some((o) => o.role === 'weapon')).toBe(true)
 
-      // room1 includes player, guard, and dagger
-      const room1Objs = getRoomObjectConfigs(ROOM_IDS.first)
-      expect(room1Objs.some((o) => o.role === 'player')).toBe(true)
-      expect(room1Objs.some((o) => o.role === 'enemy' || o.role === 'guard')).toBe(true)
-      expect(room1Objs.some((o) => o.role === 'weapon')).toBe(true)
+      // room includes player, guard, and dagger
+      const roomObjs = getRoomObjectConfigs(ROOM_IDS.first)
+      expect(roomObjs.some((o) => o.role === 'player')).toBe(true)
+      expect(roomObjs.some((o) => o.role === 'enemy' || o.role === 'guard')).toBe(true)
+      expect(roomObjs.some((o) => o.role === 'weapon')).toBe(true)
     })
 
-    it('serves room2 from its definition: a dagger and a Target Dummy, and a Hidden Exit', () => {
+    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and a Hidden Exit', () => {
       const objects = getRoomObjectConfigs(ROOM_IDS.second)
       expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
       expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(1000)
-      expect(getRoomDefinition(ROOM_IDS.second)?.exit).toMatchObject({ targetRoomId: 'room3', hiddenUntilOpen: true })
+      expect(getRoomDefinition(ROOM_IDS.second)?.exit).toMatchObject({ targetRoomId: 'end', hiddenUntilOpen: true })
 
       setRoomObjectConfigs(ROOM_IDS.second, [])
       expect(getRoomObjectConfigs(ROOM_IDS.second)).toHaveLength(0)
@@ -214,7 +214,7 @@ describe('LevelEditorScene & Room Registry', () => {
 
     it('resets all mutated room configurations cleanly with resetAllRooms', () => {
       const originalStorage = [...getRoomObjectConfigs(HOME_AREA_IDS.storage)]
-      const originalRoom1 = [...getRoomObjectConfigs(ROOM_IDS.first)]
+      const originalRoom = [...getRoomObjectConfigs(ROOM_IDS.first)]
 
       setRoomObjectConfigs(HOME_AREA_IDS.storage, [])
       setRoomObjectConfigs(ROOM_IDS.first, [])
@@ -225,7 +225,7 @@ describe('LevelEditorScene & Room Registry', () => {
       resetAllRooms()
 
       expect(getRoomObjectConfigs(HOME_AREA_IDS.storage)).toEqual(originalStorage)
-      expect(getRoomObjectConfigs(ROOM_IDS.first)).toEqual(originalRoom1)
+      expect(getRoomObjectConfigs(ROOM_IDS.first)).toEqual(originalRoom)
     })
   })
 
@@ -277,7 +277,7 @@ describe('LevelEditorScene & Room Registry', () => {
   })
 
   describe('LevelEditorScene initialization', () => {
-    it('instantiates LevelEditorScene with level-editor key and default room1', () => {
+    it('instantiates LevelEditorScene with level-editor key and default room', () => {
       const scene = new LevelEditorScene()
       expect(scene.scene.key).toBe('level-editor')
       expect(scene.getCurrentRoomId()).toBe(ROOM_IDS.first)
@@ -289,7 +289,7 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(scene.getCurrentRoomId()).toBe(HOME_AREA_IDS.storage)
     })
 
-    it('ignores invalid roomId in init() and falls back to default room1', () => {
+    it('ignores invalid roomId in init() and falls back to default room', () => {
       const scene = new LevelEditorScene()
       scene.init({ roomId: 'non-existent-room-99' })
       expect(scene.getCurrentRoomId()).toBe(ROOM_IDS.first)

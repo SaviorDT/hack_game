@@ -26,7 +26,7 @@ vi.mock('phaser', () => {
 })
 
 import { GameScene } from './GameScene.ts'
-import { createRoom1Session } from '../content/createRoom1Session.ts'
+import { createRoomSession } from '../content/createRoomSession.ts'
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 
 describe('GameScene key handling', () => {
@@ -41,7 +41,7 @@ describe('GameScene key handling', () => {
 
   function setupScene() {
     const scene = new GameScene()
-    const session = createRoom1Session({ movementBindings: INPUT_BINDINGS.movement, storage: memoryStorage })
+    const session = createRoomSession({ movementBindings: INPUT_BINDINGS.movement, storage: memoryStorage })
     const mockInlineCommandInputView = {
       setVisible: vi.fn(),
       clearInput: vi.fn(),
@@ -403,7 +403,7 @@ describe('GameScene key handling', () => {
 
     it('closes command prompt on empty submission without error or executing', () => {
       const scene = new GameScene()
-      const session = createRoom1Session({ movementBindings: INPUT_BINDINGS.movement, storage: memoryStorage })
+      const session = createRoomSession({ movementBindings: INPUT_BINDINGS.movement, storage: memoryStorage })
 
       const mockInlineCommandInputView = {
         setVisible: vi.fn(),

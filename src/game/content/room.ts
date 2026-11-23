@@ -54,7 +54,7 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   prefabId?: string
 }
 
-export const ROOM1_OBJECTS: RoomObjectConfig[] = ([
+export const ROOM_OBJECTS: RoomObjectConfig[] = ([
   {
     id: "player",
     role: "player",

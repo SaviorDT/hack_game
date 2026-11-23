@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { CombatFeedback } from './CombatFeedback.ts'
 import { CombatService } from '../domain/CombatService.ts'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
+import { createInitialWorldState } from '../content/roomWorldState.ts'
 import type { CharacterCombatState } from '../domain/CharacterState.ts'
 
 function setup() {

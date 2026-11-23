@@ -61,7 +61,7 @@ import type {
   PlayerSpeedConfig,
   RoomObjectConfig,
   WorldObjectRole,
-} from '../content/room1.ts'
+} from '../content/room.ts'
 
 export interface PrefabDefinition extends PhysicsAttrConfig {
   id: string

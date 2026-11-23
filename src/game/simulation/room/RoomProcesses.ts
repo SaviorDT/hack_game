@@ -9,13 +9,13 @@ import {
   ROOM_LAYOUT,
   WORLD_OBJECT_IDS,
   PROCESS_IDS,
-} from '../../content/room1Constants.ts'
+} from '../../content/roomConstants.ts'
 import {
   computeDaggerAttackTranslation,
   startDaggerAttackAnimation,
   GAME_WEAPON_CONFIG,
 } from '../../content/weaponConstants.ts'
-import type { PlayerSpeedConfig } from '../../content/room1.ts'
+import type { PlayerSpeedConfig } from '../../content/room.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { ShapeCollisionWorld, boxFromState } from '../../domain/CollisionWorld.ts'
 import { ArcherProcess, ArrowFlightProcess } from './RangedProcesses.ts'
@@ -348,7 +348,7 @@ export class BoulderProcess implements WorldObjectProcess {
   tick(): void { }
 }
 
-export const ROOM1_PROCESSES: readonly WorldObjectProcess[] = [
+export const ROOM_PROCESSES: readonly WorldObjectProcess[] = [
   new PlayerMovementProcess(),
   new DaggerPickupProcess(),
   new GuardResponseProcess(),

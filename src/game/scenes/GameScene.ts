@@ -2,8 +2,8 @@ import Phaser from 'phaser'
 import { PhaserGameHud } from '../presentation/PhaserGameHud.ts'
 import type { MousePoint } from '../commands/CommandContext.ts'
 import type { GameSession } from '../application/GameSession.ts'
-import { createRoom1Session } from '../content/createRoom1Session.ts'
-import { ROOM1_OBJECTS } from '../content/room1.ts'
+import { createRoomSession } from '../content/createRoomSession.ts'
+import { ROOM_OBJECTS } from '../content/room.ts'
 import { createGameWorldState } from '../content/tutorialRooms.ts'
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.ts'
@@ -77,9 +77,9 @@ export class GameScene extends Phaser.Scene {
         this.commandTypingMode = this.customCommandTypingMode ?? loadCommandTypingMode()
         this.tutorial3RecordedSlot = undefined
         this.tutorial3ExecutedSlot = undefined
-        this.session = createRoom1Session({
+        this.session = createRoomSession({
             movementBindings: INPUT_BINDINGS.movement,
-            worldState: createGameWorldState(ROOM1_OBJECTS, this.startingRoomId),
+            worldState: createGameWorldState(ROOM_OBJECTS, this.startingRoomId),
         })
         if (this.resumeFromSave) {
             this.session.loadSavedState()

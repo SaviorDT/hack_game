@@ -21,10 +21,10 @@ function createWorld(
 ) {
   const objects: WorldObject[] = []
   const state: WorldState = {
-    rooms: [{ id: 'room1', objectIds: [], exits: [], state: {}, ...(bounds ? { bounds } : {}) }],
+    rooms: [{ id: 'room', objectIds: [], exits: [], state: {}, ...(bounds ? { bounds } : {}) }],
     worldObjects: objects,
     processInstances: [],
-    currentRoomId: 'room1',
+    currentRoomId: 'room',
     commandHistory: [],
     simulationTick: 0,
     outcome: 'playing',
@@ -33,7 +33,7 @@ function createWorld(
   const add = (id: string, role: Role, fields: Record<string, unknown> = {}) => {
     const object = new BasicWorldObject(
       id,
-      'room1',
+      'room',
       { name: id, role, colliderTags: defaultColliderTags(role) },
       [],
       { x: 500, y: 500, width: 100, height: 100, vx: 0, vy: 0, ...fields },
@@ -188,7 +188,7 @@ describe('PhysicsWorld motion', () => {
   it('does not move bodies outside the current room, dead bodies or held weapons', () => {
     const { add, step, state } = createWorld({ drag: 0 })
     const elsewhere = add('elsewhere', 'enemy', { vx: 100 })
-      ; (elsewhere.object as unknown as { roomId: string }).roomId = 'room2'
+      ; (elsewhere.object as unknown as { roomId: string }).roomId = 'tutorial5'
     const dead = add('dead', 'enemy', { vx: 100, alive: false })
     const held = add('dagger', 'weapon', { vx: 100, equippedBy: 'player' })
 
@@ -450,7 +450,7 @@ describe('PhysicsWorld walls', () => {
 
   it('lets floor objects ignore walls', () => {
     const { state, step } = walledWorld()
-    const plate = new BasicWorldObject('plate', 'room1', { name: 'plate', role: 'object', colliderTags: [{ class: 'floor' }] }, [], {
+    const plate = new BasicWorldObject('plate', 'room', { name: 'plate', role: 'object', colliderTags: [{ class: 'floor' }] }, [], {
       x: 610,
       y: 500,
       width: 80,

@@ -3,8 +3,8 @@ import { assertValidLabel, hasUppercase } from './label.ts'
 import { BasicWorldObject } from './BasicWorldObject.ts'
 import { assertValidRoom, assertValidRoomExit, type RoomExit } from './Room.ts'
 import { createGameWorldState } from '../content/tutorialRooms.ts'
-import { ROOM1_OBJECTS } from '../content/room1.ts'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
+import { ROOM_OBJECTS } from '../content/room.ts'
+import { createInitialWorldState } from '../content/roomWorldState.ts'
 
 describe('label validation', () => {
   it('detects uppercase letters correctly', () => {
@@ -30,7 +30,7 @@ describe('label validation', () => {
       () =>
         new BasicWorldObject(
           'test_obj',
-          'room1',
+          'room',
           { name: 'InvalidName' },
           [],
           {},
@@ -41,7 +41,7 @@ describe('label validation', () => {
       () =>
         new BasicWorldObject(
           'UpperId',
-          'room1',
+          'room',
           { name: 'valid_name' },
           [],
           {},
@@ -50,7 +50,7 @@ describe('label validation', () => {
 
     const obj = new BasicWorldObject(
       'valid_obj',
-      'room1',
+      'room',
       { name: 'valid_name' },
       [],
       {},
@@ -64,18 +64,18 @@ describe('label validation', () => {
 
   it('enforces lowercase labels on RoomExit and Room', () => {
     const invalidExit: RoomExit = {
-      targetRoomId: 'room2',
-      label: 'Room2',
+      targetRoomId: 'tutorial5',
+      label: 'Tutorial5',
       x: 100,
       y: 100,
     }
     expect(() => assertValidRoomExit(invalidExit)).toThrow(
-      'Invalid room exit label: "Room2" must not contain uppercase letters.',
+      'Invalid room exit label: "Tutorial5" must not contain uppercase letters.',
     )
 
     const validExit: RoomExit = {
-      targetRoomId: 'room2',
-      label: 'room2',
+      targetRoomId: 'tutorial5',
+      label: 'tutorial5',
       x: 100,
       y: 100,
     }
@@ -83,16 +83,16 @@ describe('label validation', () => {
 
     expect(() =>
       assertValidRoom({
-        id: 'room1',
+        id: 'room',
         objectIds: [],
         exits: [invalidExit],
         state: {},
       }),
-    ).toThrow('Invalid room exit label: "Room2" must not contain uppercase letters.')
+    ).toThrow('Invalid room exit label: "Tutorial5" must not contain uppercase letters.')
   })
 
   it('enforces that all actual game rooms and objects have zero uppercase labels', () => {
-    const worldState = createGameWorldState(ROOM1_OBJECTS)
+    const worldState = createGameWorldState(ROOM_OBJECTS)
     for (const room of worldState.rooms) {
       assertValidRoom(room)
     }
@@ -103,14 +103,14 @@ describe('label validation', () => {
       }
     }
 
-    const initialRoom1 = createInitialWorldState(ROOM1_OBJECTS)
-    for (const room of initialRoom1.rooms) {
+    const initialRoom = createInitialWorldState(ROOM_OBJECTS)
+    for (const room of initialRoom.rooms) {
       assertValidRoom(room)
     }
-    for (const obj of initialRoom1.worldObjects) {
-      assertValidLabel(obj.id, `room1 world object id`)
+    for (const obj of initialRoom.worldObjects) {
+      assertValidLabel(obj.id, `room world object id`)
       if (typeof obj.metadata.name === 'string') {
-        assertValidLabel(obj.metadata.name, `room1 world object name`)
+        assertValidLabel(obj.metadata.name, `room world object name`)
       }
     }
   })

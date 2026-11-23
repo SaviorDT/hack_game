@@ -19,8 +19,8 @@ import {
   BOULDER_BASE_SIZE,
   MAX_HEALTH,
   GAME_WEAPON_CONFIG,
-} from './room1Constants.ts'
-import { ROOM1_OBJECTS, type RoomObjectConfig, type WorldObjectRole } from './room1.ts'
+} from './roomConstants.ts'
+import { ROOM_OBJECTS, type RoomObjectConfig, type WorldObjectRole } from './room.ts'
 import { ARCHER_CONFIG, arrowIdsFor } from './archerConstants.ts'
 
 const ROOM_BOUNDS = {
@@ -333,22 +333,22 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
 
 import { loadCommandSlots } from '../application/commandSlots.ts'
 
-export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJECTS): WorldState {
-  const worldObjects = createRoomObjects(objects, ROOM_IDS.first)
+export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM_OBJECTS): WorldState {
+  const worldObjects = createRoomObjects(objects, ROOM_IDS.main)
 
   const firstRoom: Room = {
-    id: ROOM_IDS.first,
+    id: ROOM_IDS.main,
     objectIds: worldObjects.map((o) => o.id),
-    exits: [{ targetRoomId: ROOM_IDS.second, label: ROOM_NAMES[ROOM_IDS.second], ...ROOM_LAYOUT.exit, endsGame: true }],
-    state: { name: ROOM_NAMES[ROOM_IDS.first], width: ROOM_LAYOUT.width, height: ROOM_LAYOUT.height },
+    exits: [{ targetRoomId: ROOM_IDS.end, label: ROOM_NAMES[ROOM_IDS.end], ...ROOM_LAYOUT.exit, endsGame: true }],
+    state: { name: ROOM_NAMES[ROOM_IDS.main], width: ROOM_LAYOUT.width, height: ROOM_LAYOUT.height },
     bounds: ROOM_BOUNDS,
   }
 
   const secondRoom: Room = {
-    id: ROOM_IDS.second,
+    id: ROOM_IDS.end,
     objectIds: [],
     exits: [],
-    state: { name: ROOM_NAMES[ROOM_IDS.second], width: ROOM_LAYOUT.width, height: ROOM_LAYOUT.height },
+    state: { name: ROOM_NAMES[ROOM_IDS.end], width: ROOM_LAYOUT.width, height: ROOM_LAYOUT.height },
     bounds: ROOM_BOUNDS,
   }
 
@@ -359,7 +359,7 @@ export function createInitialWorldState(objects: RoomObjectConfig[] = ROOM1_OBJE
     rooms: [firstRoom, secondRoom],
     worldObjects,
     processInstances: [],
-    currentRoomId: ROOM_IDS.first,
+    currentRoomId: ROOM_IDS.main,
     commandHistory: [],
     commandSlots: loadCommandSlots(),
     simulationTick: 0,

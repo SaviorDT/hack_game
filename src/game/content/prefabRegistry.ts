@@ -1,4 +1,4 @@
-import type { RoomObjectConfig } from './room1.ts'
+import type { RoomObjectConfig } from './room.ts'
 import {
   DEFAULT_PREFABS,
   type PrefabDefinition,

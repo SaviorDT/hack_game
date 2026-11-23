@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { createRoom1Session } from './createRoom1Session.ts'
-import { generateRoom1Source } from './room1Serializer.ts'
-import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from './room1Constants.ts'
-import { createInitialWorldState } from './room1WorldState.ts'
+import { createRoomSession } from './createRoomSession.ts'
+import { generateRoomSource } from './roomSerializer.ts'
+import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from './roomConstants.ts'
+import { createInitialWorldState } from './roomWorldState.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import { PickUpService } from '../domain/PickUpService.ts'
 import { generatePrefabSource } from '../domain/prefabSerializer.ts'
@@ -14,7 +14,7 @@ const memoryStorage = { getItem: () => null, setItem: () => undefined } as unkno
 type Body = { x: number; y: number; vx?: number; alive?: boolean; destroyed?: boolean; mvLimit?: number; weaponId?: string | null; equippedBy?: string | null }
 
 function newSession(): GameSession {
-  return createRoom1Session({ movementBindings: bindings, storage: memoryStorage })
+  return createRoomSession({ movementBindings: bindings, storage: memoryStorage })
 }
 
 function body(session: GameSession, id: string): Body {
@@ -124,8 +124,8 @@ describe('Mv Limit in play', () => {
 })
 
 describe('Mv Limit in saved sources', () => {
-  it('writes mvLimit to room1.ts and to the prefab source only when it is set', () => {
-    const room = generateRoom1Source([
+  it('writes mvLimit to room.ts and to the prefab source only when it is set', () => {
+    const room = generateRoomSource([
       { id: 'a', role: 'weapon', x: 1, y: 2, displayWidth: 10, displayHeight: 10, mvLimit: 3 },
       { id: 'b', role: 'object', x: 1, y: 2, displayWidth: 10, displayHeight: 10 },
     ])

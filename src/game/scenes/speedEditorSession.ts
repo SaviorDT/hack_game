@@ -1,21 +1,21 @@
 import {
   WORLD_OBJECT_IDS,
-} from '../content/room1Constants.ts'
+} from '../content/roomConstants.ts'
 import {
-  ROOM1_OBJECTS,
+  ROOM_OBJECTS,
   type PlayerSpeedConfig,
   type RoomObjectConfig,
-} from '../content/room1.ts'
+} from '../content/room.ts'
 import { GAME_MV_CONFIG, type MvConfig } from '../commands/mvConstants.ts'
 import { GAME_PHYSICS_CONFIG, type PhysicsConfig } from '../simulation/physicsConstants.ts'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
-import { createRoom1CommandSubmissionService } from '../content/room1Commands.ts'
+import { createInitialWorldState } from '../content/roomWorldState.ts'
+import { createRoomCommandSubmissionService } from '../content/roomCommands.ts'
 import { GameSession } from '../application/GameSession.ts'
 import { InputModeController } from '../application/InputModeController.ts'
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { RealtimeSimulationClock } from '../simulation/RealtimeSimulationClock.ts'
 import { TickSimulationEngine } from '../simulation/TickSimulationEngine.ts'
-import { PlayerMovementProcess, DaggerPickupProcess, BoulderProcess } from '../simulation/room1/Room1Processes.ts'
+import { PlayerMovementProcess, DaggerPickupProcess, BoulderProcess } from '../simulation/room/RoomProcesses.ts'
 import { BasicWorldObject } from '../domain/BasicWorldObject.ts'
 import { CombatService } from '../domain/CombatService.ts'
 import { PickUpService } from '../domain/PickUpService.ts'
@@ -82,7 +82,7 @@ export function createSpeedEditorSession(options?: {
   storage?: Storage
   objects?: RoomObjectConfig[]
 }): SpeedEditorSessionBundle {
-  const sourceObjects = options?.objects ?? ROOM1_OBJECTS
+  const sourceObjects = options?.objects ?? ROOM_OBJECTS
   const worldState = createInitialWorldState(sourceObjects)
 
   // Disable exits so running into the door doesn't trigger room transition / congratulations
@@ -131,7 +131,7 @@ export function createSpeedEditorSession(options?: {
   )
   const session = new GameSession({
     worldState,
-    commandSubmission: createRoom1CommandSubmissionService(),
+    commandSubmission: createRoomCommandSubmissionService(),
     simulationClock: new RealtimeSimulationClock(),
     simulationEngine,
     saveRepository: new LocalStorageSaveRepository(getEditorStorage(options?.storage), 'hack-game.editor-save'),

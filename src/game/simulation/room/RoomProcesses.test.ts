@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialWorldState } from '../../content/room1WorldState.ts'
-import { WORLD_OBJECT_IDS, ROOM_LAYOUT } from '../../content/room1Constants.ts'
+import { createInitialWorldState } from '../../content/roomWorldState.ts'
+import { WORLD_OBJECT_IDS, ROOM_LAYOUT } from '../../content/roomConstants.ts'
 import { TickSimulationEngine } from '../TickSimulationEngine.ts'
-import { ROOM1_PROCESSES } from './Room1Processes.ts'
+import { ROOM_PROCESSES } from './RoomProcesses.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import { ShapeCollisionWorld } from '../../domain/CollisionWorld.ts'
 import { DEFAULT_DRAG, DEFAULT_FRICTION } from '../physicsConstants.ts'
 
-describe('Room1Processes collisionbox overlap prevention', () => {
+describe('RoomProcesses collisionbox overlap prevention', () => {
   const collisionWorld = new ShapeCollisionWorld()
 
   it('prevents player from walking into or through a boulder', () => {
@@ -28,7 +28,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
     playerState.moveX = 1 // moving right toward boulder
     playerState.moveY = 0
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
 
     // Advance 10 ticks (10 * 16.67ms)
     for (let i = 0; i < 10; i++) {
@@ -64,7 +64,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
     playerState.moveX = 1
     playerState.moveY = 0
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
     for (let i = 0; i < 90; i++) {
       engine.advance(state, 16.67)
     }
@@ -89,7 +89,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
     playerState.moveX = 1
     playerState.moveY = 0
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
 
     for (let i = 0; i < 20; i++) {
       engine.advance(state, 16.67)
@@ -126,7 +126,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
     playerState.moveX = 1
     playerState.moveY = 0
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
     engine.advance(state, 100)
 
     // Player picks up dagger without movement being blocked
@@ -151,7 +151,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
     guardState.x = playerState.x as number + 150
     guardState.y = 365
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
 
     // Step long enough for guard to reach player
     for (let i = 0; i < 60; i++) {
@@ -192,7 +192,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
     guardState.x = 1250
     guardState.y = 365
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
 
     for (let i = 0; i < 40; i++) {
       engine.advance(state, 16.67)
@@ -215,7 +215,7 @@ describe('Room1Processes collisionbox overlap prevention', () => {
   })
 })
 
-describe('Room1Processes braking only below the top speed', () => {
+describe('RoomProcesses braking only below the top speed', () => {
   const FRICTION = DEFAULT_FRICTION
   const DRAG = DEFAULT_DRAG
   const DT = 1000 / 60 / 1000
@@ -233,7 +233,7 @@ describe('Room1Processes braking only below the top speed', () => {
     player.y = 300
     player.moveX = 0
     player.moveY = 0
-    return { state, player, get, engine: new TickSimulationEngine(ROOM1_PROCESSES) }
+    return { state, player, get, engine: new TickSimulationEngine(ROOM_PROCESSES) }
   }
 
   it('does not brake a player who was knocked faster than maxSpeed: only friction and drag slow it', () => {

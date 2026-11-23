@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { generateRoom1Source } from './room1Serializer.ts'
-import type { RoomObjectConfig } from './room1.ts'
+import { generateRoomSource } from './roomSerializer.ts'
+import type { RoomObjectConfig } from './room.ts'
 
-describe('room1Serializer', () => {
-  it('generates valid TypeScript output for initial room1 objects', () => {
+describe('roomSerializer', () => {
+  it('generates valid TypeScript output for initial room objects', () => {
     const objects: RoomObjectConfig[] = [
       {
         id: 'player',
@@ -25,9 +25,9 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain('export interface RoomObjectConfig')
-    expect(source).toContain('export const ROOM1_OBJECTS: RoomObjectConfig[] = ([')
+    expect(source).toContain('export const ROOM_OBJECTS: RoomObjectConfig[] = ([')
     expect(source).toContain('] as RoomObjectConfig[]).map((obj) => {')
     expect(source).toContain('DEFAULT_PREFABS')
     expect(source).toContain("id: \"player\"")
@@ -52,7 +52,7 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain('prefabId: "guard"')
     expect(source).toContain('prefabId?: string')
   })
@@ -73,7 +73,7 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain("id: \"guard2\"")
     expect(source).toContain("x: 960")
     expect(source).toContain("y: 380")
@@ -104,7 +104,7 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain('export interface PlayerSpeedConfig')
     expect(source).toContain('acceleration: 800')
     expect(source).toContain('frictionAcceleration: 1200')
@@ -113,11 +113,11 @@ describe('room1Serializer', () => {
     expect(source).toContain('maxSpeed: 240')
   })
 
-  it('does not couple mv speed to room1 serialization', () => {
+  it('does not couple mv speed to room serialization', () => {
     const objects: RoomObjectConfig[] = []
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
 
-    expect(source).not.toContain('ROOM1_MV_SPEED')
+    expect(source).not.toContain('ROOM_MV_SPEED')
     expect(source).not.toContain('MvSpeedConfig')
   })
 
@@ -137,7 +137,7 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain('attackDistance: 45')
     expect(source).toContain('attackDurationMs: 250')
     expect(source).toContain('holdOffsetX: 16')
@@ -158,7 +158,7 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain('id: "boulder"')
     expect(source).toContain('role: "object"')
     expect(source).toContain('x: 800')
@@ -189,16 +189,16 @@ describe('room1Serializer', () => {
       },
     ]
 
-    const source = generateRoom1Source(objects)
+    const source = generateRoomSource(objects)
     expect(source).toContain('colliderWidth: 95')
     expect(source).toContain('colliderHeight: 145')
     expect(source).not.toContain('colliderWidth: undefined')
   })
 })
 
-describe('generateRoom1Source physics values', () => {
+describe('generateRoomSource physics values', () => {
   it('writes only the physics values that are set', () => {
-    const source = generateRoom1Source([
+    const source = generateRoomSource([
       {
         id: 'dagger',
         role: 'weapon',
@@ -218,7 +218,7 @@ describe('generateRoom1Source physics values', () => {
   })
 })
 
-describe('room1Serializer collider shape', () => {
+describe('roomSerializer collider shape', () => {
   const rock: RoomObjectConfig = {
     id: 'boulder',
     role: 'object',
@@ -232,12 +232,12 @@ describe('room1Serializer collider shape', () => {
   }
 
   it('writes a circle collider shape and the type that allows it', () => {
-    const source = generateRoom1Source([rock])
+    const source = generateRoomSource([rock])
     expect(source).toContain('    colliderShape: "circle",')
     expect(source).toContain("colliderShape?: 'box' | 'circle'")
   })
 
   it('leaves the default box shape out', () => {
-    expect(generateRoom1Source([{ ...rock, colliderShape: 'box' }])).not.toContain('colliderShape: "')
+    expect(generateRoomSource([{ ...rock, colliderShape: 'box' }])).not.toContain('colliderShape: "')
   })
 })

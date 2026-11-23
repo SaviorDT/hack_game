@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MvCommandExecutor } from './mv.ts'
-import { createInitialWorldState } from '../../content/room1WorldState.ts'
-import { WORLD_OBJECT_IDS } from '../../content/room1Constants.ts'
+import { createInitialWorldState } from '../../content/roomWorldState.ts'
+import { WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 
 describe('MvCommandExecutor', () => {
@@ -53,8 +53,8 @@ describe('MvCommandExecutor', () => {
       .toEqual({ kind: 'popup', text: '"$mouse" cannot be used as an object name.' })
     expect(executor.execute({ name: 'mv', arguments: ['dagger', 'guard'], options: [] }, state).feedback)
       .toEqual({ kind: 'popup', text: '"guard" already exists.' })
-    expect(executor.execute({ name: 'mv', arguments: ['dagger', 'room2'], options: [] }, state).feedback)
-      .toEqual({ kind: 'popup', text: '"room2" already exists.' })
+    expect(executor.execute({ name: 'mv', arguments: ['dagger', 'tutorial5'], options: [] }, state).feedback)
+      .toEqual({ kind: 'popup', text: '"tutorial5" already exists.' })
   })
 
   it('rejects self-renaming', () => {

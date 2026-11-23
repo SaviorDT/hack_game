@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createRoom1Session } from './createRoom1Session.ts'
+import { createRoomSession } from './createRoomSession.ts'
 import { createGameWorldState, TUTORIAL_ROOM_IDS } from './tutorialRooms.ts'
 import { HOME_AREA_IDS } from './homeArea.ts'
-import { ROOM1_OBJECTS } from './room1.ts'
-import { ROOM_IDS, ROOM_LAYOUT } from './room1Constants.ts'
+import { ROOM_OBJECTS } from './room.ts'
+import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import { isExitOpen } from '../domain/RoomTravel.ts'
 import { SIMULATION_TICK_MS } from '../simulation/TickSimulationEngine.ts'
@@ -14,7 +14,7 @@ const memoryStorage = { getItem: () => null, setItem: () => undefined } as unkno
 type Body = { x: number; y: number; alive?: boolean; health?: number; maxHealth?: number; weaponId?: string | null; equippedBy?: string | null; discovered?: boolean }
 
 function newGame(): GameSession {
-  return createRoom1Session({ movementBindings: bindings, storage: memoryStorage, worldState: createGameWorldState() })
+  return createRoomSession({ movementBindings: bindings, storage: memoryStorage, worldState: createGameWorldState() })
 }
 
 function body(session: GameSession, id: string): Body {
@@ -83,7 +83,7 @@ describe('tutorial rooms', () => {
 
   it('starts the game in specified startingRoomId with the player placed there and nowhere else', () => {
     for (const targetId of [HOME_AREA_IDS.storage, HOME_AREA_IDS.yard, ROOM_IDS.first, ROOM_IDS.second, TUTORIAL_ROOM_IDS.throw]) {
-      const state = createGameWorldState(ROOM1_OBJECTS, targetId)
+      const state = createGameWorldState(ROOM_OBJECTS, targetId)
       expect(state.currentRoomId).toBe(targetId)
       const holders = state.rooms.filter((candidate) => candidate.objectIds.includes('player')).map((candidate) => candidate.id)
       expect(holders).toEqual([targetId])
@@ -93,7 +93,7 @@ describe('tutorial rooms', () => {
   })
 
   it('falls back to tutorial1 when an invalid startingRoomId is specified', () => {
-    const state = createGameWorldState(ROOM1_OBJECTS, 'non-existent-room-xyz')
+    const state = createGameWorldState(ROOM_OBJECTS, 'non-existent-room-xyz')
     expect(state.currentRoomId).toBe(TUTORIAL_ROOM_IDS.move)
     const holders = state.rooms.filter((candidate) => candidate.objectIds.includes('player')).map((candidate) => candidate.id)
     expect(holders).toEqual([TUTORIAL_ROOM_IDS.move])
@@ -158,8 +158,8 @@ describe('tutorial rooms', () => {
     expect(state.rooms.find((candidate) => candidate.id === TUTORIAL_ROOM_IDS.slowTime)!.objectIds).not.toContain('player')
   })
 
-  it('keeps room1 on its own as before for the editors and older tests', () => {
-    const session = createRoom1Session({ movementBindings: bindings, storage: memoryStorage })
+  it('keeps room on its own as before for the editors and older tests', () => {
+    const session = createRoomSession({ movementBindings: bindings, storage: memoryStorage })
     expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.first)
     expect(session.getWorldState().rooms.map((candidate) => candidate.id)).toEqual([ROOM_IDS.first, ROOM_IDS.second])
   })

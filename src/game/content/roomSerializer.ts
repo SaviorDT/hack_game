@@ -1,11 +1,11 @@
 import { PHYSICS_ATTR_KEYS } from '../domain/PhysicsAttr.ts'
-import type { RoomObjectConfig } from './room1.ts'
+import type { RoomObjectConfig } from './room.ts'
 
 /**
  * Serializes an array of RoomObjectConfig items into valid TypeScript source code
- * suitable for writing directly to src/game/content/room1.ts.
+ * suitable for writing directly to src/game/content/room.ts.
  */
-export function generateRoom1Source(objects: RoomObjectConfig[]): string {
+export function generateRoomSource(objects: RoomObjectConfig[]): string {
   const serializedObjects = objects.map((obj) => {
     const lines = [
       `    id: ${JSON.stringify(obj.id)},`,
@@ -137,7 +137,7 @@ export interface RoomObjectConfig extends PhysicsAttrConfig {
   prefabId?: string
 }
 
-export const ROOM1_OBJECTS: RoomObjectConfig[] = ([
+export const ROOM_OBJECTS: RoomObjectConfig[] = ([
 ${serializedObjects.join('\n')}
 ] as RoomObjectConfig[]).map((obj) => {
   const prefab = DEFAULT_PREFABS.find((p) => p.id === inferPrefabId(obj))

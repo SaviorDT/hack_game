@@ -1,20 +1,18 @@
+import { wallFromEdges } from '../domain/Room.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import { HOME_AREA_IDS, HOME_AREA_ROOMS } from './homeArea.ts'
-import { ROOM1_OBJECTS, type RoomObjectConfig } from './room1.ts'
-import { ROOM_IDS } from './room1Constants.ts'
-import { ROOM2_DEFINITION } from './room2.ts'
-import { createInitialWorldState } from './room1WorldState.ts'
+import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
+import { ROOM_IDS } from './roomConstants.ts'
+import { TUTORIAL5_DEFINITION } from './tutorial5.ts'
+import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
+import { createInitialWorldState } from './roomWorldState.ts'
 import { boulder, buildRooms, dagger, guard, ROOM_ENTRY, STANDS_FIRM, type RoomDefinition } from './roomPieces.ts'
 
 /**
- * Tutorial rooms played first, one per mechanic: tutorial1 → tutorial2 → tutorial3, then the
- * home area (`homeArea.ts`) and room1. Each Exit stays locked until the room's goal is met.
+ * Tutorial rooms played first, one per mechanic: tutorial1 → … → tutorial5, then the
+ * home area (`homeArea.ts`) and room. Each Exit stays locked until the room's goal is met.
  */
-export const TUTORIAL_ROOM_IDS = {
-  move: 'tutorial1',
-  throw: 'tutorial2',
-  slowTime: 'tutorial3',
-} as const
+export { TUTORIAL_ROOM_IDS }
 
 export const TUTORIAL_ROOMS: RoomDefinition[] = [
   {
@@ -57,47 +55,55 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
       guard('runner', 1550, 420, { speed: 380, maxHealth: 30 }),
     ],
     exit: {
-      targetRoomId: HOME_AREA_IDS.home,
-      label: HOME_AREA_IDS.home,
+      targetRoomId: TUTORIAL_ROOM_IDS.mouseThrow,
+      label: TUTORIAL_ROOM_IDS.mouseThrow,
       requires: { kind: 'defeat', objectIds: ['runner'] },
     },
   },
+  {
+    // A wall splits the room; the only gap is plugged by a boulder. Throw it out of the way with `acc`.
+    id: TUTORIAL_ROOM_IDS.mouseThrow,
+    hint: 'move your mouse and type: acc boulder $mouse',
+    goal: 'Get through to the far side.',
+    walls: [wallFromEdges(880, 80, 940, 330), wallFromEdges(880, 470, 940, 700)],
+    objects: [boulder('tutorial4boulder', 910, 400), dagger('tutorial4dagger', 520, 600)],
+    exit: { targetRoomId: TUTORIAL_ROOM_IDS.flyAround, label: TUTORIAL_ROOM_IDS.flyAround },
+  },
+  TUTORIAL5_DEFINITION,
 ]
 
-export const ROOM1_HINT =
-  'The real thing: guards rush you once you cross the middle of the room. Use acc and your dagger to reach room2.'
+export const ROOM_HINT =
+  'The real thing: guards rush you once you cross the middle of the room. Use acc and your dagger to reach the next room.'
 
 /**
- * The whole game: the tutorial rooms, the home area, room1, then room2 (whose Hidden Exit to room3 ends the
- * game). The Player Character starts in tutorial1 with the stats configured for room1's player.
+ * The whole game: the tutorial rooms, the home area, then room (whose Exit ends the game until a next room
+ * exists). The Player Character starts in tutorial1 with the stats configured for room's player.
  */
 export function createGameWorldState(
-  room1Objects: readonly RoomObjectConfig[] = ROOM1_OBJECTS,
+  roomObjects: readonly RoomObjectConfig[] = ROOM_OBJECTS,
   startingRoomId?: string,
 ): WorldState {
-  const room1 = createInitialWorldState([...room1Objects])
-  const playerConfig = room1Objects.find((obj) => obj.role === 'player')
+  const room = createInitialWorldState([...roomObjects])
+  const playerConfig = roomObjects.find((obj) => obj.role === 'player')
   const playerId = playerConfig?.id ?? 'player'
-  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ROOM2_DEFINITION], playerConfig)
+  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS], playerConfig)
 
-  // room1 only: `createInitialWorldState` also holds an empty room2, which `built` replaces with the real one.
-  const room1Rooms = room1.rooms
+  // room only: `createInitialWorldState` also holds an empty `end` room, which the game does not use.
+  const roomRooms = room.rooms
     .filter((room) => room.id === ROOM_IDS.first)
     .map((room) => ({
       ...room,
-      // Here room1's Exit leads on to the real room2 instead of ending the run.
-      exits: room.exits.map(({ endsGame: _endsGame, ...exit }) => exit),
       objectIds: room.objectIds.filter((id) => id !== playerId),
       entry: playerConfig ? { x: playerConfig.x, y: playerConfig.y } : ROOM_ENTRY,
-      hint: ROOM1_HINT,
-      goal: 'Reach the exit to room2.',
+      hint: ROOM_HINT,
+      goal: 'Reach the exit to the next room.',
       restoresHealth: true,
     }))
 
-  const allRooms = [...built.rooms, ...room1Rooms]
+  const allRooms = [...built.rooms, ...roomRooms]
   const allWorldObjects = [
     ...built.worldObjects,
-    ...room1.worldObjects.filter((worldObject) => worldObject.id !== playerId),
+    ...room.worldObjects.filter((worldObject) => worldObject.id !== playerId),
   ]
 
   const effectiveStartingRoomId =
@@ -152,7 +158,7 @@ export function createGameWorldState(
   })
 
   return {
-    ...room1,
+    ...room,
     rooms: finalRooms,
     worldObjects: allWorldObjects,
     currentRoomId: effectiveStartingRoomId,

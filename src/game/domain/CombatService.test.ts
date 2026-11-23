@@ -28,7 +28,7 @@ function character(
     facing: 'right',
     ...overrides,
   }
-  return new BasicWorldObject(id, 'room1', { role }, [], state as never)
+  return new BasicWorldObject(id, 'room', { role }, [], state as never)
 }
 
 function worldOf(...worldObjects: WorldObject[]): WorldState {
@@ -36,7 +36,7 @@ function worldOf(...worldObjects: WorldObject[]): WorldState {
     rooms: [],
     worldObjects,
     processInstances: [],
-    currentRoomId: 'room1',
+    currentRoomId: 'room',
     commandHistory: [],
     simulationTick: 0,
     outcome: 'playing',
@@ -105,7 +105,7 @@ describe('attack', () => {
     const dead = character('dead', 'guard', SIZE + 1, { alive: false, health: 0 })
     const elsewhere = new BasicWorldObject(
       'elsewhere',
-      'room2',
+      'tutorial5',
       { role: 'guard' },
       [],
       { ...stateOf(character('x', 'guard', SIZE + 1)) } as never,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createRoom1Session } from '../content/createRoom1Session.ts'
-import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { createRoomSession } from '../content/createRoomSession.ts'
+import { ROOM_IDS, ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
 import type { CharacterState } from '../domain/CharacterState.ts'
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
@@ -17,7 +17,7 @@ const bindings = {
 const memoryStorage = { getItem: () => null, setItem: () => undefined } as unknown as Storage
 
 function newSession(): GameSession {
-  return createRoom1Session({ movementBindings: bindings, storage: memoryStorage })
+  return createRoomSession({ movementBindings: bindings, storage: memoryStorage })
 }
 
 function stateOf(session: GameSession, id: string): CharacterState {
@@ -257,7 +257,7 @@ describe('guard', () => {
 
 describe('commands', () => {
   it('rejects unknown commands like cd and help', () => {
-    expect(newSession().submitCommand('cd room2/')).toMatchObject({
+    expect(newSession().submitCommand('cd tutorial5/')).toMatchObject({
       status: 'rejected',
       feedback: { text: 'Unknown command: cd' },
     })
@@ -422,10 +422,10 @@ describe('commands', () => {
     for (const id of ['guard', 'guard2', 'guard3', 'boulder']) {
       ; (stateOf(session, id) as unknown as { alive: boolean }).alive = false
     }
-    const result = session.submitCommand('acc hacker room2')
+    const result = session.submitCommand('acc hacker tutorial5')
     expect(result.status).toBe('success')
 
-    // Run until player reaches room2 exit
+    // Run until player reaches tutorial5 exit
     runFor(session, 6000)
     expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.second)
     expect(session.getWorldState().outcome).toBe('congratulations')
@@ -507,14 +507,14 @@ describe('saved state', () => {
   }
 
   it('reports no saved state until a save is written, and load does nothing', () => {
-    const session = createRoom1Session({ movementBindings: bindings, storage: storageStub() })
+    const session = createRoomSession({ movementBindings: bindings, storage: storageStub() })
     expect(session.hasSavedState()).toBe(false)
     expect(session.loadSavedState()).toBe(false)
   })
 
   it('restores the saved world, resumes playing in movement mode', () => {
     const storage = storageStub()
-    const session = createRoom1Session({ movementBindings: bindings, storage })
+    const session = createRoomSession({ movementBindings: bindings, storage })
     stateOf(session, 'player').x = 321
     session.saveCurrentState()
 
@@ -531,7 +531,7 @@ describe('saved state', () => {
 
   it('restores the simulation tick with the saved world, and leaves the record in place', () => {
     const storage = storageStub()
-    const session = createRoom1Session({ movementBindings: bindings, storage })
+    const session = createRoomSession({ movementBindings: bindings, storage })
     session.getWorldState().simulationTick = 40
     session.saveCurrentState()
     const record = storage.getItem('hack-game.save')
@@ -546,13 +546,13 @@ describe('saved state', () => {
   it('treats corrupt save data as no save', () => {
     const storage = storageStub()
     storage.setItem('hack-game.save', '{not json')
-    const session = createRoom1Session({ movementBindings: bindings, storage })
+    const session = createRoomSession({ movementBindings: bindings, storage })
     expect(session.hasSavedState()).toBe(false)
   })
 
   it('treats a save from an older schema (with mv_attr and no physics fields) as no save', () => {
     const storage = storageStub()
-    const session = createRoom1Session({ movementBindings: bindings, storage })
+    const session = createRoomSession({ movementBindings: bindings, storage })
     session.saveCurrentState()
     const record = JSON.parse(storage.getItem('hack-game.save') as string)
     storage.setItem('hack-game.save', JSON.stringify({ ...record, schemaVersion: 1 }))

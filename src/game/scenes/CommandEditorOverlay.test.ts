@@ -36,9 +36,9 @@ import {
   DEFAULT_RESTITUTION,
   MIN_MASS,
 } from '../simulation/physicsConstants.ts'
-import { createRoom1Session } from '../content/createRoom1Session.ts'
+import { createRoomSession } from '../content/createRoomSession.ts'
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
-import { WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
 import type Phaser from 'phaser'
 
 function createMockPhaserScene(): Phaser.Scene {
@@ -104,7 +104,7 @@ describe('CommandEditorOverlay & MV Tuning', () => {
   const initialPhysics = { ...GAME_PHYSICS_CONFIG }
 
   function createTestSession() {
-    return createRoom1Session({
+    return createRoomSession({
       movementBindings: INPUT_BINDINGS.movement,
       storage: memoryStorage,
     })

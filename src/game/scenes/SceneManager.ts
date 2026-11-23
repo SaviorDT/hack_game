@@ -289,8 +289,8 @@ export class SceneManager {
 
   private beforeLeave(scene?: Phaser.Scene): void {
     if (!scene) return
-    if ('syncToRoom1Objects' in scene && typeof (scene as any).syncToRoom1Objects === 'function') {
-      (scene as any).syncToRoom1Objects()
+    if ('syncToRoomObjects' in scene && typeof (scene as any).syncToRoomObjects === 'function') {
+      (scene as any).syncToRoomObjects()
     }
   }
 }

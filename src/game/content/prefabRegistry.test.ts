@@ -9,7 +9,7 @@ import {
   updatePrefab,
 } from './prefabRegistry.ts'
 import { getRoomObjectConfigs, resetAllRooms } from './roomRegistry.ts'
-import { ROOM_IDS } from './room1Constants.ts'
+import { ROOM_IDS } from './roomConstants.ts'
 
 describe('Prefab Registry & Propagation', () => {
   beforeEach(() => {
@@ -33,9 +33,9 @@ describe('Prefab Registry & Propagation', () => {
   it('finds instances of a prefab across rooms', () => {
     const guardInstances = getPrefabInstances('guard')
     expect(guardInstances.length).toBeGreaterThan(0)
-    const inRoom1 = guardInstances.filter((m) => m.roomId === ROOM_IDS.first)
-    // In room1 there are guard, guard2, guard3
-    expect(inRoom1.length).toBe(3)
+    const inRoom = guardInstances.filter((m) => m.roomId === ROOM_IDS.first)
+    // In room there are guard, guard2, guard3
+    expect(inRoom.length).toBe(3)
   })
 
   it('propagatePrefabChanges updates all instances across rooms while preserving coordinates and id', () => {
@@ -53,11 +53,11 @@ describe('Prefab Registry & Propagation', () => {
     expect(result.affectedRooms).toContain(ROOM_IDS.first)
     expect(result.affectedInstanceCount).toBeGreaterThanOrEqual(3)
 
-    // Verify room1 objects
-    const room1Objects = getRoomObjectConfigs(ROOM_IDS.first)
-    const g1 = room1Objects.find((o) => o.id === 'guard')!
-    const g2 = room1Objects.find((o) => o.id === 'guard2')!
-    const g3 = room1Objects.find((o) => o.id === 'guard3')!
+    // Verify room objects
+    const roomObjects = getRoomObjectConfigs(ROOM_IDS.first)
+    const g1 = roomObjects.find((o) => o.id === 'guard')!
+    const g2 = roomObjects.find((o) => o.id === 'guard2')!
+    const g3 = roomObjects.find((o) => o.id === 'guard3')!
 
     expect(g1.maxHealth).toBe(180)
     expect(g1.displayWidth).toBe(190)
@@ -77,7 +77,7 @@ describe('Prefab Registry & Propagation', () => {
     expect(g3.x).toBe(1160)
 
     // Non-guard objects should NOT be changed
-    const player = room1Objects.find((o) => o.id === 'player')!
+    const player = roomObjects.find((o) => o.id === 'player')!
     expect(player.displayWidth).toBe(playerWidthBefore)
   })
 

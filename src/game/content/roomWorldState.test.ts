@@ -3,14 +3,14 @@ import {
   createInitialWorldState,
   computeCollisionSize,
   resolveScale,
-} from './room1WorldState.ts'
-import { CHARACTER_SIZE, DAGGER_SIZE, CHARACTER_BASE_SIZE } from './room1Constants.ts'
-import type { RoomObjectConfig } from './room1.ts'
+} from './roomWorldState.ts'
+import { CHARACTER_SIZE, DAGGER_SIZE, CHARACTER_BASE_SIZE } from './roomConstants.ts'
+import type { RoomObjectConfig } from './room.ts'
 import { ShapeCollisionWorld } from '../domain/CollisionWorld.ts'
 import { readPhysicsAttrOverride } from '../domain/PhysicsAttr.ts'
 import { collidesPhysically, colliderTagsOf } from '../domain/ColliderTag.ts'
 
-describe('room1WorldState scaled collision AABB', () => {
+describe('roomWorldState scaled collision AABB', () => {
   it('resolves scale from explicit scaleX and scaleY', () => {
     const obj: RoomObjectConfig = {
       id: 'guard-test',

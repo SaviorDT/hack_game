@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { AccCommandExecutor } from './acc.ts'
-import { createInitialWorldState } from '../../content/room1WorldState.ts'
-import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../../content/room1Constants.ts'
+import { createInitialWorldState } from '../../content/roomWorldState.ts'
+import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import { getMutableWorldObjectState, type MutableWorldObjectState } from '../../domain/WorldObjectState.ts'
 import { TickSimulationEngine } from '../../simulation/TickSimulationEngine.ts'
-import { ROOM1_PROCESSES } from '../../simulation/room1/Room1Processes.ts'
+import { ROOM_PROCESSES } from '../../simulation/room/RoomProcesses.ts'
 
 describe('AccCommandExecutor', () => {
   const executor = new AccCommandExecutor()
@@ -44,7 +44,7 @@ describe('AccCommandExecutor', () => {
 
   it('throws to a room exit', () => {
     const state = createInitialWorldState()
-    const result = executor.execute({ name: 'acc', arguments: ['dagger', 'room2'], options: [] }, state)
+    const result = executor.execute({ name: 'acc', arguments: ['dagger', 'tutorial5'], options: [] }, state)
     expect(result.status).toBe('success')
     expect(getMutableWorldObjectState<MutableWorldObjectState>(
       state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!,
@@ -136,7 +136,7 @@ describe('AccCommandExecutor', () => {
     const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(dagger)
     const initialX = daggerState.x as number
     executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state)
-    new TickSimulationEngine(ROOM1_PROCESSES).advance(state, 100)
+    new TickSimulationEngine(ROOM_PROCESSES).advance(state, 100)
     expect(daggerState.x as number).not.toBe(initialX)
   })
 })

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { createRoom1Session } from './createRoom1Session.ts'
+import { createRoomSession } from './createRoomSession.ts'
 import { createGameWorldState, TUTORIAL_ROOM_IDS } from './tutorialRooms.ts'
 import { HOME_AREA_IDS } from './homeArea.ts'
-import { ROOM_IDS, ROOM_LAYOUT } from './room1Constants.ts'
+import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
 import type { GameSession } from '../application/GameSession.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import { isExitOpen } from '../domain/RoomTravel.ts'
@@ -28,7 +28,7 @@ function gameIn(roomId: string): GameSession {
   player.roomId = roomId
   Object.assign(player.state as object, target.entry)
   state.currentRoomId = roomId
-  return createRoom1Session({ movementBindings: bindings, storage: memoryStorage, worldState: state })
+  return createRoomSession({ movementBindings: bindings, storage: memoryStorage, worldState: state })
 }
 
 function body(session: GameSession, id: string): Body {
@@ -81,7 +81,7 @@ function walk(session: GameSession, ...waypoints: { x: number; y: number }[]): v
 }
 
 describe('home area', () => {
-  it('follows the tutorial and leads into room1', () => {
+  it('follows the tutorial and leads into room', () => {
     const state = createGameWorldState()
     const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0].targetRoomId
     expect(exitOf(TUTORIAL_ROOM_IDS.slowTime)).toBe(HOME_AREA_IDS.home)

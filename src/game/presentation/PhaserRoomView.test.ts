@@ -6,7 +6,7 @@ import {
   DAGGER_ATTACK_DURATION_MS,
   computeDaggerAttackTranslation,
 } from './PhaserRoomView.ts'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
+import { createInitialWorldState } from '../content/roomWorldState.ts'
 
 interface MockText {
   text: string

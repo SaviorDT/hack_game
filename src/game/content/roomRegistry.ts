@@ -1,23 +1,22 @@
 import type { Box } from '../domain/CollisionWorld.ts'
 import type { RoomExit } from '../domain/Room.ts'
 import { HOME_AREA_IDS, HOME_AREA_ROOMS } from './homeArea.ts'
-import { ROOM1_OBJECTS, type RoomObjectConfig } from './room1.ts'
-import { ROOM2_DEFINITION } from './room2.ts'
-import { ROOM_IDS } from './room1Constants.ts'
+import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
+import { ROOM_IDS } from './roomConstants.ts'
 import { ROOM_ENTRY, type RoomDefinition } from './roomPieces.ts'
-import { TUTORIAL_ROOMS, TUTORIAL_ROOM_IDS, ROOM1_HINT } from './tutorialRooms.ts'
+import { TUTORIAL_ROOMS, TUTORIAL_ROOM_IDS, ROOM_HINT } from './tutorialRooms.ts'
 
 export const EDITOR_ROOM_IDS = [
   TUTORIAL_ROOM_IDS.move,
   TUTORIAL_ROOM_IDS.throw,
   TUTORIAL_ROOM_IDS.slowTime,
-  HOME_AREA_IDS.home,
+  TUTORIAL_ROOM_IDS.mouseThrow,
+  TUTORIAL_ROOM_IDS.flyAround,
   HOME_AREA_IDS.storage,
   HOME_AREA_IDS.yard,
   HOME_AREA_IDS.lane,
   HOME_AREA_IDS.gate,
-  ROOM_IDS.first,
-  ROOM_IDS.second,
+  ROOM_IDS.main,
 ] as const
 
 export type EditorRoomId = (typeof EDITOR_ROOM_IDS)[number]
@@ -34,8 +33,7 @@ export interface EditorRoomDefinition {
 // Deep clone snapshots taken at module evaluation for clean test resets
 const initialTutorialRoomsSnapshot = JSON.stringify(TUTORIAL_ROOMS)
 const initialHomeAreaRoomsSnapshot = JSON.stringify(HOME_AREA_ROOMS)
-const initialRoom1ObjectsSnapshot = JSON.stringify(ROOM1_OBJECTS)
-const initialRoom2ObjectsSnapshot = JSON.stringify(ROOM2_DEFINITION.objects)
+const initialRoomObjectsSnapshot = JSON.stringify(ROOM_OBJECTS)
 
 export function getEditorRoomIds(): readonly string[] {
   return EDITOR_ROOM_IDS
@@ -60,23 +58,13 @@ export function getPreviousRoomId(currentRoomId: string): string {
 }
 
 export function getRoomDefinition(roomId: string): EditorRoomDefinition | undefined {
-  if (roomId === ROOM_IDS.first) {
+  if (roomId === ROOM_IDS.main) {
     return {
-      id: ROOM_IDS.first,
-      title: 'room1',
-      hint: ROOM1_HINT,
-      goal: 'Reach the exit to room2.',
-      exit: { targetRoomId: ROOM_IDS.second, label: ROOM_IDS.second, endsGame: true },
-    }
-  }
-
-  if (roomId === ROOM_IDS.second) {
-    return {
-      id: ROOM_IDS.second,
-      title: 'room2',
-      hint: ROOM2_DEFINITION.hint,
-      goal: ROOM2_DEFINITION.goal,
-      exit: ROOM2_DEFINITION.exit,
+      id: ROOM_IDS.main,
+      title: 'room',
+      hint: ROOM_HINT,
+      goal: 'Reach the exit to the next room.',
+      exit: { targetRoomId: ROOM_IDS.end, label: ROOM_IDS.end, endsGame: true },
     }
   }
 
@@ -108,12 +96,8 @@ export function getRoomDefinition(roomId: string): EditorRoomDefinition | undefi
 }
 
 export function getRoomObjectConfigs(roomId: string): RoomObjectConfig[] {
-  if (roomId === ROOM_IDS.first) {
-    return [...ROOM1_OBJECTS]
-  }
-
-  if (roomId === ROOM_IDS.second) {
-    return [...ROOM2_DEFINITION.objects]
+  if (roomId === ROOM_IDS.main) {
+    return [...ROOM_OBJECTS]
   }
 
   if (roomId === TUTORIAL_ROOM_IDS.move) {
@@ -123,7 +107,7 @@ export function getRoomObjectConfigs(roomId: string): RoomObjectConfig[] {
     if (hasPlayer) {
       return [...defObjects]
     }
-    const playerConfig = ROOM1_OBJECTS.find((o) => o.role === 'player')
+    const playerConfig = ROOM_OBJECTS.find((o) => o.role === 'player')
     const playerObj: RoomObjectConfig = playerConfig
       ? { ...playerConfig, ...ROOM_ENTRY }
       : {
@@ -153,23 +137,18 @@ export function getRoomObjectConfigs(roomId: string): RoomObjectConfig[] {
 }
 
 export function setRoomObjectConfigs(roomId: string, objects: readonly RoomObjectConfig[]): void {
-  if (roomId === ROOM_IDS.first) {
-    ROOM1_OBJECTS.length = 0
-    ROOM1_OBJECTS.push(...objects)
-    return
-  }
-
-  if (roomId === ROOM_IDS.second) {
-    ROOM2_DEFINITION.objects = [...objects]
+  if (roomId === ROOM_IDS.main) {
+    ROOM_OBJECTS.length = 0
+    ROOM_OBJECTS.push(...objects)
     return
   }
 
   if (roomId === TUTORIAL_ROOM_IDS.move) {
     const playerObj = objects.find((o) => o.role === 'player' || o.id === 'player')
     if (playerObj) {
-      const pIdx = ROOM1_OBJECTS.findIndex((o) => o.role === 'player')
+      const pIdx = ROOM_OBJECTS.findIndex((o) => o.role === 'player')
       if (pIdx !== -1) {
-        ROOM1_OBJECTS[pIdx] = { ...ROOM1_OBJECTS[pIdx], ...playerObj }
+        ROOM_OBJECTS[pIdx] = { ...ROOM_OBJECTS[pIdx], ...playerObj }
       }
     }
     const nonPlayerObjs = objects.filter((o) => o.role !== 'player' && o.id !== 'player')
@@ -207,9 +186,7 @@ export function resetAllRooms(): void {
     }
   }
 
-  const parsedRoom1: RoomObjectConfig[] = JSON.parse(initialRoom1ObjectsSnapshot)
-  ROOM1_OBJECTS.length = 0
-  ROOM1_OBJECTS.push(...parsedRoom1)
-
-  ROOM2_DEFINITION.objects = JSON.parse(initialRoom2ObjectsSnapshot)
+  const parsedRoom: RoomObjectConfig[] = JSON.parse(initialRoomObjectsSnapshot)
+  ROOM_OBJECTS.length = 0
+  ROOM_OBJECTS.push(...parsedRoom)
 }

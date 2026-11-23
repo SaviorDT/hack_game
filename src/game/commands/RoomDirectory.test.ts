@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
+import { createInitialWorldState } from '../content/roomWorldState.ts'
 import { getRoomDirectoryEntries } from './RoomDirectory.ts'
 
 describe('getRoomDirectoryEntries', () => {
@@ -18,7 +18,7 @@ describe('getRoomDirectoryEntries', () => {
 
     const entries = getRoomDirectoryEntries(state, room, false, true)
     expect(entries).toContain('hacker')
-    expect(entries).toContain('room2')
+    expect(entries).toContain('tutorial5')
   })
 
   it('reflects updated player label when player is renamed', () => {

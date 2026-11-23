@@ -57,7 +57,7 @@ function createMockScene(mockObjects: EditorObject[]): LevelEditorSceneLike {
     } as any,
     getEditorObjects: vi.fn(() => mockObjects),
     refreshObjectVisuals: vi.fn(),
-    getCurrentRoomId: vi.fn(() => 'room1'),
+    getCurrentRoomId: vi.fn(() => 'room'),
     updatePropertyPanel: vi.fn(),
   }
 }

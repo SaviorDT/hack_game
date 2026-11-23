@@ -7,25 +7,25 @@ import { JsonWorldStateCodec } from '../persistence/JsonWorldStateCodec.ts'
 import { LocalStorageSaveRepository } from '../persistence/LocalStorageSaveRepository.ts'
 import { RealtimeSimulationClock } from '../simulation/RealtimeSimulationClock.ts'
 import { TickSimulationEngine } from '../simulation/TickSimulationEngine.ts'
-import { ROOM1_PROCESSES } from '../simulation/room1/Room1Processes.ts'
-import { createRoom1CommandSubmissionService } from './room1Commands.ts'
-import { createInitialWorldState } from './room1WorldState.ts'
-import { WORLD_OBJECT_IDS } from './room1Constants.ts'
+import { ROOM_PROCESSES } from '../simulation/room/RoomProcesses.ts'
+import { createRoomCommandSubmissionService } from './roomCommands.ts'
+import { createInitialWorldState } from './roomWorldState.ts'
+import { WORLD_OBJECT_IDS } from './roomConstants.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 
-export interface Room1SessionOptions {
+export interface RoomSessionOptions {
   readonly movementBindings: MovementBindings
   readonly storage?: Storage
-  /** The world to play; defaults to room1 on its own. */
+  /** The world to play; defaults to room on its own. */
   readonly worldState?: WorldState
 }
 
-export function createRoom1Session(options: Room1SessionOptions): GameSession {
+export function createRoomSession(options: RoomSessionOptions): GameSession {
   return new GameSession({
     worldState: options.worldState ?? createInitialWorldState(),
-    commandSubmission: createRoom1CommandSubmissionService(),
+    commandSubmission: createRoomCommandSubmissionService(),
     simulationClock: new RealtimeSimulationClock(),
-    simulationEngine: new TickSimulationEngine(ROOM1_PROCESSES),
+    simulationEngine: new TickSimulationEngine(ROOM_PROCESSES),
     saveRepository: new LocalStorageSaveRepository(options.storage),
     worldStateCodec: new JsonWorldStateCodec(),
     inputMode: new InputModeController(options.movementBindings),

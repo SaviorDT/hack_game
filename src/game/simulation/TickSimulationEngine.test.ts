@@ -10,12 +10,12 @@ function countingWorld(): { state: WorldState; ticks: number[] } {
   const state: WorldState = {
     rooms: [],
     worldObjects: [
-      new BasicWorldObject('thing', 'room1', {}, [
+      new BasicWorldObject('thing', 'room', {}, [
         { condition: ALWAYS_ACTIVE_BEHAVIOR, processDefinitionId: 'count' },
       ], {}),
     ],
     processInstances: [],
-    currentRoomId: 'room1',
+    currentRoomId: 'room',
     commandHistory: [],
     simulationTick: 0,
     outcome: 'playing',
@@ -81,13 +81,13 @@ describe('renderPosition', () => {
     const state: WorldState = {
       rooms: [],
       worldObjects: [
-        new BasicWorldObject('mover', 'room1', {}, [
+        new BasicWorldObject('mover', 'room', {}, [
           { condition: ALWAYS_ACTIVE_BEHAVIOR, processDefinitionId: 'move' },
         ], { x: 0, y: 100 }),
-        new BasicWorldObject('plain', 'room1', {}, [], {}),
+        new BasicWorldObject('plain', 'room', {}, [], {}),
       ],
       processInstances: [],
-      currentRoomId: 'room1',
+      currentRoomId: 'room',
       commandHistory: [],
       simulationTick: 0,
       outcome: 'playing',

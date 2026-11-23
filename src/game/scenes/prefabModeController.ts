@@ -19,7 +19,7 @@ import {
   inferPrefabId,
   type PrefabDefinition,
 } from '../domain/Prefab.ts'
-import { ROOM_LAYOUT } from '../content/room1Constants.ts'
+import { ROOM_LAYOUT } from '../content/roomConstants.ts'
 import type { EditorObject } from './LevelEditorScene.ts'
 
 export interface LevelEditorSceneLike {

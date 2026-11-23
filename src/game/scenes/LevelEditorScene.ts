@@ -9,14 +9,14 @@ import {
   DAGGER_SIZE,
   GAME_WEAPON_CONFIG,
   computeDaggerAttackTranslation,
-} from '../content/room1Constants.ts'
-import { createRoomObjects, computeCollisionSize } from '../content/room1WorldState.ts'
+} from '../content/roomConstants.ts'
+import { createRoomObjects, computeCollisionSize } from '../content/roomWorldState.ts'
 import type {
   PhysicsAttrConfig,
   PlayerSpeedConfig,
   RoomObjectConfig,
   WorldObjectRole,
-} from '../content/room1.ts'
+} from '../content/room.ts'
 import type { ObjectKind } from '../domain/ObjectKind.ts'
 import {
   EDITOR_ROOM_IDS,
@@ -30,7 +30,7 @@ import { TUTORIAL_ROOM_IDS } from '../content/tutorialRooms.ts'
 import type { ColliderShape } from '../domain/CollisionWorld.ts'
 import { PHYSICS_ATTR_KEYS, readPhysicsAttrOverride } from '../domain/PhysicsAttr.ts'
 import { GAME_PHYSICS_CONFIG, MIN_MASS } from '../simulation/physicsConstants.ts'
-import { generateRoom1Source } from '../content/room1Serializer.ts'
+import { generateRoomSource } from '../content/roomSerializer.ts'
 import {
   WORLD_OBJECT_TEXTURE_URLS,
   PLAYER_TEXTURE_KEY,
@@ -175,7 +175,7 @@ export class LevelEditorScene extends Phaser.Scene {
   private exportButton!: Phaser.GameObjects.Container
   private playButton!: Phaser.GameObjects.Container
   private instructionText: Phaser.GameObjects.Text | undefined
-  private currentRoomId: string = ROOM_IDS.first
+  private currentRoomId: string = ROOM_IDS.main
   private wallGraphics!: Phaser.GameObjects.Graphics
   private roomSelectorButtons: Map<string, Phaser.GameObjects.Text> = new Map()
   private prevRoomBtn: Phaser.GameObjects.Text | undefined
@@ -379,7 +379,7 @@ export class LevelEditorScene extends Phaser.Scene {
       .lineStyle(4, 0x9a9a9a, 1)
       .strokeRect(ROOM_LAYOUT.exit.x - 42, ROOM_LAYOUT.exit.y - 84, 84, 168)
     this.doorLabel = this.add
-      .text(ROOM_LAYOUT.exit.x, ROOM_LAYOUT.exit.y + 100, ROOM_NAMES[ROOM_IDS.second], {
+      .text(ROOM_LAYOUT.exit.x, ROOM_LAYOUT.exit.y + 100, ROOM_NAMES[ROOM_IDS.end], {
         fontFamily: FONT_FAMILY,
         fontSize: 20,
         color: TEXT_COLOR,
@@ -1333,7 +1333,7 @@ export class LevelEditorScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0)
     this.section5Desc = this.add
-      .text(1574, 75, 'Overwrite room1.ts directly:', {
+      .text(1574, 75, 'Overwrite room.ts directly:', {
         fontFamily: FONT_FAMILY,
         fontSize: 13,
         color: DIM_COLOR,
@@ -1375,7 +1375,7 @@ export class LevelEditorScene extends Phaser.Scene {
       .rectangle(0, 0, 260, 48, 0x2e7d32, 1)
       .setStrokeStyle(2, 0x66bb6a, 1)
     const label = this.add
-      .text(0, 0, 'SAVE TO ROOM1.TS', {
+      .text(0, 0, 'SAVE TO ROOM.TS', {
         fontFamily: FONT_FAMILY,
         fontSize: 15,
         color: '#ffffff',
@@ -2713,8 +2713,8 @@ export class LevelEditorScene extends Phaser.Scene {
   private drawRoomGeometry(roomId: string): void {
     const def = getRoomDefinition(roomId)
 
-    // Divider: visible only in room1 and tutorial4
-    const showDivider = roomId === ROOM_IDS.first || roomId === TUTORIAL_ROOM_IDS.slowTime
+    // Divider: visible only in room and tutorial4
+    const showDivider = roomId === ROOM_IDS.main || roomId === TUTORIAL_ROOM_IDS.slowTime
     this.roomDivider?.setVisible(showDivider)
 
     // Walls
@@ -2762,9 +2762,9 @@ export class LevelEditorScene extends Phaser.Scene {
   private updateSaveButton(): void {
     if (!this.exportButton) return
     const label = this.exportButton.getAt(1) as Phaser.GameObjects.Text | undefined
-    if (this.currentRoomId === ROOM_IDS.first) {
-      this.section5Desc?.setText('Overwrite room1.ts directly:')
-      label?.setText('SAVE TO ROOM1.TS')
+    if (this.currentRoomId === ROOM_IDS.main) {
+      this.section5Desc?.setText('Overwrite room.ts directly:')
+      label?.setText('SAVE TO ROOM.TS')
     } else {
       this.section5Desc?.setText(`Apply edits to ${this.currentRoomId}:`)
       label?.setText(`SAVE ${this.currentRoomId.toUpperCase()}`)
@@ -2843,7 +2843,7 @@ export class LevelEditorScene extends Phaser.Scene {
     return objects
   }
 
-  public syncToRoom1Objects(): RoomObjectConfig[] {
+  public syncToRoomObjects(): RoomObjectConfig[] {
     return this.syncCurrentRoomObjects()
   }
 
@@ -2862,7 +2862,7 @@ export class LevelEditorScene extends Phaser.Scene {
     if (sceneManager) {
       sceneManager.openEditor('speed-editor')
     } else {
-      this.syncToRoom1Objects()
+      this.syncToRoomObjects()
       this.scene.start('speed-editor')
     }
   }
@@ -2872,7 +2872,7 @@ export class LevelEditorScene extends Phaser.Scene {
     if (sceneManager) {
       sceneManager.openEditor('behavior-tree-editor')
     } else {
-      this.syncToRoom1Objects()
+      this.syncToRoomObjects()
       this.scene.start('behavior-tree-editor')
     }
   }
@@ -2883,11 +2883,11 @@ export class LevelEditorScene extends Phaser.Scene {
     const bg = this.exportButton?.getAt(0) as Phaser.GameObjects.Rectangle | undefined
     const label = this.exportButton?.getAt(1) as Phaser.GameObjects.Text | undefined
 
-    if (roomId === ROOM_IDS.first) {
+    if (roomId === ROOM_IDS.main) {
       await saveActivePrefabs()
-      const source = generateRoom1Source(objects)
+      const source = generateRoomSource(objects)
       try {
-        const response = await fetch('/api/save-room1', {
+        const response = await fetch('/api/save-room', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content: source }),
@@ -2903,30 +2903,30 @@ export class LevelEditorScene extends Phaser.Scene {
         }
 
         console.log(
-          '%c Overwrote room1.ts directly ',
+          '%c Overwrote room.ts directly ',
           'background: #2e7d32; color: #fff; font-size: 14px; padding: 4px 8px; border-radius: 4px',
         )
         console.log(source)
 
         if (bg && label) {
           bg.setFillStyle(0x66bb6a, 1)
-          label.setText('SAVED TO ROOM1.TS!')
+          label.setText('SAVED TO ROOM.TS!')
           this.time.delayedCall(1500, () => {
             bg.setFillStyle(0x2e7d32, 1)
-            label.setText('SAVE TO ROOM1.TS')
+            label.setText('SAVE TO ROOM.TS')
           })
         }
         return true
       } catch (err) {
-        console.error('Failed to overwrite room1.ts directly:', err)
-        console.log('Generated room1.ts source fallback:\n' + source)
+        console.error('Failed to overwrite room.ts directly:', err)
+        console.log('Generated room.ts source fallback:\n' + source)
 
         if (bg && label) {
           bg.setFillStyle(0xb71c1c, 1)
           label.setText('SAVE FAILED (CONSOLE)')
           this.time.delayedCall(2000, () => {
             bg.setFillStyle(0x2e7d32, 1)
-            label.setText('SAVE TO ROOM1.TS')
+            label.setText('SAVE TO ROOM.TS')
           })
         }
         return false

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_PREFABS } from '../domain/Prefab.ts'
-import { ROOM1_OBJECTS } from './room1.ts'
+import { ROOM_OBJECTS } from './room.ts'
 import { guard, dagger, boulder, crate } from './roomPieces.ts'
 import { createGameWorldState } from './tutorialRooms.ts'
 import { getRoomObjectConfigs, resetAllRooms } from './roomRegistry.ts'
@@ -12,12 +12,12 @@ describe('Prefab Scene Reflection', () => {
     resetPrefabs()
   })
 
-  it('ROOM1_OBJECTS dynamically reflects properties from DEFAULT_PREFABS on load', () => {
+  it('ROOM_OBJECTS dynamically reflects properties from DEFAULT_PREFABS on load', () => {
     const guardPrefab = DEFAULT_PREFABS.find((p) => p.id === 'guard')!
-    const room1Guards = ROOM1_OBJECTS.filter((o) => o.role === 'enemy' && !o.kind)
+    const roomGuards = ROOM_OBJECTS.filter((o) => o.role === 'enemy' && !o.kind)
 
-    expect(room1Guards.length).toBeGreaterThan(0)
-    for (const g of room1Guards) {
+    expect(roomGuards.length).toBeGreaterThan(0)
+    for (const g of roomGuards) {
       expect(g.displayWidth).toBe(guardPrefab.displayWidth)
       expect(g.displayHeight).toBe(guardPrefab.displayHeight)
       expect(g.maxHealth).toBe(guardPrefab.maxHealth)
@@ -47,7 +47,7 @@ describe('Prefab Scene Reflection', () => {
   })
 
   it('createGameWorldState applies prefab configurations to world objects across rooms', () => {
-    const worldState = createGameWorldState(ROOM1_OBJECTS)
+    const worldState = createGameWorldState(ROOM_OBJECTS)
     const guardObj = worldState.worldObjects.find((wo) => wo.id === 'guard')
     expect(guardObj).toBeDefined()
 
@@ -73,8 +73,8 @@ describe('Prefab Scene Reflection', () => {
     expect(mockFetch).toHaveBeenCalledWith('/api/save-prefabs', expect.anything())
 
     // In-memory rooms are updated immediately
-    const room1Guards = getRoomObjectConfigs('room1').filter((o) => o.role === 'enemy' && !o.kind)
-    for (const g of room1Guards) {
+    const roomGuards = getRoomObjectConfigs('room').filter((o) => o.role === 'enemy' && !o.kind)
+    for (const g of roomGuards) {
       expect(g.displayWidth).toBe(230)
       expect(g.maxHealth).toBe(175)
     }

@@ -1,5 +1,5 @@
 import { ARCHER_CONFIG } from '../../content/archerConstants.ts'
-import { PROCESS_IDS, WORLD_OBJECT_IDS } from '../../content/room1Constants.ts'
+import { PROCESS_IDS, WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import { colliderTagsOf } from '../../domain/ColliderTag.ts'
 import { ShapeCollisionWorld, boxFromState, type Box } from '../../domain/CollisionWorld.ts'
 import { applyPlayerDefeat } from '../../domain/PlayerDefeat.ts'

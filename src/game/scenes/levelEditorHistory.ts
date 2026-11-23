@@ -1,7 +1,7 @@
-import type { PhysicsAttrConfig, PlayerSpeedConfig, WorldObjectRole } from '../content/room1.ts'
+import type { PhysicsAttrConfig, PlayerSpeedConfig, WorldObjectRole } from '../content/room.ts'
 import type { ObjectKind } from '../domain/ObjectKind.ts'
 import { GAME_WEAPON_CONFIG } from '../content/weaponConstants.ts'
-import { computeCollisionSize } from '../content/room1WorldState.ts'
+import { computeCollisionSize } from '../content/roomWorldState.ts'
 import { rolesCollide } from '../domain/ColliderTag.ts'
 import { ShapeCollisionWorld, type ColliderShape } from '../domain/CollisionWorld.ts'
 

@@ -1,5 +1,5 @@
 import type Phaser from 'phaser'
-import { ROOM_LAYOUT } from '../content/room1Constants.ts'
+import { ROOM_LAYOUT } from '../content/roomConstants.ts'
 
 /** Decorative geometry only: the domain still owns all room boundaries. */
 export function drawRoomBackdrop(g: Phaser.GameObjects.Graphics): void {

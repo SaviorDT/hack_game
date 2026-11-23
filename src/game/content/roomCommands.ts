@@ -5,7 +5,7 @@ import type { RegisteredCommand } from '../commands/CommandRegistry.ts'
 import { AccCommandExecutor } from '../commands/executors/acc.ts'
 import { VirtualCommandParser } from '../commands/VirtualCommandParser.ts'
 
-export function createRoom1CommandSubmissionService(): CommandSubmissionService {
+export function createRoomCommandSubmissionService(): CommandSubmissionService {
   const commands: RegisteredCommand[] = [
     { name: 'acc', requirements: [], executor: new AccCommandExecutor() },
   ]

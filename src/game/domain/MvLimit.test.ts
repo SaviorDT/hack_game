@@ -12,15 +12,15 @@ import {
 import type { WorldState } from './WorldState.ts'
 
 function object(id: string, state: Record<string, unknown>) {
-  return new BasicWorldObject(id, 'room1', { name: id, role: 'object' }, [], { x: 0, y: 0, alive: true, ...state })
+  return new BasicWorldObject(id, 'room', { name: id, role: 'object' }, [], { x: 0, y: 0, alive: true, ...state })
 }
 
 function worldOf(...objects: BasicWorldObject[]): WorldState {
   return {
-    rooms: [{ id: 'room1', objectIds: objects.map((o) => o.id), exits: [], state: {} }],
+    rooms: [{ id: 'room', objectIds: objects.map((o) => o.id), exits: [], state: {} }],
     worldObjects: objects,
     processInstances: [],
-    currentRoomId: 'room1',
+    currentRoomId: 'room',
     commandHistory: [],
     simulationTick: 0,
     outcome: 'playing',

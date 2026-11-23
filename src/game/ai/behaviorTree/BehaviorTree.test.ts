@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialWorldState } from '../../content/room1WorldState.ts'
+import { createInitialWorldState } from '../../content/roomWorldState.ts'
 import { BehaviorTreeEvaluator } from './BehaviorTreeEvaluator.ts'
 import {
   STANDARD_GUARD_TREE,

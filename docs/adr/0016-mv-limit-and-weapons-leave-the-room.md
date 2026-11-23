@@ -6,7 +6,7 @@ status: accepted, supersedes 0014 for Weapons
 
 Two changes that belong together: a thrown Weapon is meant to be spent, and a spent Weapon may be thrown out of the room.
 
-**Mv Limit.** Every World Object carries `mvLimit` in its state: how many more times it can be the source of an `acc` Throw. `-1` means no limit and never changes; the default is 1 for a Weapon (role `weapon`) and `-1` for everything else. It can be set per object in `RoomObjectConfig` and in a prefab (and so in `room1.ts`), not yet in the editor's inspector. The rules (`domain/MvLimit.ts`):
+**Mv Limit.** Every World Object carries `mvLimit` in its state: how many more times it can be the source of an `acc` Throw. `-1` means no limit and never changes; the default is 1 for a Weapon (role `weapon`) and `-1` for everything else. It can be set per object in `RoomObjectConfig` and in a prefab (and so in `room.ts`), not yet in the editor's inspector. The rules (`domain/MvLimit.ts`):
 
 - `acc` spends a throw when it *starts* a Throw, per source (a Wildcard source handles each match on its own). A source with `mvLimit` 0 is Destroyed instead and not thrown, and the feedback says `<name> is used up.`. Rename through the retained `mv` executor spends nothing. We chose "check and decrement when `acc` runs" over decrementing only once the object has really started moving: it is one place, and a Throw of distance 0 counts like any other.
 - A Throw that ends for any reason (arrival, a Collision, a wall) leaves an object with `mvLimit` 0 and no Throw in flight; `MvDrive.settle`, after the contacts of the tick, destroys every such object. The effect of the touch (Impact Damage, a pushed crate) has therefore happened first. The check in `acc` also catches a re-`acc` in mid-flight.

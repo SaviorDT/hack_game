@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialWorldState, createRoomObjects } from '../content/room1WorldState.ts'
+import { createInitialWorldState, createRoomObjects } from '../content/roomWorldState.ts'
 import { targetDummy } from '../content/roomPieces.ts'
-import { ROOM_IDS, WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { ROOM_IDS, WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
 import { colliderTagsOf } from '../domain/ColliderTag.ts'
 import { getMutableWorldObjectState } from '../domain/WorldObjectState.ts'
 import { ContactResolver, IMPACT_COOLDOWN_MS } from './ContactResolver.ts'
 import { GAME_PHYSICS_CONFIG } from './physicsConstants.ts'
 import { SIMULATION_TICK_MS, TickSimulationEngine } from './TickSimulationEngine.ts'
-import { ROOM1_PROCESSES } from './room1/Room1Processes.ts'
+import { ROOM_PROCESSES } from './room/RoomProcesses.ts'
 
 type Body = {
   x: number
@@ -206,7 +206,7 @@ describe('tick order: move, contacts, then velocity update', () => {
     guard.health = 100
     dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES)
+    const engine = new TickSimulationEngine(ROOM_PROCESSES)
     let lastSpeedBeforeHit = 0
     for (let i = 0; i < 600 && guard.health === 100; i++) {
       lastSpeedBeforeHit = Math.hypot(dagger.vx ?? 0, dagger.vy ?? 0)
@@ -235,7 +235,7 @@ describe('engine without a contact resolver', () => {
     dagger.vy = 0
     dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
 
-    const engine = new TickSimulationEngine(ROOM1_PROCESSES, undefined, undefined, { contactResolver: null })
+    const engine = new TickSimulationEngine(ROOM_PROCESSES, undefined, undefined, { contactResolver: null })
     engine.advance(state, SIMULATION_TICK_MS * 3)
     expect(guard.health).toBe(100)
   })

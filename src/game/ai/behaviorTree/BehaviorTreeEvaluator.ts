@@ -1,4 +1,4 @@
-import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../../content/room1Constants.ts'
+import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../../content/roomConstants.ts'
 import type { CharacterState } from '../../domain/CharacterState.ts'
 import { ShapeCollisionWorld, boxFromState } from '../../domain/CollisionWorld.ts'
 import type { WorldObject } from '../../domain/WorldObject.ts'

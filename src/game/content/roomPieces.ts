@@ -2,15 +2,15 @@ import type { Box } from '../domain/CollisionWorld.ts'
 import type { Room, RoomExit } from '../domain/Room.ts'
 import { assertValidRoom } from '../domain/Room.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
-import type { RoomObjectConfig } from './room1.ts'
+import type { RoomObjectConfig } from './room.ts'
 import {
   DEFAULT_PREFABS,
   applyPrefabToObject,
 } from '../domain/Prefab.ts'
-import { ROOM_LAYOUT } from './room1Constants.ts'
-import { createRoomObjects } from './room1WorldState.ts'
+import { ROOM_LAYOUT } from './roomConstants.ts'
+import { createRoomObjects } from './roomWorldState.ts'
 
-/** Building blocks for rooms beyond room1: object presets and turning room definitions into Rooms. */
+/** Building blocks for rooms beyond room: object presets and turning room definitions into Rooms. */
 
 /** Mass for enemies that never walk: a speed of 0 gives them no braking, so only weight keeps a bump from shoving them. */
 export const STANDS_FIRM = 1000
@@ -38,7 +38,7 @@ function createPieceFromPrefab(
   return prefab ? { ...applyPrefabToObject(base, prefab), ...extra } : { ...base, ...extra }
 }
 
-// Objects look and behave like room1's, so every room teaches the same things.
+// Objects look and behave like room's, so every room teaches the same things.
 export const dagger = (id: string, x: number, y: number, extra: Partial<RoomObjectConfig> = {}): RoomObjectConfig =>
   createPieceFromPrefab('dagger', id, x, y, { name: 'dagger', ...extra })
 

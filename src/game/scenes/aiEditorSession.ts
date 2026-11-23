@@ -1,9 +1,9 @@
 import { GameSession } from '../application/GameSession.ts'
 import { InputModeController } from '../application/InputModeController.ts'
-import { WORLD_OBJECT_IDS, ROOM_LAYOUT, PROCESS_IDS } from '../content/room1Constants.ts'
-import { createRoom1CommandSubmissionService } from '../content/room1Commands.ts'
-import { createInitialWorldState } from '../content/room1WorldState.ts'
-import { ROOM1_OBJECTS, type RoomObjectConfig } from '../content/room1.ts'
+import { WORLD_OBJECT_IDS, ROOM_LAYOUT, PROCESS_IDS } from '../content/roomConstants.ts'
+import { createRoomCommandSubmissionService } from '../content/roomCommands.ts'
+import { createInitialWorldState } from '../content/roomWorldState.ts'
+import { ROOM_OBJECTS, type RoomObjectConfig } from '../content/room.ts'
 import { BasicWorldObject } from '../domain/BasicWorldObject.ts'
 import { CombatService } from '../domain/CombatService.ts'
 import { PickUpService } from '../domain/PickUpService.ts'
@@ -14,7 +14,7 @@ import { LocalStorageSaveRepository } from '../persistence/LocalStorageSaveRepos
 import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { RealtimeSimulationClock } from '../simulation/RealtimeSimulationClock.ts'
 import { TickSimulationEngine } from '../simulation/TickSimulationEngine.ts'
-import { BoulderProcess, DaggerPickupProcess, GuardResponseProcess, PlayerMovementProcess } from '../simulation/room1/Room1Processes.ts'
+import { BoulderProcess, DaggerPickupProcess, GuardResponseProcess, PlayerMovementProcess } from '../simulation/room/RoomProcesses.ts'
 import {
   BEHAVIOR_TREE_PROCESS_ID,
   BehaviorTreeProcess,
@@ -51,12 +51,12 @@ export function createAiEditorSession(options?: {
   objects?: RoomObjectConfig[]
   targetGuardId?: string
 }): AiEditorSessionBundle {
-  const sourceObjects = options?.objects ?? ROOM1_OBJECTS
+  const sourceObjects = options?.objects ?? ROOM_OBJECTS
   const targetGuardId = options?.targetGuardId ?? (sourceObjects.find((o) => o.role === 'enemy' || o.role === 'guard')?.id ?? WORLD_OBJECT_IDS.guard)
   const activeTree = options?.tree ?? BOSS_CYBER_ENFORCER_TREE
   const btProcess = new BehaviorTreeProcess(activeTree)
 
-  // Reuse room1 world state directly from ROOM1_OBJECTS
+  // Reuse room world state directly from ROOM_OBJECTS
   const worldState = createInitialWorldState(sourceObjects)
 
   // Disable exits so running to the door does not trigger congratulations outcome
@@ -104,7 +104,7 @@ export function createAiEditorSession(options?: {
 
   const session = new GameSession({
     worldState,
-    commandSubmission: createRoom1CommandSubmissionService(),
+    commandSubmission: createRoomCommandSubmissionService(),
     simulationClock: new RealtimeSimulationClock(),
     simulationEngine,
     saveRepository: new LocalStorageSaveRepository(getEditorStorage(options?.storage), 'hack-game.editor-save'),

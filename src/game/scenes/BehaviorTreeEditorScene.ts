@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/room1Constants.ts'
+import { ROOM_LAYOUT, WORLD_OBJECT_IDS } from '../content/roomConstants.ts'
 import {
   PRESET_BEHAVIOR_TREES,
   BOSS_CYBER_ENFORCER_TREE,
@@ -26,8 +26,8 @@ import {
   WORLD_OBJECT_TEXTURE_URLS,
 } from '../presentation/PhaserRoomView.ts'
 import { createAiEditorSession, type AiEditorSessionBundle } from './aiEditorSession.ts'
-import { ROOM1_OBJECTS } from '../content/room1.ts'
-import { generateRoom1Source } from '../content/room1Serializer.ts'
+import { ROOM_OBJECTS } from '../content/room.ts'
+import { generateRoomSource } from '../content/roomSerializer.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import type { WorldObject } from '../domain/WorldObject.ts'
 import {
@@ -134,10 +134,10 @@ export class BehaviorTreeEditorScene extends Phaser.Scene {
     this.treeOffsetX = 0
     this.treeOffsetY = 0
 
-    // Initialize AI session reusing room1 environment
+    // Initialize AI session reusing room environment
     this.sessionBundle = createAiEditorSession({
       tree: this.currentTree,
-      objects: ROOM1_OBJECTS,
+      objects: ROOM_OBJECTS,
     })
     this.worldState = this.sessionBundle.worldState
 
@@ -1180,21 +1180,21 @@ export class BehaviorTreeEditorScene extends Phaser.Scene {
   }
 
   private async saveToGame(): Promise<void> {
-    const guard = ROOM1_OBJECTS.find((o) => o.role === 'enemy' || o.role === 'guard' || o.id === this.sessionBundle.targetGuardId)
+    const guard = ROOM_OBJECTS.find((o) => o.role === 'enemy' || o.role === 'guard' || o.id === this.sessionBundle.targetGuardId)
     if (guard) {
       ;(guard as unknown as Record<string, unknown>).behaviorTree = this.currentTree
     }
 
     try {
-      const source = generateRoom1Source(ROOM1_OBJECTS)
-      const res = await fetch('/api/save-room1', {
+      const source = generateRoomSource(ROOM_OBJECTS)
+      const res = await fetch('/api/save-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: source }),
       })
 
       if (res.ok) {
-        this.showStatus('Saved Behavior Tree to guard in room1.ts!')
+        this.showStatus('Saved Behavior Tree to guard in room.ts!')
       } else {
         this.showStatus('Applied Behavior Tree to active game session.')
       }

@@ -12,8 +12,8 @@ import {
 import {
   DAGGER_ATTACK_DISTANCE,
   DAGGER_ATTACK_DURATION_MS,
-  computeDaggerAttackTranslation as room1ComputeTranslation,
-} from './room1Constants.ts'
+  computeDaggerAttackTranslation as roomComputeTranslation,
+} from './roomConstants.ts'
 import type { MutableWorldObjectState } from '../domain/WorldObjectState.ts'
 
 describe('weaponConstants', () => {
@@ -51,10 +51,10 @@ describe('weaponConstants', () => {
       expect(GAME_WEAPON_CONFIG.holdOffsetY).toBe(26)
     })
 
-    it('re-exports weapon constants and functions through room1Constants for backwards compatibility', () => {
+    it('re-exports weapon constants and functions through roomConstants for backwards compatibility', () => {
       expect(DAGGER_ATTACK_DISTANCE).toBe(DEFAULT_DAGGER_ATTACK_DISTANCE)
       expect(DAGGER_ATTACK_DURATION_MS).toBe(DEFAULT_DAGGER_ATTACK_DURATION_MS)
-      expect(room1ComputeTranslation(100, 200, 30)).toBe(computeDaggerAttackTranslation(100, 200, 30))
+      expect(roomComputeTranslation(100, 200, 30)).toBe(computeDaggerAttackTranslation(100, 200, 30))
     })
   })
 

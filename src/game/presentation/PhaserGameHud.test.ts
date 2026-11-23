@@ -385,7 +385,7 @@ describe('PhaserGameHud', () => {
   it('keeps typing the room hint across later updates in the same room', () => {
     const { mockScene, activeTimers } = setupMockScene()
     const hud = new PhaserGameHud(mockScene)
-    const state = mockWorldState('room2', 'Keep typing.')
+    const state = mockWorldState('tutorial5', 'Keep typing.')
 
     hud.update(state)
     expect(activeTimers.length).toBe(1)

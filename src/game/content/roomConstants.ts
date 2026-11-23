@@ -22,6 +22,8 @@ export const PROCESS_IDS = {
   boulder: 'boulder-behavior',
   archer: 'archer-shoot',
   arrow: 'arrow-flight',
+  boss: 'boss-attacks',
+  blade: 'blade-flight',
 } as const
 
 export const ROOM_LAYOUT = {

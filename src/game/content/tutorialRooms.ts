@@ -3,6 +3,7 @@ import type { WorldState } from '../domain/WorldState.ts'
 import { HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
 import { ROOM_IDS } from './roomConstants.ts'
+import { ARENA_DEFINITION, ARENA_IDS } from './arena.ts'
 import { TUTORIAL5_DEFINITION } from './tutorial5.ts'
 import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
 import { createInitialWorldState } from './roomWorldState.ts'
@@ -76,8 +77,7 @@ export const ROOM_HINT =
   'The real thing: guards rush you once you cross the middle of the room. Use acc and your dagger to reach the next room.'
 
 /**
- * The whole game: the tutorial rooms, the home area, then room (whose Exit ends the game until a next room
- * exists). The Player Character starts in tutorial1 with the stats configured for room's player.
+ * The whole game: the tutorial rooms, the home area, room, then the arena (whose Exit ends the game). The Player Character starts in tutorial1 with the stats configured for room's player.
  */
 export function createGameWorldState(
   roomObjects: readonly RoomObjectConfig[] = ROOM_OBJECTS,
@@ -86,7 +86,7 @@ export function createGameWorldState(
   const room = createInitialWorldState([...roomObjects])
   const playerConfig = roomObjects.find((obj) => obj.role === 'player')
   const playerId = playerConfig?.id ?? 'player'
-  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS], playerConfig)
+  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ARENA_DEFINITION], playerConfig)
 
   // room only: `createInitialWorldState` also holds an empty `end` room, which the game does not use.
   const roomRooms = room.rooms
@@ -98,6 +98,8 @@ export function createGameWorldState(
       hint: ROOM_HINT,
       goal: 'Reach the exit to the next room.',
       restoresHealth: true,
+      // In the game, room leads on to the arena; its own Exit to `end` is only for the room-only world.
+      exits: room.exits.map(({ endsGame: _endsGame, ...exit }) => ({ ...exit, targetRoomId: ARENA_IDS.room, label: ARENA_IDS.room })),
     }))
 
   const allRooms = [...built.rooms, ...roomRooms]
@@ -121,7 +123,7 @@ export function createGameWorldState(
     if (effectiveStartingRoomId === ROOM_IDS.main && playerConfig) {
       startPos = { x: playerConfig.x, y: playerConfig.y }
     } else {
-      const allDefs = [...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS]
+      const allDefs = [...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ARENA_DEFINITION]
       const roomDef = allDefs.find((d) => d.id === effectiveStartingRoomId)
       const defPlayer = roomDef?.objects.find((o) => o.role === 'player' || o.id === playerId)
       if (defPlayer) {

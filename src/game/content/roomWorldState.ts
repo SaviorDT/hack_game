@@ -22,6 +22,7 @@ import {
 } from './roomConstants.ts'
 import { ROOM_OBJECTS, type RoomObjectConfig, type WorldObjectRole } from './room.ts'
 import { ARCHER_CONFIG, arrowIdsFor } from './archerConstants.ts'
+import { BOSS_CONFIG, bladeIdsFor } from './bossConstants.ts'
 
 const ROOM_BOUNDS = {
   left: ROOM_LAYOUT.left,
@@ -173,6 +174,54 @@ function createArrows(archer: RoomObjectConfig, roomId: string): WorldObject[] {
   )
 }
 
+/**
+ * The Blades a Boss launches: listable, nameable Weapon-tagged objects (so `acc` can send them back and they hurt
+ * by Impact Damage), but not Weapons the player can pick up. They wait Destroyed in the pool, named only once
+ * launched, and are reused after they end.
+ */
+function createBlades(boss: RoomObjectConfig, roomId: string): WorldObject[] {
+  const { width, height } = BOSS_CONFIG.bladeSize
+  return bladeIdsFor(boss.id).map((id) =>
+    createRoomWorldObject(
+      roomId,
+      id,
+      {
+        name: id,
+        role: 'object',
+        kind: 'blade',
+        discoverable: true,
+        colliderTags: [{ class: 'weapon', impactDamageRate: BOSS_CONFIG.bladeImpactDamageRate }],
+      },
+      [alwaysActiveRule(PROCESS_IDS.blade)],
+      {
+        x: boss.x,
+        y: boss.y,
+        width,
+        height,
+        collisionBox: { width, height },
+        colliderWidth: width,
+        colliderHeight: height,
+        displayWidth: BOSS_CONFIG.bladeDisplaySize,
+        displayHeight: BOSS_CONFIG.bladeDisplaySize,
+        // Flies straight at a constant speed: no drag, no ground Friction, and nothing but the speed cap.
+        mass: 1,
+        drag: 0,
+        friction: 0,
+        max_velocity: BOSS_CONFIG.bladeSpeed,
+        vx: 0,
+        vy: 0,
+        mvLimit: 1,
+        alive: false,
+        destroyed: true,
+        discovered: true,
+        thrown: null,
+        angle: 0,
+        immuneId: boss.id,
+      },
+    ),
+  )
+}
+
 /** A Target Dummy: tagged `target` so nothing Collides with it, with Health like a Character but no behavior. */
 function createTargetDummy(obj: RoomObjectConfig, roomId: string): WorldObject {
   const { scaleX, scaleY } = resolveScale(obj, CHARACTER_BASE_SIZE.width, CHARACTER_BASE_SIZE.height)
@@ -193,9 +242,36 @@ function createTargetDummy(obj: RoomObjectConfig, roomId: string): WorldObject {
   )
 }
 
+/** What the Boss's attack state machine needs from the start. */
+function bossStartState(bossId: string) {
+  return {
+    bladeIds: bladeIdsFor(bossId),
+    bossMode: 'chase',
+    bossModeElapsedMs: 0,
+    wavesFired: 0,
+    volleyRules: [] as string[],
+    dashDirX: 1,
+    dashDirY: 0,
+    vx: 0,
+    vy: 0,
+  }
+}
+
+function enemyProcessId(obj: RoomObjectConfig): string {
+  if (obj.kind === 'archer') {
+    return PROCESS_IDS.archer
+  }
+  return obj.kind === 'boss' ? PROCESS_IDS.boss : PROCESS_IDS.guard
+}
+
 /** Builds the World Objects described by `objects`, all placed in `roomId`; archers bring their arrows. */
 export function createRoomObjects(objects: readonly RoomObjectConfig[], roomId: string): WorldObject[] {
-  return objects.flatMap((obj) => (obj.kind === 'archer' ? [createRoomObject(obj, roomId), ...createArrows(obj, roomId)] : [createRoomObject(obj, roomId)]))
+  return objects.flatMap((obj) => {
+    if (obj.kind === 'archer') {
+      return [createRoomObject(obj, roomId), ...createArrows(obj, roomId)]
+    }
+    return obj.kind === 'boss' ? [createRoomObject(obj, roomId), ...createBlades(obj, roomId)] : [createRoomObject(obj, roomId)]
+  })
 }
 
 function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
@@ -311,7 +387,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
       ...(obj.kind ? { kind: obj.kind } : {}),
       colliderTags: defaultColliderTags('enemy'),
     },
-    [alwaysActiveRule(obj.kind === 'archer' ? PROCESS_IDS.archer : PROCESS_IDS.guard)],
+    [alwaysActiveRule(enemyProcessId(obj))],
     {
       ...placedBodyState(obj, width, height, scaleX, scaleY),
       speed: obj.speed ?? 210,
@@ -328,6 +404,7 @@ function createRoomObject(obj: RoomObjectConfig, roomId: string): WorldObject {
       facing: 'right',
       ...(obj.passive ? { passive: true } : {}),
       ...(obj.kind === 'archer' ? { arrowIds: arrowIdsFor(obj.id) } : {}),
+      ...(obj.kind === 'boss' ? { ...bossStartState(obj.id) } : {}),
     },
   )
 }

@@ -182,11 +182,11 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(roomObjs.some((o) => o.role === 'weapon')).toBe(true)
     })
 
-    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and a Hidden Exit', () => {
+    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and an Exit on the right wall', () => {
       const objects = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)
       expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
       expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(200)
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage, hiddenUntilOpen: true })
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
 
       setRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround, [])
       expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(0)

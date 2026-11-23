@@ -77,6 +77,7 @@ const KIND_TEXTURES: Readonly<Record<string, string>> = {
   crate: 'crate',
   plate: 'plate',
   dummy: GUARD_TEXTURE_KEY,
+  boss: GUARD_TEXTURE_KEY,
 }
 
 export interface SpawnObjectConfig extends PhysicsAttrConfig {
@@ -2757,7 +2758,7 @@ export class LevelEditorScene extends Phaser.Scene {
     const configs = getRoomObjectConfigs(roomId)
     const worldObjects = createRoomObjects(configs, roomId)
     for (const worldObject of worldObjects) {
-      if (worldObject.metadata.hidden || worldObject.metadata.kind === 'arrow') {
+      if (worldObject.metadata.hidden || worldObject.metadata.kind === 'arrow' || worldObject.metadata.kind === 'blade') {
         continue
       }
       this.createEditorObject(worldObject)

@@ -11,12 +11,12 @@ import {
   ACTIVE_ROOM_IDS,
   UNUSED_ROOM_IDS,
   ROOM_CONTENT_SNAPSHOT,
-  type RoomContentSnapshot,
 } from './roomSequence.ts'
 
 export const EDITOR_ROOM_IDS = [...ACTIVE_ROOM_IDS] as const
 
 export type EditorRoomId = (typeof EDITOR_ROOM_IDS)[number]
+type RoomContentSnapshot = RoomDefinition
 
 export interface EditorRoomDefinition {
   readonly id: string
@@ -42,14 +42,15 @@ let roomContentHydrated = false
 function hydrateRoomContentSnapshot(): void {
   if (roomContentHydrated) return
   roomContentHydrated = true
-  for (const [roomId, snapshot] of Object.entries(ROOM_CONTENT_SNAPSHOT)) {
+  const snapshots = ROOM_CONTENT_SNAPSHOT as Readonly<Record<string, RoomContentSnapshot>>
+  for (const [roomId, snapshot] of Object.entries(snapshots)) {
     const source = getSourceRoomDefinition(roomId)
     if (source) {
-      setRoomObjectConfigs(roomId, snapshot.objects as RoomObjectConfig[])
+      setRoomObjectConfigs(roomId, snapshot.objects)
       if (roomId !== ROOM_IDS.main) {
         const existing = getRoomDefinition(roomId)
         if (existing) {
-          exitOverrides.set(roomId, snapshot.exit as EditorRoomDefinition['exit'])
+          exitOverrides.set(roomId, snapshot.exit)
         }
       }
       continue
@@ -58,9 +59,9 @@ function hydrateRoomContentSnapshot(): void {
       id: roomId,
       ...(snapshot.hint ? { hint: snapshot.hint } : {}),
       goal: snapshot.goal,
-      objects: [...(snapshot.objects as RoomObjectConfig[])],
-      ...(snapshot.walls ? { walls: snapshot.walls as readonly Box[] } : {}),
-      exit: snapshot.exit as RoomDefinition['exit'],
+      objects: [...snapshot.objects],
+      ...(snapshot.walls ? { walls: snapshot.walls } : {}),
+      exit: snapshot.exit,
     })
   }
   rechainActiveRoomExits()

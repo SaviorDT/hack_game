@@ -8,13 +8,12 @@ export const ACTIVE_ROOM_IDS: readonly string[] = [
   "yard",
   "lane",
   "gate",
+  "wheel",
   "room",
   "arena",
 ]
 
-export const UNUSED_ROOM_IDS: readonly string[] = [
-  "wheel",
-]
+export const UNUSED_ROOM_IDS: readonly string[] = []
 
 export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
   "tutorial1": {
@@ -434,15 +433,14 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
     "objects": [
       {
         "id": "laneboulder",
-        "name": "boulder",
         "role": "object",
+        "name": "boulder",
         "x": 450,
         "y": 580,
         "displayWidth": 154,
         "displayHeight": 154,
         "scaleX": 1.28,
         "scaleY": 1.28,
-        "prefabId": "boulder",
         "colliderWidth": 128,
         "colliderHeight": 128,
         "colliderShape": "circle",
@@ -450,37 +448,33 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       },
       {
         "id": "laneplate",
-        "name": "plate",
         "role": "object",
+        "name": "plate",
+        "kind": "plate",
         "x": 1505,
         "y": 345,
         "displayWidth": 96,
         "displayHeight": 96,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "plate",
-        "kind": "plate",
         "colliderWidth": 80,
-        "colliderHeight": 80,
-        "colliderShape": "box"
+        "colliderHeight": 80
       },
       {
         "id": "lanearcher",
-        "name": "archer",
         "role": "enemy",
+        "name": "archer",
+        "kind": "archer",
         "x": 1505,
         "y": 155,
         "displayWidth": 106,
         "displayHeight": 106,
         "scaleX": 0.6,
         "scaleY": 0.6,
-        "prefabId": "archer",
-        "kind": "archer",
+        "speed": 0,
+        "maxHealth": 30,
         "colliderWidth": 66,
         "colliderHeight": 96,
-        "colliderShape": "box",
-        "maxHealth": 30,
-        "speed": 0,
         "mass": 1000
       }
     ],
@@ -522,18 +516,14 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
     "objects": [
       {
         "id": "gatedagger",
-        "name": "dagger",
         "role": "weapon",
+        "name": "dagger",
         "x": 370,
         "y": 600,
         "displayWidth": 49,
         "displayHeight": 49,
         "scaleX": 0.68,
         "scaleY": 0.68,
-        "prefabId": "dagger",
-        "colliderWidth": 72,
-        "colliderHeight": 72,
-        "colliderShape": "box",
         "attackDistance": 30,
         "attackDurationMs": 200,
         "holdOffsetX": 20,
@@ -541,32 +531,29 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       },
       {
         "id": "gatecrate",
-        "name": "crate",
         "role": "object",
+        "name": "crate",
+        "kind": "crate",
         "x": 560,
         "y": 420,
         "displayWidth": 88,
         "displayHeight": 88,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "crate",
-        "kind": "crate",
         "colliderWidth": 80,
         "colliderHeight": 80,
-        "colliderShape": "box",
         "mass": 3
       },
       {
         "id": "gateboulder",
-        "name": "boulder",
         "role": "object",
+        "name": "boulder",
         "x": 570,
         "y": 630,
         "displayWidth": 154,
         "displayHeight": 154,
         "scaleX": 1.28,
         "scaleY": 1.28,
-        "prefabId": "boulder",
         "colliderWidth": 128,
         "colliderHeight": 128,
         "colliderShape": "circle",
@@ -574,71 +561,63 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       },
       {
         "id": "gateplate",
-        "name": "plate",
         "role": "object",
+        "name": "plate",
+        "kind": "plate",
         "x": 1560,
         "y": 600,
         "displayWidth": 96,
         "displayHeight": 96,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "plate",
-        "kind": "plate",
         "colliderWidth": 80,
-        "colliderHeight": 80,
-        "colliderShape": "box"
+        "colliderHeight": 80
       },
       {
         "id": "gateguard",
-        "name": "guard",
         "role": "enemy",
+        "name": "guard",
         "x": 1450,
         "y": 300,
         "displayWidth": 176,
         "displayHeight": 176,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "guard",
-        "colliderWidth": 110,
-        "colliderHeight": 160,
-        "colliderShape": "box",
+        "speed": 190,
         "maxHealth": 60,
-        "speed": 190
+        "colliderWidth": 110,
+        "colliderHeight": 160
       },
       {
         "id": "gateguard2",
-        "name": "guard2",
         "role": "enemy",
+        "name": "guard2",
         "x": 1480,
         "y": 470,
         "displayWidth": 176,
         "displayHeight": 176,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "guard",
-        "colliderWidth": 110,
-        "colliderHeight": 160,
-        "colliderShape": "box",
+        "speed": 120,
         "maxHealth": 60,
-        "speed": 120
+        "colliderWidth": 110,
+        "colliderHeight": 160
       },
       {
         "id": "gatearcher",
-        "name": "archer",
         "role": "enemy",
+        "name": "archer",
+        "kind": "archer",
         "x": 1700,
         "y": 200,
         "displayWidth": 176,
         "displayHeight": 176,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "archer",
-        "kind": "archer",
+        "speed": 0,
+        "maxHealth": 30,
         "colliderWidth": 110,
         "colliderHeight": 160,
-        "colliderShape": "box",
-        "maxHealth": 30,
-        "speed": 0,
         "mass": 1000
       }
     ],
@@ -663,8 +642,8 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       }
     ],
     "exit": {
-      "targetRoomId": "room",
-      "label": "room",
+      "targetRoomId": "wheel",
+      "label": "wheel",
       "requires": [
         {
           "kind": "pressed",
@@ -680,6 +659,54 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
           ]
         }
       ],
+      "endsGame": false
+    }
+  },
+  "wheel": {
+    "id": "wheel",
+    "hint": "One throw won't be enough. Maybe you can make the dagger fly around with you?",
+    "goal": "Defeat the dummy, then walk into the exit.",
+    "objects": [
+      {
+        "id": "wheeldagger",
+        "role": "weapon",
+        "name": "dagger",
+        "x": 614,
+        "y": 611,
+        "displayWidth": 49,
+        "displayHeight": 49,
+        "scaleX": 0.68,
+        "scaleY": 0.68,
+        "attackDistance": 30,
+        "attackDurationMs": 200,
+        "holdOffsetX": 20,
+        "holdOffsetY": 26
+      },
+      {
+        "id": "dummy2",
+        "role": "object",
+        "name": "dummy",
+        "kind": "dummy",
+        "x": 1490,
+        "y": 365,
+        "displayWidth": 176,
+        "displayHeight": 176,
+        "scaleX": 1,
+        "scaleY": 1,
+        "maxHealth": 200,
+        "colliderWidth": 110,
+        "colliderHeight": 160
+      }
+    ],
+    "exit": {
+      "targetRoomId": "room",
+      "label": "room",
+      "requires": {
+        "kind": "defeat",
+        "objectIds": [
+          "dummy2"
+        ]
+      },
       "endsGame": false
     }
   },
@@ -975,53 +1002,6 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         ]
       },
       "endsGame": true
-    }
-  },
-  "wheel": {
-    "id": "wheel",
-    "hint": "One throw won't be enough. Maybe you can make the dagger fly around with you?",
-    "goal": "Defeat the dummy, then walk into the exit.",
-    "objects": [
-      {
-        "id": "wheeldagger",
-        "role": "weapon",
-        "name": "dagger",
-        "x": 614,
-        "y": 611,
-        "displayWidth": 49,
-        "displayHeight": 49,
-        "scaleX": 0.68,
-        "scaleY": 0.68,
-        "attackDistance": 30,
-        "attackDurationMs": 200,
-        "holdOffsetX": 20,
-        "holdOffsetY": 26
-      },
-      {
-        "id": "dummy2",
-        "role": "object",
-        "name": "dummy",
-        "kind": "dummy",
-        "x": 1490,
-        "y": 365,
-        "displayWidth": 176,
-        "displayHeight": 176,
-        "scaleX": 1,
-        "scaleY": 1,
-        "maxHealth": 200,
-        "colliderWidth": 110,
-        "colliderHeight": 160
-      }
-    ],
-    "exit": {
-      "targetRoomId": "storage",
-      "label": "storage",
-      "requires": {
-        "kind": "defeat",
-        "objectIds": [
-          "dummy2"
-        ]
-      }
     }
   }
 }

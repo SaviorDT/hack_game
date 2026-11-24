@@ -14,7 +14,7 @@ export function enterOpensCommandInput(mode: CommandTypingMode): boolean {
 }
 
 export const COMMAND_TYPING_MODE_KEY = 'hack-game.command-typing-mode'
-export const DEFAULT_COMMAND_TYPING_MODE: CommandTypingMode = 'hold-shift'
+export const DEFAULT_COMMAND_TYPING_MODE: CommandTypingMode = 'hybrid'
 
 export function loadCommandTypingMode(storage?: Storage): CommandTypingMode {
   try {

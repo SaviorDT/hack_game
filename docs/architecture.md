@@ -40,9 +40,9 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 | **Command** | 0.25 | Disabled (or latched direction) | Ignored |
 
 - **Shell Entry & Exit**:
-  - In **Hold Shift mode** (`'hold-shift'`, default): Holding Shift while in Movement Mode opens the inline command prompt (`$ `) under the player. Releasing Shift executes the command (if non-empty) and closes the prompt, returning to Movement Mode. Releasing Shift without typing anything cancels and clears the prompt. Enter also submits.
+  - In **Hold Shift mode** (`'hold-shift'`): Holding Shift while in Movement Mode opens the inline command prompt (`$ `) under the player. Releasing Shift executes the command (if non-empty) and closes the prompt, returning to Movement Mode. Releasing Shift without typing anything cancels and clears the prompt. Enter also submits.
   - In **Enter + Sticky mode** (`'enter-sticky'`): Shift is disabled. Pressing Enter in Movement Mode opens the inline command prompt. Pressing Enter executes typed commands and closes the prompt; pressing Enter on an empty prompt closes the bar without executing.
-- In **Hybrid mode** (`'hybrid'`): both entries work. Shift opens the prompt and its release submits/cancels; Enter opens it and Enter submits (empty Enter closes). The key that opened the prompt decides how it closes (`GameScene.enteredByShift`); `shiftOpensCommandInput` / `enterOpensCommandInput` in `gameSettings.ts` define which keys open it per mode.
+- In **Hybrid mode** (`'hybrid'`, default): both entries work. Shift opens the prompt and its release submits/cancels; Enter opens it and Enter submits (empty Enter closes). The key that opened the prompt decides how it closes (`GameScene.enteredByShift`); `shiftOpensCommandInput` / `enterOpensCommandInput` in `gameSettings.ts` define which keys open it per mode.
   - Space and P do not close the command prompt in any mode; they type literal characters into the prompt.
 - **Submission**: Commands are submitted and executed when Shift is released (in hold-shift mode) or when Enter is pressed, returning to Movement Mode.
 - **Recorded Commands (Macros)**:

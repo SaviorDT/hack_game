@@ -288,6 +288,7 @@ describe('TitleScene', () => {
   })
 
   it('swaps to settings screen when SETTING is confirmed, allows in-place toggle switch, and exits on RETURN', () => {
+    titleStorage.setItem('hack-game.command-typing-mode', 'hold-shift')
     const { scene, handleKeyDown } = setupScene()
     expect(scene.isInSettings()).toBe(false)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')

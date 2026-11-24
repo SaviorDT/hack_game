@@ -170,8 +170,9 @@ describe('GameScene key handling', () => {
     expect(result).toBe(false)
   })
 
-  it('does not enter command mode when Enter is pressed in movement mode', () => {
-    const { session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+  it('does not enter command mode when Enter is pressed in movement mode (hold-shift)', () => {
+    const { scene, session, mockInlineCommandInputView, handleKeyDown } = setupScene()
+    scene.setCommandTypingMode('hold-shift')
     expect(session.inputMode).toBe('movement')
 
     const preventDefault = vi.fn()

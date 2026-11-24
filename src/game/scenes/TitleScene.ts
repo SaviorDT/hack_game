@@ -4,6 +4,7 @@ import {
   saveCommandTypingMode,
   COMMAND_TYPING_MODES,
   type CommandTypingMode,
+  DEFAULT_COMMAND_TYPING_MODE,
 } from '../application/gameSettings.ts'
 import { LocalStorageSaveRepository } from '../persistence/LocalStorageSaveRepository.ts'
 import { SAVE_SCHEMA_VERSION } from '../application/GameSession.ts'
@@ -67,7 +68,7 @@ export class TitleScene extends Phaser.Scene {
   private settingDescText?: Phaser.GameObjects.Text
   private helpManualText?: Phaser.GameObjects.Text
   private helpDescText?: Phaser.GameObjects.Text
-  private currentTypingMode: CommandTypingMode = 'hold-shift'
+  private currentTypingMode: CommandTypingMode = DEFAULT_COMMAND_TYPING_MODE
   private tutorialUnlocks: TutorialFeatureUnlocks = getTutorialFeatureUnlocks(null)
   private hasSavedGame = false
   private settingFocusIndex: SettingFocus = 0

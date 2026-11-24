@@ -24,6 +24,7 @@ import {
     loadCommandTypingMode,
     shiftOpensCommandInput,
     type CommandTypingMode,
+  DEFAULT_COMMAND_TYPING_MODE,
 } from '../application/gameSettings.ts'
 
 export class GameScene extends Phaser.Scene {
@@ -38,7 +39,7 @@ export class GameScene extends Phaser.Scene {
     private resumeFromSave = false
     private startingRoomId?: string
     private initialOpenCommandEditor = false
-    private commandTypingMode: CommandTypingMode = 'hold-shift'
+    private commandTypingMode: CommandTypingMode = DEFAULT_COMMAND_TYPING_MODE
     private customCommandTypingMode?: CommandTypingMode
     private enteredByShift = false
     private slotHoldTimer?: Phaser.Time.TimerEvent

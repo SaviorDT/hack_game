@@ -33,7 +33,7 @@ describe('gameSettings', () => {
   it('returns default mode when storage is empty', () => {
     const storage = createMockStorage()
     expect(loadCommandTypingMode(storage)).toBe(DEFAULT_COMMAND_TYPING_MODE)
-    expect(DEFAULT_COMMAND_TYPING_MODE).toBe('hold-shift')
+    expect(DEFAULT_COMMAND_TYPING_MODE).toBe('hybrid')
   })
 
   it('loads valid stored modes', () => {
@@ -48,7 +48,7 @@ describe('gameSettings', () => {
   it('falls back to default for invalid stored values', () => {
     const storage = createMockStorage()
     storage.setItem(COMMAND_TYPING_MODE_KEY, 'invalid-mode')
-    expect(loadCommandTypingMode(storage)).toBe('hold-shift')
+    expect(loadCommandTypingMode(storage)).toBe(DEFAULT_COMMAND_TYPING_MODE)
   })
 
   it('saves typing mode to storage', () => {
@@ -74,7 +74,7 @@ describe('gameSettings', () => {
       length: 0,
     }
 
-    expect(loadCommandTypingMode(throwingStorage)).toBe('hold-shift')
+    expect(loadCommandTypingMode(throwingStorage)).toBe(DEFAULT_COMMAND_TYPING_MODE)
     expect(() => saveCommandTypingMode('enter-sticky', throwingStorage)).not.toThrow()
   })
 

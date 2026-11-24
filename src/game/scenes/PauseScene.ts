@@ -3,6 +3,7 @@ import {
   loadCommandTypingMode,
   saveCommandTypingMode,
   type CommandTypingMode,
+  DEFAULT_COMMAND_TYPING_MODE,
 } from '../application/gameSettings.ts'
 import {
   focusForMode,
@@ -59,7 +60,7 @@ export class PauseScene extends Phaser.Scene {
   private inConfirm = false
   private settingDescText?: Phaser.GameObjects.Text
   private helpManualText?: Phaser.GameObjects.Text
-  private currentTypingMode: CommandTypingMode = 'hold-shift'
+  private currentTypingMode: CommandTypingMode = DEFAULT_COMMAND_TYPING_MODE
   private settingFocusIndex: SettingFocus = 0
   private inHelp = false
   private inSettings = false

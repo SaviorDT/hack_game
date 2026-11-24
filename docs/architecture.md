@@ -202,7 +202,7 @@ An open Exit is used by walking the Player Character into its zone (`PlayerMovem
 
 Enemies that never walk (`speed` 0) have `mass` 1000 so a bump cannot shove them (a speed of 0 gives no braking). A `passive` enemy (`RoomObjectConfig.passive`, stored in state) never chases or attacks. In the throwing rooms the player picks up the dagger and throws it with `acc dagger guard`; a thrown held Weapon can graze its thrower for a few points of Impact Damage as it leaves the hand. `content/tutorialRooms.test.ts` plays tutorial1 to tutorial3 through `GameSession` with the taught mechanics into tutorial4.
 
-**Home area** (`content/homeArea.ts`): four rooms after the tutorial with no hint banners; each room's layout poses one problem, and `gate` combines them.
+**Home area** (`content/homeArea.ts`): four rooms after the tutorial with no hint banners except `yard`'s (`YARD_HINT`: "Stuck? Press R to reset the room, or press SPACE to open the menu.", naming the Room Reset and Pause Menu shortcuts, which the player first needs here); each room's layout poses one problem, and `gate` combines them.
 
 | Room | Layout | Exit opens when |
 |---|---|---|

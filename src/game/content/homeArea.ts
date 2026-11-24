@@ -3,11 +3,13 @@ import { ROOM_IDS } from './roomConstants.ts'
 import { archer, boulder, crate, dagger, guard, plate, type RoomDefinition } from './roomPieces.ts'
 
 /**
- * The first area after the tutorial, played before room. There are no hint banners: each room poses one
+ * The first area after the tutorial, played before room. The only hint banner is yard's, which names the R and Space shortcuts: each room poses one
  * problem that its layout makes solvable, and the last combines them.
  *
  * storage → yard → lane → gate → room
  */
+export const YARD_HINT = 'Stuck? Press R to reset the room, or press SPACE to open the menu.'
+
 export const HOME_AREA_IDS = {
   storage: 'storage',
   yard: 'yard',
@@ -31,6 +33,7 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
   {
     // An archer across a yard of stone pillars: move from cover to cover, then take it down.
     id: HOME_AREA_IDS.yard,
+    hint: YARD_HINT,
     goal: 'Deal with the archer.',
     walls: [
       wallFromEdges(620, 220, 700, 300),

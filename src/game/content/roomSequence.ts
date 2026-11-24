@@ -325,6 +325,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
   },
   "yard": {
     "id": "yard",
+    "hint": "Stuck? Press R to reset the room, or press SPACE to open the menu.",
     "goal": "Deal with the archer.",
     "objects": [
       {

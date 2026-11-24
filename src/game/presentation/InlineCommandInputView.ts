@@ -25,6 +25,37 @@ const LEFT_ANCHOR_X = -PILL_MIN_WIDTH / 2
 const PROMPT = '$ '
 const OFFSET_Y = 90
 const VIEW_DEPTH = 20
+const SHIFT_DIGIT_MAP: Record<string, string> = {
+  ')': '0',
+  '!': '1',
+  '@': '2',
+  '#': '3',
+  '$': '4',
+  '%': '5',
+  '^': '6',
+  '&': '7',
+  '*': '8',
+  '(': '9',
+}
+
+export function resolveTypedCharacter(event: KeyboardEvent): string {
+  if (!event.shiftKey) {
+    return event.key
+  }
+
+  if (event.code) {
+    const digitMatch = /^(?:Digit|Numpad)([0-9])$/.exec(event.code)
+    if (digitMatch) {
+      return digitMatch[1]
+    }
+  }
+
+  if (event.key in SHIFT_DIGIT_MAP) {
+    return SHIFT_DIGIT_MAP[event.key]
+  }
+
+  return event.key.toLowerCase()
+}
 
 export class InlineCommandInputView {
   private scene: Phaser.Scene | undefined
@@ -287,7 +318,7 @@ export class InlineCommandInputView {
     ) {
       event.preventDefault()
       this.resetHistoryNavigation()
-      const char = event.shiftKey ? event.key.toLowerCase() : event.key
+      const char = resolveTypedCharacter(event)
       characters.splice(this.cursorIndex, 0, char)
       this.cursorIndex += 1
       this.value = characters.join('')

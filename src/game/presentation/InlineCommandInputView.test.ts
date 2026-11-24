@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { InlineCommandInputView } from './InlineCommandInputView.ts'
+import {
+  InlineCommandInputView,
+  resolveTypedCharacter,
+} from './InlineCommandInputView.ts'
 
 describe('InlineCommandInputView', () => {
   function setupView() {
@@ -113,11 +116,50 @@ describe('InlineCommandInputView', () => {
     dispatchKeydown({ key: 'O', shiftKey: true })
     dispatchKeydown({ key: 'O', shiftKey: true })
     dispatchKeydown({ key: 'M', shiftKey: true })
-    dispatchKeydown({ key: '2', shiftKey: true })
+    dispatchKeydown({ key: '@', code: 'Digit2', shiftKey: true })
 
     expect(view.getValue()).toBe('mv room2')
     view.submit()
     expect(onSubmit).toHaveBeenCalledWith('mv room2')
+  })
+
+  it('normalizes shifted number row symbols and physical digit codes', () => {
+    const shiftedSymbols = ')!@#$%^&*('
+    for (let digit = 0; digit <= 9; digit += 1) {
+      const symbol = shiftedSymbols[digit]
+      expect(resolveTypedCharacter({
+        key: symbol,
+        code: `Digit${digit}`,
+        shiftKey: true,
+      } as KeyboardEvent)).toBe(String(digit))
+      expect(resolveTypedCharacter({
+        key: symbol,
+        shiftKey: true,
+      } as KeyboardEvent)).toBe(String(digit))
+    }
+  })
+
+  it('normalizes numpad digit codes while shift is held', () => {
+    for (let digit = 0; digit <= 9; digit += 1) {
+      expect(resolveTypedCharacter({
+        key: String(digit),
+        code: `Numpad${digit}`,
+        shiftKey: true,
+      } as KeyboardEvent)).toBe(String(digit))
+    }
+  })
+
+  it('leaves unshifted keys unchanged and lowercases shifted letters', () => {
+    expect(resolveTypedCharacter({
+      key: 'M',
+      code: 'KeyM',
+      shiftKey: true,
+    } as KeyboardEvent)).toBe('m')
+    expect(resolveTypedCharacter({
+      key: '2',
+      code: 'Digit2',
+      shiftKey: false,
+    } as KeyboardEvent)).toBe('2')
   })
 
   it('exposes getValue and submit for external triggers such as shift release', () => {

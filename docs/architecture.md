@@ -57,7 +57,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 
 ### Command Input Behavior
 
-- **Case Enforcement**: Typing printable characters while pressing Shift is converted to lowercase in `InlineCommandInputView`, preventing accidental uppercase input when holding Shift to enter Command Mode. All room object and exit labels must not contain uppercase letters.
+- **Case and Digit Enforcement**: Typing printable characters while pressing Shift is converted to lowercase in `InlineCommandInputView`, preventing accidental uppercase input when holding Shift to enter Command Mode. Number-row and Numpad keys pressed with Shift resolve to digits `0`–`9` from their physical key codes or the standard US shifted-digit symbol fallback. All room object and exit labels must not contain uppercase letters.
 - **Tab Completion**: Tab completes registered commands, discovered room entries, and the player character's label (`hacker`). Argument positions (after command name and whitespace) complete room entries (including `hacker`) without command name collisions. Unique matches append a trailing space; ambiguous matches complete the common prefix.
 - **Discovery Gate**: In gameplay, all visible room objects are discovered and display their labels by default, making them available to autocomplete from the start; the player character is always discovered. Utility functions and domain state retain discovery tracking for tooling.
 - **History & Editing**: `Ctrl+Backspace` deletes previous word; `Up`/`Down` navigates command history (down past newest restores draft).

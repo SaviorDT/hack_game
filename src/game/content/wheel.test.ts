@@ -4,7 +4,6 @@ import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
 import { ARENA_IDS } from './arena.ts'
 import { WHEEL_DEFINITION, WHEEL_DUMMY, WHEEL_HINT } from './wheel.ts'
 import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
-import { HOME_AREA_IDS } from './homeArea.ts'
 import { createGameWorldState } from './tutorialRooms.ts'
 import { getRoomDirectoryEntries } from '../commands/RoomDirectory.ts'
 import type { GameSession } from '../application/GameSession.ts'
@@ -12,7 +11,7 @@ import { collidesPhysically, colliderTagsOf } from '../domain/ColliderTag.ts'
 import { isExitOpen, isExitVisible, visibleExitsOf } from '../domain/RoomTravel.ts'
 import { SIMULATION_TICK_MS } from '../simulation/TickSimulationEngine.ts'
 
-const NEXT_ID = HOME_AREA_IDS.storage
+const NEXT_ID = ROOM_IDS.main
 
 const bindings = { up: ['arrowup'], down: ['arrowdown'], left: ['arrowleft'], right: ['arrowright'] }
 const memoryStorage = { getItem: () => null, setItem: () => undefined } as unknown as Storage
@@ -45,14 +44,14 @@ function wheelOf(session: GameSession) {
 }
 
 describe('wheel', () => {
-  it('is reached from tutorial4, and the arena (not wheel or room) ends the game', () => {
+  it('is reached from gate, and the arena (not wheel or room) ends the game', () => {
     const state = createGameWorldState()
     const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0]
-    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow).targetRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
-    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
-    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround).endsGame).toBeUndefined()
+    expect(exitOf('gate').targetRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
+    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toMatchObject({ targetRoomId: ROOM_IDS.main })
+    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround).endsGame).toBeFalsy()
     expect(exitOf(ROOM_IDS.main)).toMatchObject({ targetRoomId: ARENA_IDS.room })
-    expect(exitOf(ROOM_IDS.main).endsGame).toBeUndefined()
+    expect(exitOf(ROOM_IDS.main).endsGame).toBeFalsy()
     expect(exitOf(ARENA_IDS.room)).toMatchObject({ targetRoomId: ROOM_IDS.end, endsGame: true })
     expect(state.rooms.filter((room) => room.id === TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(1)
   })
@@ -101,7 +100,7 @@ describe('wheel', () => {
     expect(Math.hypot(dagger.x - dummy.x, dagger.y - dummy.y)).toBeLessThan(20)
   })
 
-  it('bars the exit to storage on the right wall until the dummy is defeated', () => {
+  it('bars the exit to room on the right wall until the dummy is defeated', () => {
     const session = wheelSession()
     const { state, room } = wheelOf(session)
     const exit = room.exits[0]
@@ -135,7 +134,7 @@ describe('wheel', () => {
     expect(objectOf(session, 'wheeldagger').metadata.name).toBe('dagger')
   })
 
-  it('leads on to storage when the player walks into the open exit', () => {
+  it('leads on to room when the player walks into the open exit', () => {
     const session = wheelSession()
     body(session, WHEEL_DUMMY.id).alive = false
     const player = body(session, 'player')

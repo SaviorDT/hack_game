@@ -85,14 +85,15 @@ describe('home area', () => {
     const state = createGameWorldState()
     const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0].targetRoomId
     expect(exitOf(TUTORIAL_ROOM_IDS.slowTime)).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
-    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow)).toBe(TUTORIAL_ROOM_IDS.flyAround)
-    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toBe('storage')
+    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow)).toBe(TUTORIAL_ROOM_IDS.selfThrow)
+    expect(exitOf(TUTORIAL_ROOM_IDS.selfThrow)).toBe('storage')
     expect([exitOf('storage'), exitOf('yard'), exitOf('lane'), exitOf('gate')]).toEqual([
       'yard',
       'lane',
       'gate',
-      ROOM_IDS.main,
+      TUTORIAL_ROOM_IDS.flyAround,
     ])
+    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toBe(ROOM_IDS.main)
     expect(new Set(state.worldObjects.map((worldObject) => worldObject.id)).size).toBe(state.worldObjects.length)
     // Arrows are never something the player can list or name.
     expect(state.worldObjects.filter((worldObject) => worldObject.metadata.kind === 'arrow').length).toBe(9)
@@ -111,7 +112,7 @@ describe('home area', () => {
     expect(body(session, 'tutorial4boulder').x).toBeGreaterThan(960) // out of the gap
     // The boulder landed on the far side; walk around it to the exit.
     walk(session, { x: 1000, y: 400 }, { x: 1150, y: 250 }, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
+    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.selfThrow)
   })
 
   it('storage: standing on the plate opens the exit only while you stay; a crate keeps it open', () => {
@@ -209,6 +210,9 @@ describe('home area', () => {
     expect(body(session, 'gateguard2').alive).toBe(false)
     expect(exitOpen(session)).toBe(false) // the plate is still up
 
+    // The gate archer keeps shooting while the crate is thrown and the player walks to the exit, and an arrow does
+    // 35: keep the player alive so this test is about the Exit's requirements, not the archer's damage.
+    body(session, 'player').health = 100000
     // With the guards gone (and the player out of its path), the crate can fly to the plate.
     walk(session, { x: 1000, y: 300 })
     expect(session.submitCommand('acc crate plate').status).toBe('success')
@@ -217,7 +221,7 @@ describe('home area', () => {
     expect(exitOpen(session)).toBe(true)
     // Go over the cover wall (x 1230-1340, y 360-470) rather than through its corner.
     walk(session, { x: 1285, y: 290 }, { x: 1500, y: 420 }, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(ROOM_IDS.main)
+    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
   })
 
   it('keeps arrows out of tab completion and acc', () => {

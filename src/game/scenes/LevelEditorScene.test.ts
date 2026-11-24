@@ -63,15 +63,16 @@ describe('LevelEditorScene & Room Registry', () => {
         TUTORIAL_ROOM_IDS.throw,      // tutorial2
         TUTORIAL_ROOM_IDS.slowTime,   // tutorial3
         TUTORIAL_ROOM_IDS.mouseThrow, // tutorial4
-        TUTORIAL_ROOM_IDS.flyAround,  // wheel
+        TUTORIAL_ROOM_IDS.selfThrow,  // tutorial5
         HOME_AREA_IDS.storage,        // storage
         HOME_AREA_IDS.yard,           // yard
         HOME_AREA_IDS.lane,           // lane
         HOME_AREA_IDS.gate,           // gate
+        TUTORIAL_ROOM_IDS.flyAround,  // wheel
         ROOM_IDS.main,                // room
         ARENA_IDS.room,               // arena
       ])
-      expect(roomIds.length).toBe(11)
+      expect(roomIds.length).toBe(12)
     })
 
     it('returns valid room definitions for all editor rooms', () => {
@@ -163,8 +164,8 @@ describe('LevelEditorScene & Room Registry', () => {
       removeRoomToUnused(TUTORIAL_ROOM_IDS.slowTime)
       insertNewRoom(createDefaultRoomDefinition('custom_reset'), ROOM_IDS.main)
       resetAllRooms()
-      expect(getActiveRoomIds()).toHaveLength(11)
-      expect(getUnusedRoomIds()).toEqual([TUTORIAL_ROOM_IDS.selfThrow])
+      expect(getActiveRoomIds()).toHaveLength(12)
+      expect(getUnusedRoomIds()).toEqual([])
       expect(getRoomDefinition(ARENA_IDS.room)?.exit).toMatchObject({
         targetRoomId: ROOM_IDS.end,
         endsGame: true,
@@ -182,7 +183,7 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getNextRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
       current = getNextRoomId(current)
-      expect(current).toBe(TUTORIAL_ROOM_IDS.flyAround)
+      expect(current).toBe(TUTORIAL_ROOM_IDS.selfThrow)
       current = getNextRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.storage)
       current = getNextRoomId(current)
@@ -191,6 +192,8 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(current).toBe(HOME_AREA_IDS.lane)
       current = getNextRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.gate)
+      current = getNextRoomId(current)
+      expect(current).toBe(TUTORIAL_ROOM_IDS.flyAround)
       current = getNextRoomId(current)
       expect(current).toBe(ROOM_IDS.main)
       current = getNextRoomId(current)
@@ -206,6 +209,8 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getPreviousRoomId(current)
       expect(current).toBe(ROOM_IDS.main)
       current = getPreviousRoomId(current)
+      expect(current).toBe(TUTORIAL_ROOM_IDS.flyAround)
+      current = getPreviousRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.gate)
       current = getPreviousRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.lane)
@@ -214,7 +219,7 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getPreviousRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.storage)
       current = getPreviousRoomId(current)
-      expect(current).toBe(TUTORIAL_ROOM_IDS.flyAround)
+      expect(current).toBe(TUTORIAL_ROOM_IDS.selfThrow)
       current = getPreviousRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
       current = getPreviousRoomId(current)
@@ -271,7 +276,7 @@ describe('LevelEditorScene & Room Registry', () => {
       const objects = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)
       expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
       expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(200)
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: ROOM_IDS.main })
 
       setRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround, [])
       expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(0)

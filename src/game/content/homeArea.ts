@@ -1,12 +1,12 @@
 import { wallFromEdges } from '../domain/Room.ts'
-import { ROOM_IDS } from './roomConstants.ts'
+import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
 import { archer, boulder, crate, dagger, guard, plate, type RoomDefinition } from './roomPieces.ts'
 
 /**
  * The first area after the tutorial, played before room. The only hint banner is yard's, which names the R and Space shortcuts: each room poses one
  * problem that its layout makes solvable, and the last combines them.
  *
- * storage → yard → lane → gate → room
+ * storage → yard → lane → gate → wheel → room
  */
 export const YARD_HINT = 'Stuck? Press R to reset the room, or press SPACE to open the menu.'
 
@@ -91,8 +91,8 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
       archer('gatearcher', 1700, 200),
     ],
     exit: {
-      targetRoomId: ROOM_IDS.main,
-      label: ROOM_IDS.main,
+      targetRoomId: TUTORIAL_ROOM_IDS.flyAround,
+      label: TUTORIAL_ROOM_IDS.flyAround,
       requires: [
         { kind: 'pressed', plateIds: ['gateplate'] },
         { kind: 'defeat', objectIds: ['gateguard', 'gateguard2'] },

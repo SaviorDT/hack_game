@@ -147,6 +147,7 @@ function getSourceRoomDefinition(roomId: string): RoomDefinition | undefined {
 }
 
 export function getActiveRoomDefinitions(): RoomDefinition[] {
+  hydrateRoomContentSnapshot()
   return activeRoomIds
     .map((roomId) => getSourceRoomDefinition(roomId))
     .filter((definition): definition is RoomDefinition => definition !== undefined)
@@ -272,6 +273,18 @@ export function getRoomDefinition(roomId: string): EditorRoomDefinition | undefi
       goal: tutorialMatch.goal,
       walls: tutorialMatch.walls,
       exit: { ...tutorialMatch.exit, ...exitOverride },
+    }
+  }
+
+  if (roomId === TUTORIAL5_DEFINITION.id) {
+    const exitOverride = exitOverrides.get(roomId)
+    return {
+      id: TUTORIAL5_DEFINITION.id,
+      title: TUTORIAL5_DEFINITION.id,
+      hint: TUTORIAL5_DEFINITION.hint,
+      goal: TUTORIAL5_DEFINITION.goal,
+      walls: TUTORIAL5_DEFINITION.walls,
+      exit: { ...TUTORIAL5_DEFINITION.exit, ...exitOverride },
     }
   }
 

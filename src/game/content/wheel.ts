@@ -1,5 +1,5 @@
 import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
-import { HOME_AREA_IDS } from './homeArea.ts'
+import { ROOM_IDS } from './roomConstants.ts'
 import { dagger, targetDummy, type RoomDefinition } from './roomPieces.ts'
 
 /** Where wheel's Target Dummy stands. */
@@ -9,7 +9,7 @@ export const WHEEL_HINT = "One throw won't be enough. Maybe you can make the dag
 
 /**
  * wheel: a dagger on the left and a Target Dummy on the right, laid out like room. Defeating the dummy opens
- * the Exit to storage on the right wall.
+ * the Exit to room on the right wall.
  */
 export const WHEEL_DEFINITION: RoomDefinition = {
   id: TUTORIAL_ROOM_IDS.flyAround,
@@ -20,8 +20,8 @@ export const WHEEL_DEFINITION: RoomDefinition = {
     targetDummy(WHEEL_DUMMY.id, WHEEL_DUMMY.x, WHEEL_DUMMY.y, { maxHealth: WHEEL_DUMMY.maxHealth }),
   ],
   exit: {
-    targetRoomId: HOME_AREA_IDS.storage,
-    label: HOME_AREA_IDS.storage,
+    targetRoomId: ROOM_IDS.main,
+    label: ROOM_IDS.main,
     requires: { kind: 'defeat', objectIds: [WHEEL_DUMMY.id] },
   },
 }

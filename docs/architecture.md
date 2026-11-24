@@ -53,6 +53,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
   - The Pause Scene main menu displays a `RECORDED COMMANDS` panel showing current slot assignments (`8,9,0: EXEC    HOLD 8,9,0: RECORD`).
 - **Latched Movement**: Holding Shift while holding movement keys latches velocity until collision, room exit, or release/submission; latched keys are suppressed from typing input.
 - **Prompt**: Displays `$ ` (current room is displayed in the HUD header).
+- **Time Dilation Visual Feedback (Cyber Glitch Shader)**: Entering Command Mode activates the WebGL camera filter (`TimeDilationGlitchView`, registered as `FilterGlitch` via `GlitchFilterRenderNode`), applying horizontal block displacement and RGB chromatic aberration over the scene while time is dilated to 0.25x. All shader tuning parameters (`DEFAULT_GLITCH_SHAKE_POWER` [0.012], `DEFAULT_GLITCH_SHAKE_RATE` [0.25], `DEFAULT_GLITCH_SHAKE_SPEED` [5.0], `DEFAULT_GLITCH_SHAKE_BLOCK_SIZE` [32.0], `DEFAULT_GLITCH_SHAKE_COLOR_RATE` [0.005], and fade durations) are isolated and exported from `presentation/glitchShaderConstants.ts` for human adjustment. Transitions between Movement Mode and Command Mode smoothly fade `shakePower` in over `GLITCH_FADE_IN_MS` (100 ms) and out over `GLITCH_FADE_OUT_MS` (80 ms), providing clear visual feedback that reality's clock cycles are dilated while keeping the command prompt and battlefield legible.
 
 ### Command Input Behavior
 
@@ -395,7 +396,7 @@ Editable configurations in `room` export directly to `room.ts` (`ROOM_OBJECTS`) 
 | **Collisionboxes** | Non-weapon objects render green collider outlines: rectangles (`110×scaleX` by `160×scaleY` for characters, or custom `colliderWidth`×`colliderHeight`), or circles of diameter `colliderWidth` for `colliderShape: 'circle'` (the boulder); weapons have no collisionbox; pressure plates (`kind: 'plate'`) allow overlap |
 | **Collider Box Editing** | Drag green corner handle, hotkeys `[` / `]`, panel `BOX +` / `BOX -` buttons, or inspector `box_w` / `box_h` fields (+/- 10, Shift: 50, click for prompt; blocked from collisionbox overlap). For a circle, either field sets the diameter |
 | **Selection** | Click sprite, panel list entry, or cycle with `Tab` / `Shift+Tab` |
-| **Character Stats** | Edit guard `max_health` & `speed`, or player `max_health` (`+/-` 10, Shift: 50, click value for prompt) |
+| **Character Stats** | Edit guard `max_health`, `speed` & `strike_dmg`, or player `max_health` (`+/-` 10, Shift: 50, click value for prompt) |
 | **Weapon Stats** | Edit weapon `attack_dist`, `attack_dur`, `hold_offset_x`, `hold_offset_y` (`+/-` 10, Shift: 50, click value for prompt) |
 | **Physics** | Per-object `drag`, `friction`, `mass`, `max_velocity`, `restitution` values (`+/-`, click value for prompt, `R` resets one to the default; unset values show the global default dimmed). Written to `room.ts` as top-level fields, only for the fields set |
 | **Test Equip** | `TEST EQUIP` / `TEST UNEQUIP` button toggles preview attachment to player at hold offsets, moving with player |

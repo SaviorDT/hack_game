@@ -176,6 +176,7 @@ export interface ScaleChange {
 export type CharacterProperty =
   | 'maxHealth'
   | 'speed'
+  | 'strikeDamage'
   | 'maxSpeed'
   | 'acceleration'
   | 'frictionAcceleration'

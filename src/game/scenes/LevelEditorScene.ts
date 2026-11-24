@@ -1086,9 +1086,10 @@ export class LevelEditorScene extends Phaser.Scene {
 
     createStatRow('max_health', 'maxHealth', 'maxHealth', 50, this.statsElements)
     createStatRow('speed', 'speed', 'speed', 86, this.guardStatsElements)
+    createStatRow('strike_dmg', 'strikeDamage', 'strikeDamage', 122, this.guardStatsElements)
 
     const openAiEditorBtn = this.add
-      .text(890, 134, 'AI EDITOR (F4)', {
+      .text(890, 168, 'AI EDITOR (F4)', {
         fontFamily: FONT_FAMILY,
         fontSize: 12,
         color: '#ffffff',
@@ -1103,7 +1104,7 @@ export class LevelEditorScene extends Phaser.Scene {
     })
 
     const guardAiHint = this.add
-      .text(890, 184, 'Edit & simulate behavior tree', {
+      .text(890, 208, 'Edit & simulate behavior tree', {
         fontFamily: FONT_FAMILY,
         fontSize: 11,
         color: DIM_COLOR,
@@ -1461,6 +1462,7 @@ export class LevelEditorScene extends Phaser.Scene {
         'colliderHeight',
         'maxHealth',
         'speed',
+        'strikeDamage',
         'player_speed_summary',
         'attackDistance',
         'attackDurationMs',
@@ -1524,6 +1526,7 @@ export class LevelEditorScene extends Phaser.Scene {
       if (selected.role === 'player') {
         this.guardStatsElements.forEach((el) => el.setVisible(false))
         this.playerStatsElements.forEach((el) => el.setVisible(true))
+        setField('strikeDamage', '--')
         const maxSpd =
           selected.maxSpeed ??
           (typeof selected.speed === 'object' && selected.speed !== null
@@ -1542,11 +1545,14 @@ export class LevelEditorScene extends Phaser.Scene {
         this.playerStatsElements.forEach((el) => el.setVisible(false))
         const spd = typeof selected.speed === 'number' ? selected.speed : (selected.maxSpeed ?? 210)
         setField('speed', spd.toString())
+        const dmg = selected.strikeDamage ?? 20
+        setField('strikeDamage', dmg.toString())
       }
     } else if (selected.role === 'weapon') {
       this.section3Title?.setText('WEAPON STATS')
       setField('maxHealth', '--')
       setField('speed', '--')
+      setField('strikeDamage', '--')
       setField('player_speed_summary', '--')
       this.statsElements.forEach((el) => el.setVisible(false))
       this.guardStatsElements.forEach((el) => el.setVisible(false))
@@ -1568,6 +1574,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this.section3Title?.setText('STATS')
       setField('maxHealth', '--')
       setField('speed', '--')
+      setField('strikeDamage', '--')
       setField('player_speed_summary', '--')
       setField('attackDistance', '--')
       setField('attackDurationMs', '--')
@@ -1596,6 +1603,8 @@ export class LevelEditorScene extends Phaser.Scene {
               : 240
       } else if (property === 'speed') {
         prevValue = typeof selected.speed === 'number' ? selected.speed : 210
+      } else if (property === 'strikeDamage') {
+        prevValue = 20
       } else if (property === 'acceleration') {
         prevValue =
           typeof selected.speed === 'object' && selected.speed !== null
@@ -1626,6 +1635,8 @@ export class LevelEditorScene extends Phaser.Scene {
     let min = 10
     if (property === 'maxHealth') {
       min = 1
+    } else if (property === 'strikeDamage') {
+      min = 0
     } else if (property === 'attackDistance') {
       min = 0
     } else if (property === 'attackDurationMs') {
@@ -1679,6 +1690,8 @@ export class LevelEditorScene extends Phaser.Scene {
               : 240
       } else if (property === 'speed') {
         prevValue = typeof selected.speed === 'number' ? selected.speed : 210
+      } else if (property === 'strikeDamage') {
+        prevValue = 20
       } else if (property === 'acceleration') {
         prevValue =
           typeof selected.speed === 'object' && selected.speed !== null
@@ -1709,7 +1722,11 @@ export class LevelEditorScene extends Phaser.Scene {
     const label =
       property === 'maxHealth'
         ? 'max_health'
-        : property === 'maxSpeed'
+        : property === 'speed'
+          ? 'speed'
+          : property === 'strikeDamage'
+            ? 'strike_dmg'
+          : property === 'maxSpeed'
           ? 'max_speed'
           : property === 'frictionAcceleration'
             ? 'friction_accel'
@@ -1731,6 +1748,8 @@ export class LevelEditorScene extends Phaser.Scene {
     let min = 10
     if (property === 'maxHealth') {
       min = 1
+    } else if (property === 'strikeDamage') {
+      min = 0
     } else if (property === 'attackDistance') {
       min = 0
     } else if (property === 'attackDurationMs') {

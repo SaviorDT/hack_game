@@ -481,6 +481,27 @@ describe('levelEditorHistory', () => {
       expect(obj.maxHealth).toBe(100)
     })
 
+    it('undoes strikeDamage property changes', () => {
+      const history = new EditorHistory()
+      const obj = createTestObject({ strikeDamage: 40 })
+
+      const damageChange: PropertyChange = {
+        type: 'property',
+        objectId: 'test-obj',
+        property: 'strikeDamage',
+        delta: 10,
+        prevValue: 40,
+        nextValue: 50,
+      }
+      applyChange(obj, damageChange)
+      expect(obj.strikeDamage).toBe(50)
+      history.push(damageChange)
+
+      const reversed = history.undo((id) => (id === obj.id ? obj : undefined))
+      expect(reversed?.type).toBe('property')
+      expect(obj.strikeDamage).toBe(40)
+    })
+
     it('undoes acceleration, turnaround, and friction acceleration property changes', () => {
       const history = new EditorHistory()
       const speedConfig = {

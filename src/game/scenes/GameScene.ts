@@ -9,6 +9,7 @@ import { INPUT_BINDINGS } from '../presentation/InputBindings.ts'
 import { PhaserGameOutcomePanel } from '../presentation/PhaserGameOutcomePanel.ts'
 import { PhaserRoomView, WORLD_OBJECT_TEXTURE_URLS } from '../presentation/PhaserRoomView.ts'
 import { InlineCommandInputView } from '../presentation/InlineCommandInputView.ts'
+import { TimeDilationGlitchView } from '../presentation/TimeDilationGlitchView.ts'
 import { MacroIndicatorView } from '../presentation/MacroIndicatorView.ts'
 import type { TutorialHudContext } from '../presentation/StagedTutorialPrompts.ts'
 import {
@@ -32,6 +33,7 @@ export class GameScene extends Phaser.Scene {
     private outcomePanel: PhaserGameOutcomePanel | undefined
     private hud: PhaserGameHud | undefined
     private commandEditor: CommandEditorOverlay | undefined
+    private readonly glitchView = new TimeDilationGlitchView()
 
     private resumeFromSave = false
     private startingRoomId?: string
@@ -137,6 +139,7 @@ export class GameScene extends Phaser.Scene {
         this.commandEditor = new CommandEditorOverlay(this, this.session)
         this.commandEditor.mount()
         this.macroIndicatorView.mount(this)
+        this.glitchView.mount(this)
         if (this.initialOpenCommandEditor) {
             this.commandEditor.open()
         }
@@ -153,6 +156,7 @@ export class GameScene extends Phaser.Scene {
             this.slotHoldTimer?.remove()
             this.slotHoldTimer = undefined
             this.macroIndicatorView.destroy()
+            this.glitchView.destroy()
             inlineCommandInputView.destroy()
             this.roomView.destroy()
             this.hud?.destroy()
@@ -167,6 +171,8 @@ export class GameScene extends Phaser.Scene {
 
     update(_time: number, delta: number): void {
         this.session.update(delta)
+        this.glitchView.setMode(this.session.inputMode)
+        this.glitchView.update(delta)
         const worldState = this.session.getWorldState()
         if (worldState.currentRoomId !== this.lastRoomId) {
             this.lastRoomId = worldState.currentRoomId
@@ -247,6 +253,10 @@ export class GameScene extends Phaser.Scene {
 
     public getCommandEditor(): CommandEditorOverlay | undefined {
         return this.commandEditor
+    }
+
+    public getGlitchView(): TimeDilationGlitchView {
+        return this.glitchView
     }
 
     public openPause(): void {
@@ -413,6 +423,7 @@ export class GameScene extends Phaser.Scene {
         this.slotHoldStartedRoomId = undefined
         this.slotHoldRecorded = false
         this.macroIndicatorView.cancelHoldProgress()
+        this.glitchView.setMode(this.session.inputMode)
         this.inlineCommandInputView?.clearInput()
         this.inlineCommandInputView?.setVisible(false)
         this.enteredByShift = false
@@ -446,6 +457,7 @@ export class GameScene extends Phaser.Scene {
 
     private openCommandInput(byShift: boolean): void {
         this.session.enterCommandMode()
+        this.glitchView.setMode('command')
         this.inlineCommandInputView?.setVisible(true)
         this.enteredByShift = byShift
     }

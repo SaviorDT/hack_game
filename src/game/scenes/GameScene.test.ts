@@ -706,5 +706,23 @@ describe('GameScene key handling', () => {
       scene.update(0, 16)
       expect(cancelSpy).toHaveBeenCalled()
     })
+
+    it('notifies glitchView when switching input modes', () => {
+      const { scene, session, handleKeyDown } = setupScene()
+      const glitchView = scene.getGlitchView()
+      const setModeSpy = vi.spyOn(glitchView, 'setMode')
+
+      handleKeyDown({
+        key: 'Shift',
+        repeat: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent)
+
+      expect(session.inputMode).toBe('command')
+      expect(setModeSpy).toHaveBeenCalledWith('command')
+
+      scene.update(0, 16)
+      expect(setModeSpy).toHaveBeenCalledWith('command')
+    })
   })
 })

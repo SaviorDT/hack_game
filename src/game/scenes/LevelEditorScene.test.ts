@@ -33,6 +33,13 @@ import {
   resetAllRooms,
   getNextRoomId,
   getPreviousRoomId,
+  getActiveRoomIds,
+  getUnusedRoomIds,
+  isRoomUnused,
+  removeRoomToUnused,
+  insertRoomFromUnused,
+  insertNewRoom,
+  createDefaultRoomDefinition,
 } from '../content/roomRegistry.ts'
 import { ROOM_IDS } from '../content/roomConstants.ts'
 import { TUTORIAL_ROOM_IDS } from '../content/tutorialRooms.ts'
@@ -104,6 +111,64 @@ describe('LevelEditorScene & Room Registry', () => {
     it('returns hints for tutorial rooms and room', () => {
       expect(getRoomDefinition(TUTORIAL_ROOM_IDS.move)?.hint).toContain('WASD')
       expect(getRoomDefinition(ROOM_IDS.main)?.hint).toContain('reach the next room')
+    })
+  })
+
+  describe('active and unused room pools', () => {
+    it('moves a room to unused and re-chains adjacent exits', () => {
+      expect(removeRoomToUnused(TUTORIAL_ROOM_IDS.slowTime)).toBe(true)
+      expect(getActiveRoomIds()).not.toContain(TUTORIAL_ROOM_IDS.slowTime)
+      expect(getUnusedRoomIds()).toContain(TUTORIAL_ROOM_IDS.slowTime)
+      expect(isRoomUnused(TUTORIAL_ROOM_IDS.slowTime)).toBe(true)
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.throw)?.exit.targetRoomId)
+        .toBe(TUTORIAL_ROOM_IDS.mouseThrow)
+    })
+
+    it('inserts an unused room after the requested active room', () => {
+      removeRoomToUnused(TUTORIAL_ROOM_IDS.slowTime)
+      expect(insertRoomFromUnused(TUTORIAL_ROOM_IDS.slowTime, TUTORIAL_ROOM_IDS.throw)).toBe(true)
+      expect(getActiveRoomIds()).toContain(TUTORIAL_ROOM_IDS.slowTime)
+      expect(getUnusedRoomIds()).not.toContain(TUTORIAL_ROOM_IDS.slowTime)
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.throw)?.exit.targetRoomId)
+        .toBe(TUTORIAL_ROOM_IDS.slowTime)
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.slowTime)?.exit.targetRoomId)
+        .toBe(TUTORIAL_ROOM_IDS.mouseThrow)
+    })
+
+    it('inserts a new custom room and chains the final room to end', () => {
+      const custom = createDefaultRoomDefinition('custom_test')
+      expect(insertNewRoom(custom, ROOM_IDS.main)).toBe(true)
+      expect(getActiveRoomIds()).toContain('custom_test')
+      expect(getRoomDefinition(ROOM_IDS.main)?.exit.targetRoomId).toBe('custom_test')
+      expect(getRoomDefinition('custom_test')?.exit).toMatchObject({
+        targetRoomId: ARENA_IDS.room,
+        endsGame: false,
+      })
+      expect(getRoomDefinition(ARENA_IDS.room)?.exit).toMatchObject({
+        targetRoomId: ROOM_IDS.end,
+        endsGame: true,
+      })
+    })
+
+    it('never removes the last active room', () => {
+      for (const roomId of [...getActiveRoomIds()].slice(0, -1)) {
+        removeRoomToUnused(roomId)
+      }
+      const lastRoom = getActiveRoomIds()[0]
+      expect(removeRoomToUnused(lastRoom)).toBe(false)
+      expect(getActiveRoomIds()).toEqual([lastRoom])
+    })
+
+    it('reset restores the initial active pool and clears unused rooms', () => {
+      removeRoomToUnused(TUTORIAL_ROOM_IDS.slowTime)
+      insertNewRoom(createDefaultRoomDefinition('custom_reset'), ROOM_IDS.main)
+      resetAllRooms()
+      expect(getActiveRoomIds()).toHaveLength(11)
+      expect(getUnusedRoomIds()).toEqual([])
+      expect(getRoomDefinition(ARENA_IDS.room)?.exit).toMatchObject({
+        targetRoomId: ROOM_IDS.end,
+        endsGame: true,
+      })
     })
   })
 

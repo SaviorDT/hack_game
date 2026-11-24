@@ -376,7 +376,14 @@ Editable configurations in `room` export directly to `room.ts` (`ROOM_OBJECTS`) 
 
 ### Room Selection & Geometry
 
-- **Room Selection Bar**: Positioned at Row 2 (`y = 44`), featuring a `ROOM:` label, `◄` / `►` step buttons, and clickable pills for each room ordered by progression.
+- **Room Selection Bar**: Positioned at Row 2 (`y = 44`). It is owned by `LevelEditorRoomBar` and shows the active room pills, `◄` / `►` navigation, insert/remove actions, unused-room pills, and the Prefabs entry point.
+- **Active and Unused Pools**: `roomRegistry` maintains `activeRoomIds` and `unusedRoomIds`. Removing a room moves it to the unused pool rather than deleting it; unused rooms remain selectable and editable.
+- **Insert Actions**: An unused room can be inserted after any active room. The insert modal also creates a custom empty room with a standard player-free blank layout and inserts it into the active sequence.
+- **Insert Position**: Choosing `+ INSERT TO GAME`, an unused room in the insert modal, or a new empty room opens an after-level picker. The selected room is inserted immediately behind the chosen active room.
+- **Sequence Persistence**: `SAVE SEQUENCE` writes active and unused room IDs plus the complete room content snapshot to `roomSequence.ts` through `/api/save-room-sequence`. Reloading the app restores sequence membership and room layouts, goals, hints, walls, exits, and custom rooms.
+- **Exit Re-Chaining**: Every active room exit is re-linked after removal or insertion. Each active room points to the next active room; the final active room points to `ROOM_IDS.end` with `endsGame: true`. Exit requirements are preserved.
+- **Navigation**: PageUp/PageDown and the room arrows cycle only within the pool containing the current room. A removed room switches to an adjacent active room, and reset restores the initial 11-room active pool.
+- **Standalone Play**: F2 play mode includes the edited active sequence and can also build a standalone unused room when used for focused testing.
 - **Room Cycling Hotkeys**: `PageUp` navigates to the previous room; `PageDown` navigates to the next room (with wrap-around).
 - **Auto-Sync on Transition**: Switching rooms automatically syncs the current room's objects to memory before loading the next room's layout.
 - **Play from Current Level**: Exiting the level editor starts `GameScene` directly at the room currently open in the editor (`startingRoomId`). `createGameWorldState` positions the player in that room, establishes a save point on entry, and configures the room's specific goals, hints, obstacles, and door lock states.

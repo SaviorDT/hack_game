@@ -19,7 +19,7 @@ import type {
 } from '../content/room.ts'
 import type { ObjectKind } from '../domain/ObjectKind.ts'
 import {
-  EDITOR_ROOM_IDS,
+  getAllRoomIds,
   getRoomDefinition,
   getRoomObjectConfigs,
   setRoomObjectConfigs,
@@ -61,6 +61,8 @@ import {
   ACCENT_COLOR,
   PANEL_BG,
 } from './editorTheme.ts'
+import { LevelEditorRoomBar } from './levelEditorRoomBar.ts'
+import { isRoomUnused } from '../content/roomRegistry.ts'
 
 const SELECTED_OUTLINE = 0x4fc3f7
 const HANDLE_COLOR = 0xffcc00
@@ -183,6 +185,7 @@ export class LevelEditorScene extends Phaser.Scene {
   private roomSelectorButtons: Map<string, Phaser.GameObjects.Text> = new Map()
   private prevRoomBtn: Phaser.GameObjects.Text | undefined
   private nextRoomBtn: Phaser.GameObjects.Text | undefined
+  private roomBar?: LevelEditorRoomBar
   private roomGoalText: Phaser.GameObjects.Text | undefined
   private section5Desc: Phaser.GameObjects.Text | undefined
 
@@ -191,7 +194,7 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   init(data?: { roomId?: string }): void {
-    if (data?.roomId && (EDITOR_ROOM_IDS as readonly string[]).includes(data.roomId)) {
+    if (data?.roomId && (getAllRoomIds() as readonly string[]).includes(data.roomId)) {
       this.currentRoomId = data.roomId
     }
   }
@@ -265,86 +268,8 @@ export class LevelEditorScene extends Phaser.Scene {
     })
 
     // Room Selection Row (y = 44)
-    this.add
-      .text(ROOM_LAYOUT.left, 47, 'ROOM:', {
-        fontFamily: FONT_FAMILY,
-        fontSize: 12,
-        color: ACCENT_COLOR,
-      })
-      .setOrigin(0, 0)
-      .setDepth(50)
-
-    this.prevRoomBtn = this.add
-      .text(ROOM_LAYOUT.left + 65, 44, '◄', {
-        fontFamily: FONT_FAMILY,
-        fontSize: 12,
-        color: '#ffffff',
-        backgroundColor: '#37474f',
-        padding: { x: 7, y: 3 },
-      })
-      .setOrigin(0, 0)
-      .setDepth(50)
-      .setInteractive({ useHandCursor: true })
-    this.prevRoomBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event?.stopPropagation?.()
-      this.selectPreviousRoom()
-    })
-
-    let currX = ROOM_LAYOUT.left + 95
-    for (const roomId of EDITOR_ROOM_IDS) {
-      const isSelected = roomId === this.currentRoomId
-      const btn = this.add
-        .text(currX, 44, roomId, {
-          fontFamily: FONT_FAMILY,
-          fontSize: 10,
-          color: isSelected ? '#ffffff' : '#90a4ae',
-          backgroundColor: isSelected ? '#0288d1' : '#263238',
-          padding: { x: 7, y: 4 },
-        })
-        .setOrigin(0, 0)
-        .setDepth(50)
-        .setInteractive({ useHandCursor: true })
-      btn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        pointer.event?.stopPropagation?.()
-        this.selectRoom(roomId)
-      })
-      this.roomSelectorButtons.set(roomId, btn)
-      currX += btn.width + 6
-    }
-
-    this.nextRoomBtn = this.add
-      .text(currX, 44, '►', {
-        fontFamily: FONT_FAMILY,
-        fontSize: 12,
-        color: '#ffffff',
-        backgroundColor: '#37474f',
-        padding: { x: 7, y: 3 },
-      })
-      .setOrigin(0, 0)
-      .setDepth(50)
-      .setInteractive({ useHandCursor: true })
-    this.nextRoomBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event?.stopPropagation?.()
-      this.selectNextRoom()
-    })
-
-    const prefabsBtn = this.add
-      .text(currX + 35, 44, 'PREFABS', {
-        fontFamily: FONT_FAMILY,
-        fontSize: 10,
-        color: '#ffffff',
-        backgroundColor: '#00838f',
-        padding: { x: 8, y: 4 },
-      })
-      .setOrigin(0, 0)
-      .setDepth(50)
-      .setInteractive({ useHandCursor: true })
-    prefabsBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event?.stopPropagation?.()
-      const sel = this.getSelected()
-      const prefabId = sel ? inferPrefabId(sel) : 'guard'
-      this.prefabModeController?.enterPrefabMode(prefabId)
-    })
+    this.roomBar = new LevelEditorRoomBar(this)
+    this.roomBar.build()
 
     // Draw room frame (same as PhaserRoomView)
     this.roomFrame = this.add.graphics().setDepth(0)
@@ -423,6 +348,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this.input.keyboard?.off('keydown', this.onKeyDown, this)
       this.headerText?.destroy()
       this.roomGoalText?.destroy()
+      this.roomBar?.destroy()
       this.prevRoomBtn?.destroy()
       this.nextRoomBtn?.destroy()
       this.doorLabel?.destroy()
@@ -2719,9 +2645,17 @@ export class LevelEditorScene extends Phaser.Scene {
     this.selectRoom(getNextRoomId(this.currentRoomId))
   }
 
+  public enterPrefabMode(): void {
+    const selected = this.getSelected()
+    const prefabId = selected ? inferPrefabId(selected) : 'guard'
+    this.prefabModeController?.enterPrefabMode(prefabId)
+  }
+
   private updateHeaderAndSelector(): void {
     if (this.headerText) {
-      this.headerText.setText('LEVEL EDITOR — ' + this.currentRoomId)
+      this.headerText.setText(
+        `LEVEL EDITOR — ${this.currentRoomId}${isRoomUnused(this.currentRoomId) ? ' [UNUSED]' : ''}`,
+      )
     }
     const def = getRoomDefinition(this.currentRoomId)
     if (this.roomGoalText) {
@@ -2733,6 +2667,7 @@ export class LevelEditorScene extends Phaser.Scene {
       btn.setBackgroundColor(isSelected ? '#0288d1' : '#263238')
       btn.setColor(isSelected ? '#ffffff' : '#90a4ae')
     }
+    this.roomBar?.refresh()
   }
 
   private drawRoomGeometry(roomId: string): void {

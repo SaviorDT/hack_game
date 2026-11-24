@@ -2,12 +2,13 @@ import { wallFromEdges } from '../domain/Room.ts'
 import type { WorldState } from '../domain/WorldState.ts'
 import { HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
-import { ROOM_IDS } from './roomConstants.ts'
-import { ARENA_DEFINITION, ARENA_IDS } from './arena.ts'
+import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
+import { ARENA_DEFINITION } from './arena.ts'
 import { TUTORIAL5_DEFINITION } from './tutorial5.ts'
 import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
 import { createInitialWorldState } from './roomWorldState.ts'
 import { boulder, buildRooms, dagger, guard, ROOM_ENTRY, STANDS_FIRM, type RoomDefinition } from './roomPieces.ts'
+import { getActiveRoomDefinitions, isRoomUnused } from './roomRegistry.ts'
 
 /**
  * Tutorial rooms played first, one per mechanic: tutorial1 → … → tutorial5, then the
@@ -114,10 +115,25 @@ export function createGameWorldState(
   const room = createInitialWorldState([...roomObjects])
   const playerConfig = roomObjects.find((obj) => obj.role === 'player')
   const playerId = playerConfig?.id ?? 'player'
-  const built = buildRooms([...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ARENA_DEFINITION], playerConfig)
+  const activeDefinitions = getActiveRoomDefinitions()
+  const standaloneStartingDefinition = startingRoomId && isRoomUnused(startingRoomId)
+    ? activeDefinitions.find((definition) => definition.id === startingRoomId)
+      ?? [...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ARENA_DEFINITION]
+        .find((definition) => definition.id === startingRoomId)
+    : undefined
+  const builtDefinitions = activeDefinitions
+    .filter((definition) => definition.id !== ROOM_IDS.main)
+    .concat(
+      standaloneStartingDefinition && !activeDefinitions.some((definition) => definition.id === standaloneStartingDefinition.id)
+        ? [standaloneStartingDefinition]
+        : [],
+    )
+  const built = buildRooms(builtDefinitions, playerConfig)
 
   // room only: `createInitialWorldState` also holds an empty `end` room, which the game does not use.
-  const roomRooms = room.rooms
+  const mainIsActive = activeDefinitions.some((definition) => definition.id === ROOM_IDS.main)
+  const activeMainDefinition = activeDefinitions.find((definition) => definition.id === ROOM_IDS.main)
+  const roomRooms = mainIsActive ? room.rooms
     .filter((room) => room.id === ROOM_IDS.main)
     .map((room) => ({
       ...room,
@@ -126,9 +142,10 @@ export function createGameWorldState(
       hint: ROOM_HINT,
       goal: 'Reach the exit to the next room.',
       restoresHealth: true,
-      // In the game, room leads on to the arena; its own Exit to `end` is only for the room-only world.
-      exits: room.exits.map(({ endsGame: _endsGame, ...exit }) => ({ ...exit, targetRoomId: ARENA_IDS.room, label: ARENA_IDS.room })),
-    }))
+      exits: [activeMainDefinition
+        ? { ...ROOM_LAYOUT.exit, ...activeMainDefinition.exit }
+        : room.exits[0]],
+    })) : []
 
   const allRooms = [...built.rooms, ...roomRooms]
   const allWorldObjects = [

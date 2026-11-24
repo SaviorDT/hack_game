@@ -163,7 +163,7 @@ describe('PauseScene', () => {
 
   it('starts with RESUME selected', () => {
     const { scene } = setupScene()
-    expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'ROOM RESET', 'SETTING', 'HELP', 'TITLE'])
+    expect(PAUSE_MENU_ITEMS).toEqual(['RESUME', 'ROOM RESET', 'HELP', 'TITLE'])
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('RESUME')
   })
@@ -240,10 +240,8 @@ describe('PauseScene', () => {
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('ROOM RESET')
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
-    handleKeyDown({ key: 's', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('HELP')
-    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown({ key: 's', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('TITLE')
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('RESUME')
@@ -253,7 +251,7 @@ describe('PauseScene', () => {
     const key = (name: string) => ({ key: name, preventDefault: vi.fn() }) as unknown as KeyboardEvent
 
     function selectTitle(handleKeyDown: (event: KeyboardEvent) => void) {
-      for (let i = 0; i < 4; i += 1) handleKeyDown(key('ArrowDown'))
+      for (let i = 0; i < 3; i += 1) handleKeyDown(key('ArrowDown'))
     }
 
     it('ignores Escape in the main menu and does not resume', () => {
@@ -331,15 +329,18 @@ describe('PauseScene', () => {
 
   it('opens setting and help subscreens', () => {
     const { scene, handleKeyDown } = setupScene()
-    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    scene.showSettings(false)
     expect(scene.isInSettings()).toBe(true)
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.isInSettings()).toBe(true)
-
     scene.exitSettings(false)
-    scene.showHelp(false)
+    expect(scene.isInSettings()).toBe(false)
+
+    // Navigating down twice selects HELP
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
+    expect(scene.getSelectedChoice()).toBe('HELP')
+    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.isInHelp()).toBe(true)
   })
 

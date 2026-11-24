@@ -137,8 +137,8 @@ describe('TitleScene', () => {
     const { scene } = setupScene()
     expect(scene.getSelectedIndex()).toBe(0)
     expect(scene.getSelectedChoice()).toBe('START')
-    expect(scene.getMenuItems()).toEqual(['START', 'SETTING', 'HELP'])
-    expect(TITLE_MENU_ITEMS).toEqual(['START', 'SETTING', 'HELP'])
+    expect(scene.getMenuItems()).toEqual(['START', 'HELP'])
+    expect(TITLE_MENU_ITEMS).toEqual(['START', 'HELP'])
   })
 
   it('shows and selects RESUME when a valid save exists', () => {
@@ -148,13 +148,13 @@ describe('TitleScene', () => {
     }))
     const { scene, handleKeyDown } = setupScene()
 
-    expect(scene.getMenuItems()).toEqual(['RESTART', 'RESUME', 'SETTING', 'HELP'])
-    expect(ALL_TITLE_MENU_ITEMS).toEqual(['RESTART', 'RESUME', 'SETTING', 'HELP'])
+    expect(scene.getMenuItems()).toEqual(['RESTART', 'RESUME', 'HELP'])
+    expect(ALL_TITLE_MENU_ITEMS).toEqual(['RESTART', 'RESUME', 'HELP'])
     expect(scene.getSelectedIndex()).toBe(1)
     expect(scene.getSelectedChoice()).toBe('RESUME')
 
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
+    expect(scene.getSelectedChoice()).toBe('HELP')
     handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     expect(scene.getSelectedChoice()).toBe('RESUME')
     handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as KeyboardEvent)
@@ -222,11 +222,8 @@ describe('TitleScene', () => {
     const event = { key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent
 
     handleKeyDown(event)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
-    expect(event.preventDefault).toHaveBeenCalled()
-
-    handleKeyDown(event)
     expect(scene.getSelectedChoice()).toBe('HELP')
+    expect(event.preventDefault).toHaveBeenCalled()
 
     handleKeyDown(event)
     expect(scene.getSelectedChoice()).toBe('START')
@@ -237,7 +234,7 @@ describe('TitleScene', () => {
 
     const event = { key: 's', preventDefault: vi.fn() } as unknown as KeyboardEvent
     handleKeyDown(event)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
+    expect(scene.getSelectedChoice()).toBe('HELP')
   })
 
   it('cycles upwards using ArrowUp and wraps around', () => {
@@ -248,9 +245,6 @@ describe('TitleScene', () => {
     handleKeyDown(event)
     expect(scene.getSelectedChoice()).toBe('HELP')
     expect(event.preventDefault).toHaveBeenCalled()
-
-    handleKeyDown(event)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
 
     handleKeyDown(event)
     expect(scene.getSelectedChoice()).toBe('START')
@@ -275,14 +269,14 @@ describe('TitleScene', () => {
     expect(consoleSpy).toHaveBeenCalledWith('[TitleScene] selected: START')
     expect(scene.scene.start).toHaveBeenCalledWith('game')
 
-      // Arrow down to SETTING
-      ; (scene.scene.start as unknown as ReturnType<typeof vi.fn>).mockClear()
+    // Confirm HELP
+    ;(scene.scene.start as unknown as ReturnType<typeof vi.fn>).mockClear()
     handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
     handleKeyDown(enterEvent)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
-    expect(consoleSpy).toHaveBeenCalledWith('[TitleScene] selected: SETTING')
+    expect(scene.getSelectedChoice()).toBe('HELP')
+    expect(consoleSpy).toHaveBeenCalledWith('[TitleScene] selected: HELP')
     expect(scene.scene.start).not.toHaveBeenCalled()
-    expect(scene.isInSettings()).toBe(true)
+    expect(scene.isInHelp()).toBe(true)
 
     consoleSpy.mockRestore()
   })
@@ -293,13 +287,8 @@ describe('TitleScene', () => {
     expect(scene.isInSettings()).toBe(false)
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
 
-    // Navigate to SETTING
-    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent)
-    expect(scene.getSelectedChoice()).toBe('SETTING')
-
-    // Confirm SETTING
-    const enterEvent = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent
-    handleKeyDown(enterEvent)
+    // Open settings directly (code preserved for direct invocation / future use)
+    scene.showSettings(false)
     expect(scene.isInSettings()).toBe(true)
 
     // Initially in 'hold-shift' (index 0) with focus on the toggle switch (focus row 0)
@@ -308,6 +297,7 @@ describe('TitleScene', () => {
     expect(scene.getCurrentTypingMode()).toBe('hold-shift')
 
     // Pressing Enter while focused on [* HOLD SHIFT *] keeps hold-shift selected without exiting settings
+    const enterEvent = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent
     handleKeyDown(enterEvent)
     expect(scene.isInSettings()).toBe(true)
     expect(scene.getSettingSelectedIndex()).toBe(0)
@@ -421,8 +411,7 @@ describe('TitleScene', () => {
 
     // Changing mode updates the help manual text
     const setTextSpy = vi.spyOn(helpTextObj, 'setText')
-    handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select SETTING
-    handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // open SETTING
+    scene.showSettings(false)
     handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent) // focus hybrid
     handleKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() } as unknown as KeyboardEvent) // focus enter-sticky
     handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent) // select enter-sticky

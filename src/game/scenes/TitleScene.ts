@@ -44,9 +44,9 @@ export {
   SHRINK_MS,
 } from './pauseSceneHelpers.ts'
 
-export const TITLE_MENU_ITEMS = ['START', 'SETTING', 'HELP'] as const
-export const ALL_TITLE_MENU_ITEMS = ['RESTART', 'RESUME', 'SETTING', 'HELP'] as const
-export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number] | (typeof ALL_TITLE_MENU_ITEMS)[number]
+export const TITLE_MENU_ITEMS = ['START', 'HELP'] as const
+export const ALL_TITLE_MENU_ITEMS = ['RESTART', 'RESUME', 'HELP'] as const
+export type TitleMenuItem = (typeof TITLE_MENU_ITEMS)[number] | (typeof ALL_TITLE_MENU_ITEMS)[number] | 'SETTING'
 
 export const TYPING_MODES: readonly CommandTypingMode[] = COMMAND_TYPING_MODES
 export { CONFIRM_OPTIONS }
@@ -390,8 +390,9 @@ export class TitleScene extends Phaser.Scene {
     box.strokeRect(710, 430, 500, 270)
     this.mainMenuContainer.add(box)
 
-    const baseY = this.menuItems.length === 4 ? 485 : 510
+    const boxCenterY = 565
     const gapY = 55
+    const baseY = Math.round(boxCenterY - ((this.menuItems.length - 1) * gapY) / 2)
     this.menuTexts = this.menuItems.map((item, index) => {
       const text = this.add.text(960, baseY + index * gapY, `[ ${item} ]`, {
         fontFamily: TERMINAL_FONT,

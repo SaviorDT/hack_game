@@ -56,7 +56,7 @@ describe('LevelEditorScene & Room Registry', () => {
         TUTORIAL_ROOM_IDS.throw,      // tutorial2
         TUTORIAL_ROOM_IDS.slowTime,   // tutorial3
         TUTORIAL_ROOM_IDS.mouseThrow, // tutorial4
-        TUTORIAL_ROOM_IDS.flyAround,  // tutorial5
+        TUTORIAL_ROOM_IDS.selfThrow,  // tutorial5
         HOME_AREA_IDS.storage,        // storage
         HOME_AREA_IDS.yard,           // yard
         HOME_AREA_IDS.lane,           // lane
@@ -117,7 +117,7 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getNextRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
       current = getNextRoomId(current)
-      expect(current).toBe(TUTORIAL_ROOM_IDS.flyAround)
+      expect(current).toBe(TUTORIAL_ROOM_IDS.selfThrow)
       current = getNextRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.storage)
       current = getNextRoomId(current)
@@ -149,7 +149,7 @@ describe('LevelEditorScene & Room Registry', () => {
       current = getPreviousRoomId(current)
       expect(current).toBe(HOME_AREA_IDS.storage)
       current = getPreviousRoomId(current)
-      expect(current).toBe(TUTORIAL_ROOM_IDS.flyAround)
+      expect(current).toBe(TUTORIAL_ROOM_IDS.selfThrow)
       current = getPreviousRoomId(current)
       expect(current).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
       current = getPreviousRoomId(current)
@@ -202,16 +202,15 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')?.x).not.toBe(900)
     })
 
-    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and an Exit on the right wall', () => {
-      const objects = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)
-      expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
-      expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(200)
-      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.flyAround)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
+    it('serves tutorial5 from its definition: four plates, and an Exit on the right wall', () => {
+      const objects = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.selfThrow)
+      expect(objects.map((o) => o.name).sort()).toEqual(['b', 'bl', 'br', 'l'])
+      expect(getRoomDefinition(TUTORIAL_ROOM_IDS.selfThrow)?.exit).toMatchObject({ targetRoomId: HOME_AREA_IDS.storage })
 
-      setRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround, [])
-      expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(0)
+      setRoomObjectConfigs(TUTORIAL_ROOM_IDS.selfThrow, [])
+      expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.selfThrow)).toHaveLength(0)
       resetAllRooms()
-      expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)).toHaveLength(2)
+      expect(getRoomObjectConfigs(TUTORIAL_ROOM_IDS.selfThrow)).toHaveLength(4)
     })
 
     it('persists modified object configurations in memory with setRoomObjectConfigs', () => {

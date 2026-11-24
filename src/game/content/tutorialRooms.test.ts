@@ -100,7 +100,7 @@ describe('tutorial rooms', () => {
   })
 
   it('starts the game in specified startingRoomId with the player placed there and nowhere else', () => {
-    for (const targetId of [HOME_AREA_IDS.storage, HOME_AREA_IDS.yard, ROOM_IDS.main, TUTORIAL_ROOM_IDS.flyAround, TUTORIAL_ROOM_IDS.throw]) {
+    for (const targetId of [HOME_AREA_IDS.storage, HOME_AREA_IDS.yard, ROOM_IDS.main, TUTORIAL_ROOM_IDS.selfThrow, TUTORIAL_ROOM_IDS.throw]) {
       const state = createGameWorldState(ROOM_OBJECTS, targetId)
       expect(state.currentRoomId).toBe(targetId)
       const holders = state.rooms.filter((candidate) => candidate.objectIds.includes('player')).map((candidate) => candidate.id)

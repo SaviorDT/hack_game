@@ -12,7 +12,7 @@ export const EDITOR_ROOM_IDS = [
   TUTORIAL_ROOM_IDS.throw,
   TUTORIAL_ROOM_IDS.slowTime,
   TUTORIAL_ROOM_IDS.mouseThrow,
-  TUTORIAL_ROOM_IDS.flyAround,
+  TUTORIAL_ROOM_IDS.selfThrow,
   HOME_AREA_IDS.storage,
   HOME_AREA_IDS.yard,
   HOME_AREA_IDS.lane,

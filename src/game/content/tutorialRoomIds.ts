@@ -7,5 +7,5 @@ export const TUTORIAL_ROOM_IDS = {
   throw: 'tutorial2',
   slowTime: 'tutorial3',
   mouseThrow: 'tutorial4',
-  flyAround: 'tutorial5',
+  selfThrow: 'tutorial5',
 } as const

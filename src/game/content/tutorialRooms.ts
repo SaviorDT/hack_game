@@ -96,7 +96,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     goal: 'Get through to the far side.',
     walls: [wallFromEdges(880, 80, 940, 330), wallFromEdges(880, 470, 940, 700)],
     objects: [boulder('tutorial4boulder', 910, 400)],
-    exit: { targetRoomId: TUTORIAL_ROOM_IDS.flyAround, label: TUTORIAL_ROOM_IDS.flyAround },
+    exit: { targetRoomId: TUTORIAL_ROOM_IDS.selfThrow, label: TUTORIAL_ROOM_IDS.selfThrow },
   },
   TUTORIAL5_DEFINITION,
 ]

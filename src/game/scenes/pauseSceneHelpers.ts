@@ -341,6 +341,7 @@ export function getHelpLines(
         '-- VIRTUAL COMMANDS --',
         '  acc <src> <target>   Throw object towards target',
         '  acc <src> $mouse     Throw object towards the mouse cursor',
+        '  acc hacker <target>  Throw yourself towards target',
         '',
         '-- TYPEING TIPS --',
         '  TAB                  Auto-complete command name or object label',

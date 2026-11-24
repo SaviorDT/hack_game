@@ -85,8 +85,8 @@ describe('home area', () => {
     const state = createGameWorldState()
     const exitOf = (id: string) => state.rooms.find((room) => room.id === id)!.exits[0].targetRoomId
     expect(exitOf(TUTORIAL_ROOM_IDS.slowTime)).toBe(TUTORIAL_ROOM_IDS.mouseThrow)
-    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow)).toBe(TUTORIAL_ROOM_IDS.flyAround)
-    expect(exitOf(TUTORIAL_ROOM_IDS.flyAround)).toBe('storage')
+    expect(exitOf(TUTORIAL_ROOM_IDS.mouseThrow)).toBe(TUTORIAL_ROOM_IDS.selfThrow)
+    expect(exitOf(TUTORIAL_ROOM_IDS.selfThrow)).toBe('storage')
     expect([exitOf('storage'), exitOf('yard'), exitOf('lane'), exitOf('gate')]).toEqual([
       'yard',
       'lane',
@@ -111,7 +111,7 @@ describe('home area', () => {
     expect(body(session, 'tutorial4boulder').x).toBeGreaterThan(960) // out of the gap
     // The boulder landed on the far side; walk around it to the exit.
     walk(session, { x: 1000, y: 400 }, { x: 1150, y: 250 }, { x: EXIT.x, y: EXIT.y })
-    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.flyAround)
+    expect(session.getWorldState().currentRoomId).toBe(TUTORIAL_ROOM_IDS.selfThrow)
   })
 
   it('storage: standing on the plate opens the exit only while you stay; a crate keeps it open', () => {

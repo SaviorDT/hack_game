@@ -52,6 +52,7 @@ describe('Collider Tags', () => {
 
   it('gives the boulder an obstacle tag, which hurts nobody', () => {
     const { state, body, guard, resolver } = setup()
+    const startHealth = guard.health
     const boulderObj = state.worldObjects.find((o) => o.id === WORLD_OBJECT_IDS.boulder)!
     expect(colliderTagsOf(boulderObj)).toEqual([{ class: 'obstacle' }])
 
@@ -62,7 +63,7 @@ describe('Collider Tags', () => {
     boulder.vy = 0
     boulder.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
     resolver.resolve(state)
-    expect(guard.health).toBe(100)
+    expect(guard.health).toBe(startHealth)
   })
 })
 
@@ -235,9 +236,10 @@ describe('engine without a contact resolver', () => {
     dagger.vy = 0
     dagger.thrown = { targetX: 1700, targetY: guard.y, targetObjectId: null }
 
+    const startHealth = guard.health
     const engine = new TickSimulationEngine(ROOM_PROCESSES, undefined, undefined, { contactResolver: null })
     engine.advance(state, SIMULATION_TICK_MS * 3)
-    expect(guard.health).toBe(100)
+    expect(guard.health).toBe(startHealth)
   })
 })
 

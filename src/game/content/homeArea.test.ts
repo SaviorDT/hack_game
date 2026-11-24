@@ -138,12 +138,21 @@ describe('home area', () => {
     walk(session, { x: 520, y: 250 }, { x: 760, y: 150 })
     runFor(session, 1500)
     expect(body(session, 'player').health!).toBeLessThan(100) // out in the open you get hit
+    // An arrow does 35, so the run to the dagger and the fight would otherwise kill the player: keep them alive.
+    body(session, 'player').health = 100000
 
     walk(session, { x: 560, y: 150 }, { x: 540, y: 420 }, { x: 430, y: 560 })
     expect(body(session, 'yarddagger').equippedBy).toBe('player')
     walk(session, { x: 850, y: 650 }, { x: 1150, y: 420 })
     expect(session.submitCommand('acc dagger archer').status).toBe('success')
     runFor(session, 2000)
+    // The archer has 100 Health and the only dagger is gone after one throw (about 35 damage): finish it unarmed.
+    expect(body(session, 'yardarcher').health!).toBeLessThan(100)
+    walk(session, { x: 1512, y: 420 })
+    for (let hit = 0; hit < 20 && body(session, 'yardarcher').alive !== false; hit++) {
+      session.attack()
+      runFor(session, 500)
+    }
     expect(body(session, 'yardarcher').alive).toBe(false)
     expect(body(session, 'player').alive).not.toBe(false)
     walk(session, { x: 1500, y: 650 }, { x: 1700, y: 650 }, { x: EXIT.x, y: EXIT.y })

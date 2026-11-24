@@ -242,7 +242,8 @@ describe('SpeedEditorScene', () => {
 
       for (let i = 0; i < 600; i++) session.update(16.67)
       for (const o of worldState.worldObjects.filter((o) => o.metadata.role === 'enemy')) {
-        expect((o.state as Record<string, unknown>).health).toBe(100)
+        const state = o.state as Record<string, unknown>
+        expect(state.health).toBe(state.maxHealth)
       }
     })
   })

@@ -120,7 +120,16 @@ export class ArrowFlightProcess implements WorldObjectProcess {
       return
     }
 
+    // Advance in steps no longer than the tip, so a fast arrow cannot skip over a thin wall or a Character's edge.
     const dt = context.tickDurationMs / 1000
+    const distance = Math.hypot(arrow.flightVx, arrow.flightVy) * dt
+    const steps = Math.max(1, Math.ceil(distance / arrow.height))
+    for (let step = 0; step < steps && arrow.alive; step += 1) {
+      this.advance(context, arrow, dt / steps)
+    }
+  }
+
+  private advance(context: ProcessTickContext, arrow: ArrowState, dt: number): void {
     arrow.x += arrow.flightVx * dt
     arrow.y += arrow.flightVy * dt
     arrow.travelled += Math.hypot(arrow.flightVx, arrow.flightVy) * dt

@@ -130,10 +130,11 @@ describe('PrefabModeController', () => {
     const controller = new PrefabModeController(scene)
 
     controller.enterPrefabMode('guard')
+    const before = getPrefab('guard')!.maxHealth!
     controller.modifyProperty('maxHealth', 20)
 
-    expect(getPrefab('guard')?.maxHealth).toBe(120)
-    expect(mockGuard.maxHealth).toBe(120)
+    expect(getPrefab('guard')?.maxHealth).toBe(before + 20)
+    expect(mockGuard.maxHealth).toBe(before + 20)
     expect(scene.refreshObjectVisuals).toHaveBeenCalledWith(mockGuard)
   })
 

@@ -7,9 +7,9 @@ export const ARCHER_CONFIG = {
   /** The archer only shoots at a player within this distance (centre to centre); room entrances stay out of reach. */
   rangePx: 1300,
   /** Arrow flight speed. */
-  arrowSpeed: 650,
+  arrowSpeed: 1000,
   /** Health an arrow takes from the Character it hits. */
-  arrowDamage: 30,
+  arrowDamage: 35,
   /** An arrow's collider, pointing along its flight. */
   arrowSize: { width: 28, height: 10 },
 } as const

@@ -187,7 +187,7 @@ describe('pick-up and attack', () => {
     expect(player.weaponId).toBeNull()
   })
 
-  it('defeats a guard with three dagger hits spaced by the cooldown', () => {
+  it('defeats a guard with repeated dagger hits spaced by the cooldown', () => {
     const session = newSession()
     const player = stateOf(session, 'player')
     const guard = stateOf(session, 'guard')
@@ -195,11 +195,10 @@ describe('pick-up and attack', () => {
     guard.x = player.x + player.width + 5
     guard.y = player.y
 
-    session.attack()
-    runFor(session, 500)
-    session.attack()
-    runFor(session, 500)
-    session.attack()
+    for (let hit = 0; hit < 10 && guard.alive !== false; hit += 1) {
+      session.attack()
+      runFor(session, 500)
+    }
 
     expect(guard.health).toBe(0)
     expect(guard.alive).toBe(false)

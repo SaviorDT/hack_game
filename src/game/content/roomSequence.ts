@@ -378,7 +378,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "colliderWidth": 110,
         "colliderHeight": 160,
         "colliderShape": "box",
-        "maxHealth": 30,
+        "maxHealth": 100,
         "speed": 0,
         "mass": 1000
       }
@@ -472,7 +472,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "scaleX": 0.6,
         "scaleY": 0.6,
         "speed": 0,
-        "maxHealth": 30,
+        "maxHealth": 100,
         "colliderWidth": 66,
         "colliderHeight": 96,
         "mass": 1000
@@ -615,7 +615,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "scaleX": 1,
         "scaleY": 1,
         "speed": 0,
-        "maxHealth": 30,
+        "maxHealth": 100,
         "colliderWidth": 110,
         "colliderHeight": 160,
         "mass": 1000
@@ -769,7 +769,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "id": "guard",
         "role": "enemy",
         "name": "guard",
-        "strikeDamage": 80,
+        "strikeDamage": 40,
         "x": 1558,
         "y": 422,
         "displayWidth": 176,
@@ -777,7 +777,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "scaleX": 1,
         "scaleY": 1,
         "speed": 210,
-        "maxHealth": 100,
+        "maxHealth": 200,
         "colliderWidth": 110,
         "colliderHeight": 160
       },
@@ -785,7 +785,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "id": "guard2",
         "role": "enemy",
         "name": "guard2",
-        "strikeDamage": 80,
+        "strikeDamage": 40,
         "x": 1277,
         "y": 205,
         "displayWidth": 176,
@@ -793,7 +793,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "scaleX": 1,
         "scaleY": 1,
         "speed": 210,
-        "maxHealth": 100,
+        "maxHealth": 200,
         "colliderWidth": 110,
         "colliderHeight": 160
       },
@@ -801,7 +801,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "id": "guard3",
         "role": "enemy",
         "name": "guard3",
-        "strikeDamage": 80,
+        "strikeDamage": 40,
         "x": 1221,
         "y": 563,
         "displayWidth": 176,
@@ -809,7 +809,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "scaleX": 1,
         "scaleY": 1,
         "speed": 210,
-        "maxHealth": 100,
+        "maxHealth": 200,
         "colliderWidth": 110,
         "colliderHeight": 160
       }

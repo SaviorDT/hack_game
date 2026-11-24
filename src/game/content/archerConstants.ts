@@ -9,7 +9,7 @@ export const ARCHER_CONFIG = {
   /** Arrow flight speed. */
   arrowSpeed: 650,
   /** Health an arrow takes from the Character it hits. */
-  arrowDamage: 15,
+  arrowDamage: 30,
   /** An arrow's collider, pointing along its flight. */
   arrowSize: { width: 28, height: 10 },
 } as const

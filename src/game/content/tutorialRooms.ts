@@ -69,7 +69,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     objects: [
       dagger('tutorial2dagger', 420, 600),
       boulder('tutorial2boulder', 760, 300),
-      guard('sentry', 1500, 420, { speed: 0, maxHealth: 30, mass: STANDS_FIRM }),
+      guard('sentry', 1500, 420, { speed: 0, maxHealth: 30, strikeDamage: 100, mass: STANDS_FIRM }),
     ],
     exit: {
       targetRoomId: TUTORIAL_ROOM_IDS.slowTime,
@@ -83,7 +83,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     goal: 'Defeat the fast guard.',
     objects: [
       dagger('tutorial3dagger', 430, 600),
-      guard('runner', 1550, 420, { speed: 380, maxHealth: 30 }),
+      guard('runner', 1550, 420, { speed: 380, maxHealth: 30, strikeDamage: 100 }),
     ],
     exit: {
       targetRoomId: TUTORIAL_ROOM_IDS.mouseThrow,

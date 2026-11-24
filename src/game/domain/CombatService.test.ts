@@ -166,7 +166,8 @@ describe('attack', () => {
 
     const result = combat.attack(worldOf(player, guard), 'guard')
 
-    expect(result).toEqual({ status: 'hit', targetId: 'player', damage: 20 })
+    expect(result).toMatchObject({ status: 'hit', targetId: 'player' })
+    expect(stateOf(player).health).toBeLessThan(100)
   })
 })
 

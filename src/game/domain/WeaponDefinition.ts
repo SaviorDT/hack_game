@@ -18,7 +18,7 @@ export class WeaponDefinition {
 
 export const UNARMED = new WeaponDefinition('unarmed', 10, 500, 5)
 export const DAGGER = new WeaponDefinition('dagger', 35, 500, 10)
-export const GUARD_STRIKE = new WeaponDefinition('guard-strike', 20, 1000, 5)
+export const GUARD_STRIKE = new WeaponDefinition('guard-strike', 40, 1000, 5)
 
 const WEAPONS_BY_ID: ReadonlyMap<string, WeaponDefinition> = new Map(
   [UNARMED, DAGGER, GUARD_STRIKE].map((weapon) => [weapon.id, weapon]),

@@ -38,10 +38,10 @@ function blockerFiveAhead(boulder: Body, blocker: Body): number {
   return boulder.x + (boulder.width as number) / 2 + 5 + (blocker.width as number) / 2
 }
 
-/** Boulder at (500, 500) with only `guard2` left alive as an obstacle at (700, 500). */
+/** Boulder at (500, 500) with only `guard_b` left alive as an obstacle at (700, 500). */
 function boulderSetup(targetId: string) {
   const ctx = setup({ mv_acceleration: 1000 })
-  for (const id of ['player', 'guard', 'guard2', 'guard3']) {
+  for (const id of ['player', 'guard_a', 'guard_b', 'guard_c']) {
     ctx.body(id).alive = false
   }
   const boulder = ctx.body(WORLD_OBJECT_IDS.boulder)
@@ -49,7 +49,7 @@ function boulderSetup(targetId: string) {
   boulder.y = 500
   boulder.vx = 400
   boulder.vy = 0
-  const blocker = ctx.body('guard2')
+  const blocker = ctx.body('guard_b')
   blocker.alive = true
   blocker.x = 700
   blocker.y = 500
@@ -182,10 +182,10 @@ describe('MvDrive', () => {
 
   it('lets a thrown Weapon fly through a Character', () => {
     const { tick, body } = setup({ mv_acceleration: 0 })
-    for (const id of ['player', 'guard2', 'guard3', 'boulder']) {
+    for (const id of ['player', 'guard_b', 'guard_c', 'boulder']) {
       body(id).alive = false
     }
-    const guard = body('guard')
+    const guard = body('guard_a')
     guard.x = 700
     guard.y = 500
     const dagger = body(WORLD_OBJECT_IDS.dagger)
@@ -202,7 +202,7 @@ describe('MvDrive', () => {
 
 describe('MvDrive collisions', () => {
   it('ends the Throw at the first Collision and keeps the speed for the physics step', () => {
-    const { tick, boulder, blocker } = boulderSetup('guard2')
+    const { tick, boulder, blocker } = boulderSetup('guard_b')
     blocker.x = blockerFiveAhead(boulder, blocker)
 
     tick()
@@ -212,7 +212,7 @@ describe('MvDrive collisions', () => {
   })
 
   it('marks the target discovered when the Collision is with the target itself', () => {
-    const { tick, boulder, blocker } = boulderSetup('guard2')
+    const { tick, boulder, blocker } = boulderSetup('guard_b')
     blocker.x = blockerFiveAhead(boulder, blocker)
 
     tick()
@@ -221,12 +221,12 @@ describe('MvDrive collisions', () => {
   })
 
   it('does not discover the target when another object is hit first', () => {
-    const { tick, boulder, blocker, body } = boulderSetup('guard')
-    const target = body('guard')
+    const { tick, boulder, blocker, body } = boulderSetup('guard_a')
+    const target = body('guard_a')
     target.x = 1200
     target.y = 500
     target.discovered = false
-    boulder.thrown = { targetX: 1200, targetY: 500, targetObjectId: 'guard' }
+    boulder.thrown = { targetX: 1200, targetY: 500, targetObjectId: 'guard_a' }
     blocker.x = blockerFiveAhead(boulder, blocker)
 
     tick()
@@ -235,7 +235,7 @@ describe('MvDrive collisions', () => {
   })
 
   it('never reaches a target it would collide with first: a thrown boulder stops short of a guard', () => {
-    const { tick, boulder, blocker } = boulderSetup('guard2')
+    const { tick, boulder, blocker } = boulderSetup('guard_b')
     boulder.vx = 0
 
     for (let i = 0; i < 600 && boulder.thrown; i++) tick()
@@ -260,7 +260,7 @@ describe('MvDrive and the room', () => {
 
   it('ends a Throw whose target lies outside the room once the room edge stops the object', () => {
     const { body, tick } = setup()
-    for (const id of ['player', 'guard', 'guard2', 'guard3']) {
+    for (const id of ['player', 'guard_a', 'guard_b', 'guard_c']) {
       body(id).alive = false
     }
     const boulder = body(WORLD_OBJECT_IDS.boulder)

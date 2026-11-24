@@ -543,7 +543,7 @@ describe('GameScene key handling', () => {
     it('does not execute a recorded slot before Tutorial3', () => {
       const { session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
       session.getWorldState().currentRoomId = 'tutorial2'
-      session.setCommandSlot(8, 'acc dagger guard')
+      session.setCommandSlot(8, 'acc dagger guard_a')
       const submitCommand = vi.spyOn(session, 'submitCommand')
 
       handleKeyDown({
@@ -555,12 +555,12 @@ describe('GameScene key handling', () => {
 
       expect(delayedCalls).toHaveLength(0)
       expect(submitCommand).not.toHaveBeenCalled()
-      expect(session.getWorldState().commandHistory).not.toContain('acc dagger guard')
+      expect(session.getWorldState().commandHistory).not.toContain('acc dagger guard_a')
     })
 
     it('records last command when held for the hold duration in movement mode', () => {
       const { scene, session, handleKeyDown, handleKeyUp, delayedCalls } = setupScene()
-      session.submitCommand('acc dagger guard')
+      session.submitCommand('acc dagger guard_a')
 
       const startSpy = vi.spyOn((scene as any).macroIndicatorView, 'startHoldProgress')
       const preventDefault = vi.fn()
@@ -576,7 +576,7 @@ describe('GameScene key handling', () => {
 
       // Hold duration passes -> trigger hold callback
       delayedCalls[0].callback()
-      expect(session.getCommandSlot(8)).toBe('acc dagger guard')
+      expect(session.getCommandSlot(8)).toBe('acc dagger guard_a')
 
       // Key release after hold does not execute command
       const historyLength = session.getWorldState().commandHistory.length

@@ -102,7 +102,7 @@ describe('InlineCommandInputView', () => {
     expect(onSubmit).toHaveBeenCalledWith('ls')
   })
 
-  it('converts typed characters while pressing shift to lower case', () => {
+  it('preserves browser typed characters while pressing shift', () => {
     const { view, dispatchKeydown, onSubmit } = setupView()
     const keyGate = vi.fn(() => true)
     view.setKeyGate(keyGate)
@@ -118,9 +118,9 @@ describe('InlineCommandInputView', () => {
     dispatchKeydown({ key: 'M', shiftKey: true })
     dispatchKeydown({ key: '@', code: 'Digit2', shiftKey: true })
 
-    expect(view.getValue()).toBe('mv room2')
+    expect(view.getValue()).toBe('mv room@')
     view.submit()
-    expect(onSubmit).toHaveBeenCalledWith('mv room2')
+    expect(onSubmit).toHaveBeenCalledWith('mv room@')
   })
 
   it('normalizes shifted number row symbols and physical digit codes', () => {

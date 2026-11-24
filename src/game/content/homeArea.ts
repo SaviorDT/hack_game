@@ -87,7 +87,7 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
       plate('gateplate', 1560, 600),
       // Different speeds, so the guards arrive one after the other rather than together.
       guard('gateguard', 1450, 300, { speed: 190, maxHealth: 60 }),
-      guard('gateguard2', 1480, 470, { name: 'guard2', speed: 120, maxHealth: 60 }),
+      guard('gateguard_b', 1480, 470, { name: 'guard_b', speed: 120, maxHealth: 60 }),
       archer('gatearcher', 1700, 200),
     ],
     exit: {
@@ -95,7 +95,7 @@ export const HOME_AREA_ROOMS: RoomDefinition[] = [
       label: TUTORIAL_ROOM_IDS.flyAround,
       requires: [
         { kind: 'pressed', plateIds: ['gateplate'] },
-        { kind: 'defeat', objectIds: ['gateguard', 'gateguard2'] },
+        { kind: 'defeat', objectIds: ['gateguard', 'gateguard_b'] },
       ],
     },
   },

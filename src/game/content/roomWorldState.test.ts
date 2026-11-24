@@ -129,7 +129,7 @@ describe('roomWorldState scaled collision AABB', () => {
     const state = createInitialWorldState()
     const player = state.worldObjects.find((o) => o.id === 'player')!
     const dagger = state.worldObjects.find((o) => o.id === 'dagger')!
-    const guard = state.worldObjects.find((o) => o.id === 'guard')!
+    const guard = state.worldObjects.find((o) => o.id === 'guard_a')!
     const boulder = state.worldObjects.find((o) => o.id === 'boulder')!
 
     expect(player.metadata.name).toBe('hacker')
@@ -191,7 +191,7 @@ describe('roomWorldState scaled collision AABB', () => {
   it('assigns collisionBox to every world object, weapons included', () => {
     const state = createInitialWorldState()
     const player = state.worldObjects.find((o) => o.id === 'player')!
-    const guard = state.worldObjects.find((o) => o.id === 'guard')!
+    const guard = state.worldObjects.find((o) => o.id === 'guard_a')!
     const boulder = state.worldObjects.find((o) => o.id === 'boulder')!
     const dagger = state.worldObjects.find((o) => o.id === 'dagger')!
 
@@ -284,7 +284,7 @@ describe('createInitialWorldState physics attributes and collider tags', () => {
     const tags = Object.fromEntries(state.worldObjects.map((o) => [o.id, colliderTagsOf(o)]))
     expect(tags.dagger).toEqual([{ class: 'weapon', impactDamageRate: 0.05 }])
     expect(tags.player).toEqual([{ class: 'character' }])
-    expect(tags.guard).toEqual([{ class: 'character' }])
+    expect(tags.guard_a).toEqual([{ class: 'character' }])
     expect(tags.boulder).toEqual([{ class: 'obstacle' }])
   })
 })

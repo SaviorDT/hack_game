@@ -318,7 +318,9 @@ export class InlineCommandInputView {
     ) {
       event.preventDefault()
       this.resetHistoryNavigation()
-      const char = resolveTypedCharacter(event)
+      const char = event.shiftKey && /^[a-zA-Z]$/.test(event.key)
+        ? event.key.toLowerCase()
+        : event.key
       characters.splice(this.cursorIndex, 0, char)
       this.cursorIndex += 1
       this.value = characters.join('')

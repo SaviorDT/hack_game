@@ -46,7 +46,7 @@ describe('Prefab Registry & Propagation', () => {
     const guardInstances = getPrefabInstances('guard')
     expect(guardInstances.length).toBeGreaterThan(0)
     const inRoom = guardInstances.filter((m) => m.roomId === ROOM_IDS.main)
-    // In room there are guard, guard2, guard3
+    // In room there are guard_a, guard_b, guard_c
     expect(inRoom.length).toBe(3)
   })
 
@@ -63,7 +63,7 @@ describe('Prefab Registry & Propagation', () => {
 
     const positionsBefore = Object.fromEntries(
       getRoomObjectConfigs(ROOM_IDS.main)
-        .filter((o) => ['guard', 'guard2', 'guard3'].includes(o.id))
+        .filter((o) => ['guard_a', 'guard_b', 'guard_c'].includes(o.id))
         .map((o) => [o.id, { x: o.x, y: o.y }]),
     )
 
@@ -73,9 +73,9 @@ describe('Prefab Registry & Propagation', () => {
 
     // Verify room objects
     const roomObjects = getRoomObjectConfigs(ROOM_IDS.main)
-    const g1 = roomObjects.find((o) => o.id === 'guard')!
-    const g2 = roomObjects.find((o) => o.id === 'guard2')!
-    const g3 = roomObjects.find((o) => o.id === 'guard3')!
+    const g1 = roomObjects.find((o) => o.id === 'guard_a')!
+    const g2 = roomObjects.find((o) => o.id === 'guard_b')!
+    const g3 = roomObjects.find((o) => o.id === 'guard_c')!
 
     expect(g1.maxHealth).toBe(180)
     expect(g1.displayWidth).toBe(190)
@@ -90,9 +90,9 @@ describe('Prefab Registry & Propagation', () => {
     expect(g3.colliderWidth).toBe(120)
 
     // Positions should remain unchanged
-    expect({ x: g1.x, y: g1.y }).toEqual(positionsBefore.guard)
-    expect({ x: g2.x, y: g2.y }).toEqual(positionsBefore.guard2)
-    expect({ x: g3.x, y: g3.y }).toEqual(positionsBefore.guard3)
+    expect({ x: g1.x, y: g1.y }).toEqual(positionsBefore.guard_a)
+    expect({ x: g2.x, y: g2.y }).toEqual(positionsBefore.guard_b)
+    expect({ x: g3.x, y: g3.y }).toEqual(positionsBefore.guard_c)
 
     // Non-guard objects should NOT be changed
     const player = roomObjects.find((o) => o.id === 'player')!

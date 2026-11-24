@@ -229,7 +229,7 @@ describe('SpeedEditorScene', () => {
       const state = dagger.state as Record<string, unknown>
       const startX = state.x as number
 
-      expect(session.submitCommand('acc dagger guard').status).toBe('success')
+      expect(session.submitCommand('acc dagger guard_a').status).toBe('success')
       expect(state.thrown).toMatchObject({ targetObjectId: WORLD_OBJECT_IDS.guard })
 
       session.update(16.67 * 3)

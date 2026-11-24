@@ -169,7 +169,7 @@ describe('PhaserRoomView', () => {
     const { mockScene, images } = createMockScene()
     const state = createInitialWorldState()
     view.mount(mockScene, state)
-    const guard = state.worldObjects.find(o => o.id === 'guard')!
+    const guard = state.worldObjects.find(o => o.id === 'guard_a')!
     const data = guard.state as { attackSequence?: number }
     const image = images[state.worldObjects.indexOf(guard)]
     const size = [image.displayWidth, image.displayHeight]
@@ -227,9 +227,9 @@ describe('PhaserRoomView', () => {
     const labels = texts.map((t) => t.text)
     expect(labels).toContain('hacker')
     expect(labels).toContain('dagger')
-    expect(labels).toContain('guard')
-    expect(labels).toContain('guard2')
-    expect(labels).toContain('guard3')
+    expect(labels).toContain('guard_a')
+    expect(labels).toContain('guard_b')
+    expect(labels).toContain('guard_c')
     expect(labels).not.toContain('?')
   })
 

@@ -590,9 +590,9 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "colliderHeight": 160
       },
       {
-        "id": "gateguard2",
+        "id": "gateguard_b",
         "role": "enemy",
-        "name": "guard2",
+        "name": "guard_b",
         "x": 1480,
         "y": 470,
         "displayWidth": 176,
@@ -656,7 +656,7 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
           "kind": "defeat",
           "objectIds": [
             "gateguard",
-            "gateguard2"
+            "gateguard_b"
           ]
         }
       ],
@@ -767,9 +767,9 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "holdOffsetY": 26
       },
       {
-        "id": "guard",
+        "id": "guard_a",
         "role": "enemy",
-        "name": "guard",
+        "name": "guard_a",
         "strikeDamage": 40,
         "x": 1558,
         "y": 422,
@@ -783,9 +783,9 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "colliderHeight": 160
       },
       {
-        "id": "guard2",
+        "id": "guard_b",
         "role": "enemy",
-        "name": "guard2",
+        "name": "guard_b",
         "strikeDamage": 40,
         "x": 1277,
         "y": 205,
@@ -799,9 +799,9 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
         "colliderHeight": 160
       },
       {
-        "id": "guard3",
+        "id": "guard_c",
         "role": "enemy",
-        "name": "guard3",
+        "name": "guard_c",
         "strikeDamage": 40,
         "x": 1221,
         "y": 563,

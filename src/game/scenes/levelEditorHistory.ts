@@ -85,8 +85,8 @@ export function wouldOverlapAnyEditorObject(
 }
 
 /**
- * Generates the next object ID using the `<name><num>` pattern for multi-instances
- * (e.g., guard, guard2, guard3; dagger, dagger2; boulder, boulder2).
+ * Generates the next object ID for multi-instances
+ * (e.g., guard_a, guard_b, guard_c; dagger, dagger2; boulder, boulder2).
  */
 export function generateNextObjectId(
   role: WorldObjectRole,
@@ -103,6 +103,13 @@ export function generateNextObjectId(
           ? 'guard'
           : role)
   const existingIds = new Set(existing.map((item) => (typeof item === 'string' ? item : item.id)))
+  if (prefix === 'guard') {
+    if (!existingIds.has('guard_a')) return 'guard_a'
+    const suffixes = ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    for (const suffix of suffixes) {
+      if (!existingIds.has(`guard_${suffix}`)) return `guard_${suffix}`
+    }
+  }
   if (!existingIds.has(prefix)) {
     return prefix
   }

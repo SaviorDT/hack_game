@@ -48,7 +48,7 @@ describe('Prefab Scene Reflection', () => {
 
   it('createGameWorldState applies prefab configurations to world objects across rooms', () => {
     const worldState = createGameWorldState(ROOM_OBJECTS)
-    const guardObj = worldState.worldObjects.find((wo) => wo.id === 'guard')
+    const guardObj = worldState.worldObjects.find((wo) => wo.id === 'guard_a')
     expect(guardObj).toBeDefined()
 
     const guardPrefab = DEFAULT_PREFABS.find((p) => p.id === 'guard')!

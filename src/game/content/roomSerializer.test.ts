@@ -60,7 +60,7 @@ describe('roomSerializer', () => {
   it('serializes spawned objects and rounds float coordinates', () => {
     const objects: RoomObjectConfig[] = [
       {
-        id: 'guard2',
+        id: 'guard_b',
         role: 'enemy',
         x: 959.8,
         y: 380.2,
@@ -74,7 +74,7 @@ describe('roomSerializer', () => {
     ]
 
     const source = generateRoomSource(objects)
-    expect(source).toContain("id: \"guard2\"")
+    expect(source).toContain("id: \"guard_b\"")
     expect(source).toContain("x: 960")
     expect(source).toContain("y: 380")
     expect(source).toContain("displayWidth: 194")
@@ -180,7 +180,7 @@ describe('roomSerializer', () => {
         colliderHeight: 145,
       },
       {
-        id: 'guard1',
+        id: 'guard_a',
         role: 'enemy',
         x: 600,
         y: 400,

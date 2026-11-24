@@ -51,23 +51,23 @@ describe('attack', () => {
   const combat = new CombatService()
 
   it('never lets a hostile character attack another hostile character', () => {
-    const guard1 = character('guard1', 'enemy', 0)
-    const guard2 = character('guard2', 'guard', SIZE + 5)
+    const guard_a = character('guard_a', 'enemy', 0)
+    const guard_b = character('guard_b', 'guard', SIZE + 5)
 
-    expect(combat.attack(worldOf(guard1, guard2), 'guard1')).toEqual({ status: 'no-target' })
-    expect(stateOf(guard2).health).toBe(100)
+    expect(combat.attack(worldOf(guard_a, guard_b), 'guard_a')).toEqual({ status: 'no-target' })
+    expect(stateOf(guard_b).health).toBe(100)
   })
 
   it('lets a hostile character skip a nearer hostile and hit the player in reach', () => {
-    const guard1 = character('guard1', 'enemy', 0)
-    const guard2 = character('guard2', 'enemy', SIZE + 1)
+    const guard_a = character('guard_a', 'enemy', 0)
+    const guard_b = character('guard_b', 'enemy', SIZE + 1)
     const player = character('player', 'player', -(SIZE + 5))
 
-    expect(combat.attack(worldOf(guard1, guard2, player), 'guard1')).toMatchObject({
+    expect(combat.attack(worldOf(guard_a, guard_b, player), 'guard_a')).toMatchObject({
       status: 'hit',
       targetId: 'player',
     })
-    expect(stateOf(guard2).health).toBe(100)
+    expect(stateOf(guard_b).health).toBe(100)
   })
 
   it("uses an attacker's own Strike Damage instead of its weapon's damage", () => {

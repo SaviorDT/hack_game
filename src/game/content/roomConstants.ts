@@ -11,7 +11,7 @@ export const ROOM_NAMES: Readonly<Record<string, string>> = {
 export const WORLD_OBJECT_IDS = {
   player: 'player',
   dagger: 'dagger',
-  guard: 'guard',
+  guard: 'guard_a',
   boulder: 'boulder',
 } as const
 

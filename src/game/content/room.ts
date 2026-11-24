@@ -108,7 +108,7 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
     name: "dagger",
   },
   {
-    id: "guard",
+    id: "guard_a",
     role: "enemy",
     x: 1558,
     y: 422,
@@ -121,10 +121,10 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
     strikeDamage: 40,
     colliderWidth: 110,
     colliderHeight: 160,
-    name: "guard",
+    name: "guard_a",
   },
   {
-    id: "guard2",
+    id: "guard_b",
     role: "enemy",
     x: 1277,
     y: 205,
@@ -137,10 +137,10 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
     strikeDamage: 40,
     colliderWidth: 110,
     colliderHeight: 160,
-    name: "guard2",
+    name: "guard_b",
   },
   {
-    id: "guard3",
+    id: "guard_c",
     role: "enemy",
     x: 1221,
     y: 563,
@@ -153,7 +153,7 @@ export const ROOM_OBJECTS: RoomObjectConfig[] = ([
     strikeDamage: 40,
     colliderWidth: 110,
     colliderHeight: 160,
-    name: "guard3",
+    name: "guard_c",
   },
 ] as RoomObjectConfig[]).map((obj) => {
   const prefab = DEFAULT_PREFABS.find((p) => p.id === inferPrefabId(obj))

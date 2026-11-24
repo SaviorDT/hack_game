@@ -19,6 +19,7 @@ Architecture specification for the command-driven RTS game and initial room (Vit
 - **Physics & Throws**: all movement is Forces integrated by `PhysicsWorld` (drag, speed cap, Collisions with restitution); `acc` applies a Throw through `MvDrive` (ADR 0010, superseding the flight rules of ADR 0009).
 - **Persistence**: `SaveRepository` (`LocalStorageSaveRepository`) stores snapshots with domain state and command history.
 - **Editor Theme & DRY Guardrails**: Editor scenes and overlays share visual theme constants (`editorTheme.ts`) and storage fallbacks (`editorStorage.ts`). Automated duplication verification is gated via `npm run check:dry` (JSCPD + TypeScript).
+- **Main-room Guard IDs**: The room's three guards use `guard_a`, `guard_b`, and `guard_c`; `guard` remains the legacy role/prefab identifier and is not a main-room instance ID.
 
 ## Runtime Responsibilities
 
@@ -399,7 +400,7 @@ Editable configurations in `room` export directly to `room.ts` (`ROOM_OBJECTS`) 
 | **Room Navigation** | Room pills at `y = 44`, `◄` / `►` buttons, or `PageUp` / `PageDown` hotkeys |
 | **Reposition** | Drag sprite, or arrow keys (1 px, Shift: 10 px; blocked from collisionbox overlap) |
 | **Uniform Scale** | Drag yellow corner handle, `+`/`-` keys, or panel `×1.1` / `÷1.1` buttons (blocked from collisionbox overlap) |
-| **Spawn / Despawn** | `+ GUARD`, `+ DAGGER`, `+ CRATE`, `+ BOULDER`, `+ DUMMY` buttons (`+ DUMMY` spawns a Target Dummy `targetdummy`, `targetdummy2`…, named `dummy`, 1000 Health; it and pressure plates are never in the way of overlap checks, `passesThrough` in `levelEditorHistory.ts`; spawns in non-overlapping spot using `<name><num>` naming for multi-instances such as `guard2`, `guard3`, `dagger2`, `crate2`); despawn with `REMOVE SELECTED` or `Del`/`Backspace` |
+| **Spawn / Despawn** | `+ GUARD`, `+ DAGGER`, `+ CRATE`, `+ BOULDER`, `+ DUMMY` buttons (`+ DUMMY` spawns a Target Dummy `targetdummy`, `targetdummy2`…, named `dummy`, 1000 Health; it and pressure plates are never in the way of overlap checks, `passesThrough` in `levelEditorHistory.ts`; spawns in non-overlapping spot using `<name><num>` naming for multi-instances such as `guard_b`, `guard_c`, `dagger2`, `crate2`); despawn with `REMOVE SELECTED` or `Del`/`Backspace` |
 | **Collisionboxes** | Non-weapon objects render green collider outlines: rectangles (`110×scaleX` by `160×scaleY` for characters, or custom `colliderWidth`×`colliderHeight`), or circles of diameter `colliderWidth` for `colliderShape: 'circle'` (the boulder); weapons have no collisionbox; pressure plates (`kind: 'plate'`) allow overlap |
 | **Collider Box Editing** | Drag green corner handle, hotkeys `[` / `]`, panel `BOX +` / `BOX -` buttons, or inspector `box_w` / `box_h` fields (+/- 10, Shift: 50, click for prompt; blocked from collisionbox overlap). For a circle, either field sets the diameter |
 | **Selection** | Click sprite, panel list entry, or cycle with `Tab` / `Shift+Tab` |
@@ -520,7 +521,7 @@ Each node evaluates to one of three statuses per simulation tick:
 
 1. **Upper Live Room Chamber (`y = 80..700`)**:
    - Reuses Room 1 layout and `PhaserRoomView` directly, running domain physics and combat in real-time inside `GameSession`.
-   - Control player with Arrow keys. Click any enemy in the room (`guard`, `guard2`, `guard3`) to preview the AI Behavior Tree with that clicked enemy.
+   - Control player with Arrow keys. Click any enemy in the room (`guard`, `guard_b`, `guard_c`) to preview the AI Behavior Tree with that clicked enemy.
    - Live visual detection radius (cyan ring, 380px), attack reach (red ring, 60px), and active target ring rendered around the selected enemy in room coordinates.
    - Overhead action tags (`[GUARD] [CHASING]`, `[ALERTED]`, etc.) floating above the previewed enemy entity.
    - All standard Room 1 entities and obstacles rendered with full interpolation.

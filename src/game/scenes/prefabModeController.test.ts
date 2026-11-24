@@ -80,7 +80,7 @@ describe('PrefabModeController', () => {
       outline: { setVisible: vi.fn(), setStrokeStyle: vi.fn() },
     }
     const mockGuard2: any = {
-      id: 'guard2',
+      id: 'guard_b',
       role: 'enemy',
       displayWidth: 176,
       displayHeight: 176,
@@ -152,7 +152,7 @@ describe('PrefabModeController', () => {
       outline: { setVisible: vi.fn(), setStrokeStyle: vi.fn() },
     }
     const mockGuard2: any = {
-      id: 'guard2',
+      id: 'guard_b',
       role: 'enemy',
       displayWidth: 176,
       displayHeight: 176,
@@ -170,7 +170,7 @@ describe('PrefabModeController', () => {
     controller.enterPrefabMode('guard')
     controller.onHandleDragged(mockGuard1)
 
-    // Sibling guard2 should now match guard1's dragged size
+    // Sibling guard_b should now match guard_a's dragged size
     expect(mockGuard2.displayWidth).toBe(220)
     expect(mockGuard2.displayHeight).toBe(220)
     expect(mockGuard2.colliderWidth).toBe(140)

@@ -20,7 +20,7 @@ describe('AccCommandExecutor', () => {
 
   it('throws a source to an object target', () => {
     const state = createInitialWorldState()
-    const result = executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state)
+    const result = executor.execute({ name: 'acc', arguments: ['dagger', 'guard_a'], options: [] }, state)
     expect(result.status).toBe('success')
     expect(getMutableWorldObjectState<MutableWorldObjectState>(
       state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!,
@@ -37,7 +37,7 @@ describe('AccCommandExecutor', () => {
     const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(dagger)
     daggerState.mvLimit = 0
 
-    expect(executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state)).toEqual({
+    expect(executor.execute({ name: 'acc', arguments: ['dagger', 'guard_a'], options: [] }, state)).toEqual({
       status: 'success',
       feedback: [{ kind: 'popup', text: 'dagger is used up.' }],
     })
@@ -78,7 +78,7 @@ describe('AccCommandExecutor', () => {
 
   it('rejects missing sources and targets', () => {
     const state = createInitialWorldState()
-    expect(executor.execute({ name: 'acc', arguments: ['missing', 'guard'], options: [] }, state).feedback)
+    expect(executor.execute({ name: 'acc', arguments: ['missing', 'guard_a'], options: [] }, state).feedback)
       .toEqual({ kind: 'popup', text: 'Cannot find "missing".' })
     expect(executor.execute({ name: 'acc', arguments: ['dagger', 'missing'], options: [] }, state).feedback)
       .toEqual({ kind: 'popup', text: 'Cannot find "missing".' })
@@ -93,7 +93,7 @@ describe('AccCommandExecutor', () => {
 
   it('throws wildcard sources and excludes the target', () => {
     const state = createInitialWorldState()
-    expect(executor.execute({ name: 'acc', arguments: ['d*r', 'guard'], options: [] }, state).status).toBe('success')
+    expect(executor.execute({ name: 'acc', arguments: ['d*r', 'guard_a'], options: [] }, state).status).toBe('success')
     const thrown = getMutableWorldObjectState<MutableWorldObjectState>(
       state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!,
     ).thrown as { targetObjectId: string } | null
@@ -102,7 +102,7 @@ describe('AccCommandExecutor', () => {
 
   it('spends the limit separately for each wildcard source', () => {
     const state = createInitialWorldState()
-    expect(executor.execute({ name: 'acc', arguments: ['*', 'guard'], options: [] }, state).status).toBe('success')
+    expect(executor.execute({ name: 'acc', arguments: ['*', 'guard_a'], options: [] }, state).status).toBe('success')
     const dagger = state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!
     const boulder = state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.boulder)!
     expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger).mvLimit).toBe(0)
@@ -114,7 +114,7 @@ describe('AccCommandExecutor', () => {
     const dagger = state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!
     getMutableWorldObjectState<MutableWorldObjectState>(dagger).destroyed = true
 
-    expect(executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state).feedback)
+    expect(executor.execute({ name: 'acc', arguments: ['dagger', 'guard_a'], options: [] }, state).feedback)
       .toEqual({ kind: 'popup', text: 'Cannot find "dagger".' })
     expect(executor.execute({ name: 'acc', arguments: ['boulder', 'dagger'], options: [] }, state).feedback)
       .toEqual({ kind: 'popup', text: 'Cannot find "dagger".' })
@@ -127,7 +127,7 @@ describe('AccCommandExecutor', () => {
     getMutableWorldObjectState<MutableWorldObjectState>(dagger).equippedBy = WORLD_OBJECT_IDS.player
     getMutableWorldObjectState<MutableWorldObjectState>(player).weaponId = WORLD_OBJECT_IDS.dagger
 
-    executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state)
+    executor.execute({ name: 'acc', arguments: ['dagger', 'guard_a'], options: [] }, state)
 
     expect(getMutableWorldObjectState<MutableWorldObjectState>(dagger).equippedBy).toBe(WORLD_OBJECT_IDS.player)
   })
@@ -137,7 +137,7 @@ describe('AccCommandExecutor', () => {
     const dagger = state.worldObjects.find((obj) => obj.id === WORLD_OBJECT_IDS.dagger)!
     const daggerState = getMutableWorldObjectState<MutableWorldObjectState>(dagger)
     const initialX = daggerState.x as number
-    executor.execute({ name: 'acc', arguments: ['dagger', 'guard'], options: [] }, state)
+    executor.execute({ name: 'acc', arguments: ['dagger', 'guard_a'], options: [] }, state)
     new TickSimulationEngine(ROOM_PROCESSES).advance(state, 100)
     expect(daggerState.x as number).not.toBe(initialX)
   })

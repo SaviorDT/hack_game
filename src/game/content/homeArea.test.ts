@@ -200,14 +200,14 @@ describe('home area', () => {
     expect(body(session, 'gatedagger').equippedBy).toBe('player')
     // Up and around the boulder and the crate, through the gap between the left pillars.
     walk(session, { x: 420, y: 300 }, { x: 645, y: 300 }, { x: 645, y: 420 }, { x: 1000, y: 420 }, { x: 1180, y: 500 })
-    for (let i = 0; i < 80 && !(body(session, 'gateguard').alive === false && body(session, 'gateguard2').alive === false); i++) {
+    for (let i = 0; i < 80 && !(body(session, 'gateguard').alive === false && body(session, 'gateguard_b').alive === false); i++) {
       session.attack()
       runFor(session, 100)
       if (body(session, 'player').alive === false) break
     }
     expect(body(session, 'player').alive).not.toBe(false)
     expect(body(session, 'gateguard').alive).toBe(false)
-    expect(body(session, 'gateguard2').alive).toBe(false)
+    expect(body(session, 'gateguard_b').alive).toBe(false)
     expect(exitOpen(session)).toBe(false) // the plate is still up
 
     // The gate archer keeps shooting while the crate is thrown and the player walks to the exit, and an arrow does

@@ -18,7 +18,7 @@ import type {
 describe('BehaviorTreeEvaluator', () => {
   function makeContext(): { context: BehaviorTreeContext; nodeStatuses: Map<string, BehaviorTreeStatus> } {
     const state = createInitialWorldState()
-    const guardObj = state.worldObjects.find((obj) => obj.id === 'guard')!
+    const guardObj = state.worldObjects.find((obj) => obj.id === 'guard_a')!
     const nodeStatuses = new Map<string, BehaviorTreeStatus>()
     const blackboard: Record<string, unknown> = {}
 

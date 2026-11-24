@@ -190,7 +190,7 @@ describe('pick-up and attack', () => {
   it('defeats a guard with repeated dagger hits spaced by the cooldown', () => {
     const session = newSession()
     const player = stateOf(session, 'player')
-    const guard = stateOf(session, 'guard')
+    const guard = stateOf(session, 'guard_a')
     player.weaponId = 'dagger'
     guard.x = player.x + player.width + 5
     guard.y = player.y
@@ -220,7 +220,7 @@ describe('guard', () => {
 
   it('stays put while the player is in the left half', () => {
     const session = newSession()
-    const guard = stateOf(session, 'guard')
+    const guard = stateOf(session, 'guard_a')
     const start = { x: guard.x, y: guard.y }
 
     runFor(session, 2000)
@@ -231,7 +231,7 @@ describe('guard', () => {
 
   it('does not discover guard when guard starts moving/chasing; only becomes discovered when attacked by player', () => {
     const session = newSession()
-    const guard = stateOf(session, 'guard')
+    const guard = stateOf(session, 'guard_a')
     guard.discovered = false
     const player = stateOf(session, 'player')
     player.x = ROOM_LAYOUT.rightHalfStartX + 100
@@ -276,7 +276,7 @@ describe('commands', () => {
 
   it('slows time only while in command mode', () => {
     const session = newSession()
-    const guard = stateOf(session, 'guard')
+    const guard = stateOf(session, 'guard_a')
     const player = stateOf(session, 'player')
     player.x = ROOM_LAYOUT.rightHalfStartX + 100
     player.y = guard.y
@@ -286,7 +286,7 @@ describe('commands', () => {
     runFor(session, 1000)
     const slowDistance = startX - guard.x
 
-    session.submitCommand('acc dagger guard')
+    session.submitCommand('acc dagger guard_a')
     runFor(session, 1000)
     const fastDistance = startX - slowDistance - guard.x
 
@@ -299,14 +299,14 @@ describe('commands', () => {
   it('has room objects discovered by default and completes them in tab completion', () => {
     const session = newSession()
     const dagger = stateOf(session, 'dagger')
-    const guard = stateOf(session, 'guard')
-    const guard2 = stateOf(session, 'guard2')
-    const guard3 = stateOf(session, 'guard3')
+    const guard = stateOf(session, 'guard_a')
+    const guard_b = stateOf(session, 'guard_b')
+    const guard_c = stateOf(session, 'guard_c')
 
     expect(dagger.discovered).toBe(true)
     expect(guard.discovered).toBe(true)
-    expect(guard2.discovered).toBe(true)
-    expect(guard3.discovered).toBe(true)
+    expect(guard_b.discovered).toBe(true)
+    expect(guard_c.discovered).toBe(true)
 
     const candidates = session.getCommandCompletionCandidates('acc d', 5)
     expect(candidates).toContain('dagger')
@@ -347,12 +347,12 @@ describe('commands', () => {
   it('throws an object towards target with speed across simulation ticks until arrival', () => {
     const session = newSession()
     const dagger = stateOf(session, 'dagger')
-    const guard = stateOf(session, 'guard')
+    const guard = stateOf(session, 'guard_a')
     const startX = dagger.x
 
-    const result = session.submitCommand('acc dagger guard')
+    const result = session.submitCommand('acc dagger guard_a')
     expect(result.status).toBe('success')
-    expect(result.feedback).toEqual([{ kind: 'popup', text: 'Threw dagger to guard.' }])
+    expect(result.feedback).toEqual([{ kind: 'popup', text: 'Threw dagger to guard_a.' }])
 
     // Run for 1000ms: at default speed 300 px/s, dagger should move ~300 px towards guard
     runFor(session, 1000)
@@ -371,9 +371,9 @@ describe('commands', () => {
     const session = newSession()
     const dagger = stateOf(session, 'dagger')
 
-    session.submitCommand('acc dagger guard')
+    session.submitCommand('acc dagger guard_a')
     const daggerRecord = dagger as unknown as Record<string, unknown>
-    expect(daggerRecord.thrown).toMatchObject({ targetObjectId: 'guard' })
+    expect(daggerRecord.thrown).toMatchObject({ targetObjectId: 'guard_a' })
     expect(Math.hypot((dagger.vx as number) ?? 0, (dagger.vy as number) ?? 0)).toBe(0)
 
     session.update(SIMULATION_TICK_MS)
@@ -396,7 +396,7 @@ describe('commands', () => {
     dagger.equippedBy = 'player'
 
     // Throw dagger to guard
-    const result = session.submitCommand('acc dagger guard')
+    const result = session.submitCommand('acc dagger guard_a')
     expect(result.status).toBe('success')
     // Still within pickup reach right after throwing
     expect(player.weaponId).toBe('dagger')
@@ -418,7 +418,7 @@ describe('commands', () => {
   it('throws player to exit zone and triggers congratulations upon reaching exit', () => {
     const session = newSession()
     // Thrown characters are blocked by solid objects, so clear the path first.
-    for (const id of ['guard', 'guard2', 'guard3', 'boulder']) {
+    for (const id of ['guard_a', 'guard_b', 'guard_c', 'boulder']) {
       ; (stateOf(session, id) as unknown as { alive: boolean }).alive = false
     }
     const result = session.submitCommand('acc hacker end')
@@ -531,11 +531,11 @@ describe('saved state', () => {
   it('keeps Recorded Commands when the Save Slot record is restored', () => {
     const session = createRoomSession({ movementBindings: bindings, storage: storageStub() })
     session.saveCurrentState()
-    session.setCommandSlot(8, 'acc dagger guard')
+    session.setCommandSlot(8, 'acc dagger guard_a')
 
     session.loadSavedState()
 
-    expect(session.getCommandSlot(8)).toBe('acc dagger guard')
+    expect(session.getCommandSlot(8)).toBe('acc dagger guard_a')
   })
 
   it('restores the simulation tick with the saved world, and leaves the record in place', () => {
@@ -711,14 +711,14 @@ describe('player facing and turning', () => {
     expect(session.recordLastCommandToSlot(8)).toEqual({ success: false })
 
     // Submit a command to history
-    session.submitCommand('acc dagger guard')
-    expect(session.recordLastCommandToSlot(8)).toEqual({ success: true, command: 'acc dagger guard' })
-    expect(session.getCommandSlot(8)).toBe('acc dagger guard')
-    expect(session.getCommandSlots()).toEqual({ 8: 'acc dagger guard' })
+    session.submitCommand('acc dagger guard_a')
+    expect(session.recordLastCommandToSlot(8)).toEqual({ success: true, command: 'acc dagger guard_a' })
+    expect(session.getCommandSlot(8)).toBe('acc dagger guard_a')
+    expect(session.getCommandSlots()).toEqual({ 8: 'acc dagger guard_a' })
 
     // Set slot directly
     session.setCommandSlot(9, 'acc dagger $mouse')
     expect(session.getCommandSlot(9)).toBe('acc dagger $mouse')
-    expect(session.getCommandSlots()).toEqual({ 8: 'acc dagger guard', 9: 'acc dagger $mouse' })
+    expect(session.getCommandSlots()).toEqual({ 8: 'acc dagger guard_a', 9: 'acc dagger $mouse' })
   })
 })

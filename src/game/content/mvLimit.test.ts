@@ -28,7 +28,7 @@ function runFor(session: GameSession, ms: number): void {
 describe('Mv Limit in play', () => {
   it('destroys a dagger when its Throw arrives at the target', () => {
     const session = newSession()
-    expect(session.submitCommand('acc dagger guard').status).toBe('success')
+    expect(session.submitCommand('acc dagger guard_a').status).toBe('success')
     expect(body(session, WORLD_OBJECT_IDS.dagger).mvLimit).toBe(0)
     expect(body(session, WORLD_OBJECT_IDS.dagger).destroyed).toBeUndefined() // still in flight
 
@@ -46,7 +46,7 @@ describe('Mv Limit in play', () => {
     dagger.y = 500
     boulder.x = 700
     boulder.y = 500
-    expect(session.submitCommand('acc dagger guard').status).toBe('success')
+    expect(session.submitCommand('acc dagger guard_a').status).toBe('success')
 
     runFor(session, 3000)
 

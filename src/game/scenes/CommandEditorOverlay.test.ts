@@ -300,7 +300,7 @@ describe('CommandEditorOverlay & MV Tuning', () => {
       const dState = dagger.state as Record<string, unknown>
       expect(dState.thrown).toBeFalsy()
 
-      session.submitCommand('acc dagger guard')
+      session.submitCommand('acc dagger guard_a')
 
       expect(dState.thrown).toMatchObject({
         targetObjectId: WORLD_OBJECT_IDS.guard,
@@ -318,7 +318,7 @@ describe('CommandEditorOverlay & MV Tuning', () => {
       expect((overlay as any).telemetryStatusText.setText).toHaveBeenCalledWith('Active: None (idle)')
 
       // Execute throw via terminal command and advance physics step
-      session.submitCommand('acc dagger guard')
+      session.submitCommand('acc dagger guard_a')
       session.update(16.67)
 
       // Update telemetry

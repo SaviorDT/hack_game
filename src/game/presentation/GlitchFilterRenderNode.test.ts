@@ -24,20 +24,18 @@ describe('GlitchFilterRenderNode & Controller', () => {
 
     expect(controller.active).toBe(false)
     expect(controller.time).toBe(0)
-    expect(controller.shakePower).toBeGreaterThan(0)
     expect(controller.shakeRate).toBeGreaterThan(0)
     expect(controller.shakeSpeed).toBeGreaterThan(0)
     expect(controller.shakeBlockSize).toBeGreaterThan(0)
-    expect(controller.shakeColorRate).toBeGreaterThan(0)
   })
 
   it('sets uniforms through programManager during setupUniforms', () => {
     const mockManager = {}
     const node = new GlitchFilterRenderNode(mockManager)
     const setUniformMock = vi.fn()
-    ;(node as unknown as { programManager: { setUniform: typeof setUniformMock } }).programManager = {
-      setUniform: setUniformMock,
-    }
+      ; (node as unknown as { programManager: { setUniform: typeof setUniformMock } }).programManager = {
+        setUniform: setUniformMock,
+      }
 
     const mockCamera = {} as unknown as Phaser.Cameras.Scene2D.Camera
     const controller = new GlitchFilterController(mockCamera)

@@ -6,6 +6,7 @@ import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
 import { ROOM_IDS } from './roomConstants.ts'
 import { ROOM_ENTRY, type RoomDefinition } from './roomPieces.ts'
 import { TUTORIAL_ROOMS, TUTORIAL_ROOM_IDS, ROOM_HINT } from './tutorialRooms.ts'
+import { TUTORIAL5_DEFINITION } from './tutorial5.ts'
 import {
   ACTIVE_ROOM_IDS,
   UNUSED_ROOM_IDS,
@@ -124,6 +125,7 @@ export function getPreviousRoomId(currentRoomId: string): string {
 function getSourceRoomDefinition(roomId: string): RoomDefinition | undefined {
   const custom = customRoomDefinitions.get(roomId)
   if (custom) return custom
+  if (roomId === TUTORIAL5_DEFINITION.id) return TUTORIAL5_DEFINITION
 
   const tutorial = TUTORIAL_ROOMS.find((room) => room.id === roomId)
   if (tutorial) return tutorial

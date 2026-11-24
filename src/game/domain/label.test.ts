@@ -64,7 +64,7 @@ describe('label validation', () => {
 
   it('enforces lowercase labels on RoomExit and Room', () => {
     const invalidExit: RoomExit = {
-      targetRoomId: 'tutorial5',
+      targetRoomId: 'wheel',
       label: 'Tutorial5',
       x: 100,
       y: 100,
@@ -74,8 +74,8 @@ describe('label validation', () => {
     )
 
     const validExit: RoomExit = {
-      targetRoomId: 'tutorial5',
-      label: 'tutorial5',
+      targetRoomId: 'wheel',
+      label: 'wheel',
       x: 100,
       y: 100,
     }

@@ -4,6 +4,7 @@ import { HOME_AREA_ROOMS } from './homeArea.ts'
 import { ROOM_OBJECTS, type RoomObjectConfig } from './room.ts'
 import { ROOM_IDS, ROOM_LAYOUT } from './roomConstants.ts'
 import { ARENA_DEFINITION } from './arena.ts'
+import { WHEEL_DEFINITION } from './wheel.ts'
 import { TUTORIAL5_DEFINITION } from './tutorial5.ts'
 import { TUTORIAL_ROOM_IDS } from './tutorialRoomIds.ts'
 import { createInitialWorldState } from './roomWorldState.ts'
@@ -11,7 +12,7 @@ import { boulder, buildRooms, dagger, guard, ROOM_ENTRY, STANDS_FIRM, type RoomD
 import { getActiveRoomDefinitions, isRoomUnused } from './roomRegistry.ts'
 
 /**
- * Tutorial rooms played first, one per mechanic: tutorial1 → … → tutorial5, then the
+ * Tutorial rooms played first, one per mechanic: tutorial1 → … → wheel, then the
  * home area (`homeArea.ts`) and room. Each Exit stays locked until the room's goal is met.
  */
 export { TUTORIAL_ROOM_IDS }
@@ -99,7 +100,7 @@ export const TUTORIAL_ROOMS: RoomDefinition[] = [
     objects: [boulder('tutorial4boulder', 910, 400)],
     exit: { targetRoomId: TUTORIAL_ROOM_IDS.flyAround, label: TUTORIAL_ROOM_IDS.flyAround },
   },
-  TUTORIAL5_DEFINITION,
+  WHEEL_DEFINITION,
 ]
 
 export const ROOM_HINT =
@@ -118,7 +119,7 @@ export function createGameWorldState(
   const activeDefinitions = getActiveRoomDefinitions()
   const standaloneStartingDefinition = startingRoomId && isRoomUnused(startingRoomId)
     ? activeDefinitions.find((definition) => definition.id === startingRoomId)
-      ?? [...TUTORIAL_ROOMS, ...HOME_AREA_ROOMS, ARENA_DEFINITION]
+      ?? [...TUTORIAL_ROOMS, TUTORIAL5_DEFINITION, ...HOME_AREA_ROOMS, ARENA_DEFINITION]
         .find((definition) => definition.id === startingRoomId)
     : undefined
   const builtDefinitions = activeDefinitions

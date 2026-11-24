@@ -63,10 +63,10 @@ describe('SceneManager', () => {
       expect(manager.isEditorScene('speed-editor')).toBe(true)
       expect(manager.isEditorScene('behavior-tree-editor')).toBe(true)
       expect(manager.isEditorScene('game')).toBe(false)
-      expect(manager.isEditorScene('tutorial5')).toBe(false)
+      expect(manager.isEditorScene('wheel')).toBe(false)
 
       expect(manager.isPlayableScene('game')).toBe(true)
-      expect(manager.isPlayableScene('tutorial5')).toBe(true)
+      expect(manager.isPlayableScene('wheel')).toBe(true)
       expect(manager.isPlayableScene('level-editor')).toBe(false)
       expect(manager.isPlayableScene('speed-editor')).toBe(false)
       expect(manager.isPlayableScene('behavior-tree-editor')).toBe(false)
@@ -253,15 +253,15 @@ describe('SceneManager', () => {
       expect(aiEditorScene.scene.start).toHaveBeenCalledWith('game')
     })
 
-    it('preserves custom active playable scene (e.g. tutorial5) when exiting editors', () => {
+    it('preserves custom active playable scene (e.g. wheel) when exiting editors', () => {
       const levelEditorScene = createMockScene('level-editor')
       const mockGame = createMockGame(levelEditorScene)
       const manager = new SceneManager(mockGame)
-      manager.setActivePlayableScene('tutorial5')
+      manager.setActivePlayableScene('wheel')
 
       const event = createMockKeyboardEvent('F2')
       expect(manager.handleKeyDown(event)).toBe(true)
-      expect(levelEditorScene.scene.start).toHaveBeenCalledWith('tutorial5')
+      expect(levelEditorScene.scene.start).toHaveBeenCalledWith('wheel')
     })
 
     it('does NOT intercept Escape anywhere (Escape has no utility)', () => {

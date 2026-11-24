@@ -140,7 +140,7 @@ describe('attack', () => {
     const dead = character('dead', 'guard', SIZE + 1, { alive: false, health: 0 })
     const elsewhere = new BasicWorldObject(
       'elsewhere',
-      'tutorial5',
+      'wheel',
       { role: 'guard' },
       [],
       { ...stateOf(character('x', 'guard', SIZE + 1)) } as never,

@@ -257,7 +257,7 @@ describe('guard', () => {
 
 describe('commands', () => {
   it('rejects unknown commands like cd and help', () => {
-    expect(newSession().submitCommand('cd tutorial5/')).toMatchObject({
+    expect(newSession().submitCommand('cd wheel/')).toMatchObject({
       status: 'rejected',
       feedback: { text: 'Unknown command: cd' },
     })

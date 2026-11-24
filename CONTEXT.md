@@ -49,7 +49,7 @@ A projectile a Boss launches. It is named like `dagger3` or `shiv7`, so the play
 _Avoid_: Dagger (that is the Weapon the player picks up), Knife, Arrow (an Archer's projectile)
 
 **Tutorial Room**:
-One of the first Rooms played (tutorial1 to tutorial5), each teaching one mechanic. Most have a Locked Exit until the player has used it.
+One of the first Rooms played (tutorial1 to wheel), each teaching one mechanic. Most have a Locked Exit until the player has used it.
 _Avoid_: Level, demo (when referring to these rooms in the game)
 
 **World Object**:

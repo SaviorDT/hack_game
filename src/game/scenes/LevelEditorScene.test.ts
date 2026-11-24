@@ -63,7 +63,7 @@ describe('LevelEditorScene & Room Registry', () => {
         TUTORIAL_ROOM_IDS.throw,      // tutorial2
         TUTORIAL_ROOM_IDS.slowTime,   // tutorial3
         TUTORIAL_ROOM_IDS.mouseThrow, // tutorial4
-        TUTORIAL_ROOM_IDS.flyAround,  // tutorial5
+        TUTORIAL_ROOM_IDS.flyAround,  // wheel
         HOME_AREA_IDS.storage,        // storage
         HOME_AREA_IDS.yard,           // yard
         HOME_AREA_IDS.lane,           // lane
@@ -164,7 +164,7 @@ describe('LevelEditorScene & Room Registry', () => {
       insertNewRoom(createDefaultRoomDefinition('custom_reset'), ROOM_IDS.main)
       resetAllRooms()
       expect(getActiveRoomIds()).toHaveLength(11)
-      expect(getUnusedRoomIds()).toEqual([])
+      expect(getUnusedRoomIds()).toEqual([TUTORIAL_ROOM_IDS.selfThrow])
       expect(getRoomDefinition(ARENA_IDS.room)?.exit).toMatchObject({
         targetRoomId: ROOM_IDS.end,
         endsGame: true,
@@ -267,7 +267,7 @@ describe('LevelEditorScene & Room Registry', () => {
       expect(getRoomObjectConfigs(ARENA_IDS.room).find((o) => o.kind === 'boss')?.x).not.toBe(900)
     })
 
-    it('serves tutorial5 from its definition: a dagger and a Target Dummy, and an Exit on the right wall', () => {
+    it('serves wheel from its definition: a dagger and a Target Dummy, and an Exit on the right wall', () => {
       const objects = getRoomObjectConfigs(TUTORIAL_ROOM_IDS.flyAround)
       expect(objects.map((o) => o.kind ?? o.role).sort()).toEqual(['dummy', 'weapon'])
       expect(objects.find((o) => o.kind === 'dummy')?.maxHealth).toBe(200)

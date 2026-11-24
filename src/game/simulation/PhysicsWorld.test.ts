@@ -188,7 +188,7 @@ describe('PhysicsWorld motion', () => {
   it('does not move bodies outside the current room, dead bodies or held weapons', () => {
     const { add, step, state } = createWorld({ drag: 0 })
     const elsewhere = add('elsewhere', 'enemy', { vx: 100 })
-      ; (elsewhere.object as unknown as { roomId: string }).roomId = 'tutorial5'
+      ; (elsewhere.object as unknown as { roomId: string }).roomId = 'wheel'
     const dead = add('dead', 'enemy', { vx: 100, alive: false })
     const held = add('dagger', 'weapon', { vx: 100, equippedBy: 'player' })
 

@@ -3,6 +3,7 @@ export const ACTIVE_ROOM_IDS: readonly string[] = [
   "tutorial2",
   "tutorial3",
   "tutorial4",
+  "tutorial5",
   "storage",
   "yard",
   "lane",
@@ -12,7 +13,7 @@ export const ACTIVE_ROOM_IDS: readonly string[] = [
 ]
 
 export const UNUSED_ROOM_IDS: readonly string[] = [
-  "tutorial5",
+  "wheel",
 ]
 
 export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
@@ -43,18 +44,14 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       },
       {
         "id": "tutorial1dagger",
-        "name": "dagger",
         "role": "weapon",
+        "name": "dagger",
         "x": 640,
         "y": 560,
         "displayWidth": 49,
         "displayHeight": 49,
         "scaleX": 0.68,
         "scaleY": 0.68,
-        "prefabId": "dagger",
-        "colliderWidth": 72,
-        "colliderHeight": 72,
-        "colliderShape": "box",
         "attackDistance": 30,
         "attackDurationMs": 200,
         "holdOffsetX": 20,
@@ -62,21 +59,19 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       },
       {
         "id": "dummy",
-        "name": "dummy",
         "role": "enemy",
+        "name": "dummy",
+        "passive": true,
         "x": 1250,
         "y": 420,
         "displayWidth": 176,
         "displayHeight": 176,
         "scaleX": 1,
         "scaleY": 1,
-        "prefabId": "guard",
+        "speed": 0,
+        "maxHealth": 60,
         "colliderWidth": 110,
         "colliderHeight": 160,
-        "colliderShape": "box",
-        "maxHealth": 60,
-        "speed": 0,
-        "passive": true,
         "mass": 1000
       }
     ],
@@ -253,8 +248,8 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       }
     ],
     "exit": {
-      "targetRoomId": "storage",
-      "label": "storage",
+      "targetRoomId": "tutorial5",
+      "label": "tutorial5",
       "endsGame": false
     }
   },
@@ -986,13 +981,13 @@ export const ROOM_CONTENT_SNAPSHOT: Readonly<Record<string, unknown>> = {
       "endsGame": true
     }
   },
-  "tutorial5": {
-    "id": "tutorial5",
+  "wheel": {
+    "id": "wheel",
     "hint": "One throw won't be enough. Maybe you can make the dagger fly around with you?",
     "goal": "Defeat the dummy, then walk into the exit.",
     "objects": [
       {
-        "id": "tutorial5dagger",
+        "id": "wheeldagger",
         "role": "weapon",
         "name": "dagger",
         "x": 614,

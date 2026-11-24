@@ -1,6 +1,6 @@
-export type GameOverChoice = 'restart' | 'load-save'
+export type GameOverChoice = 'reset' | 'title'
 
-export const GAME_OVER_CHOICES: readonly GameOverChoice[] = ['restart', 'load-save']
+export const GAME_OVER_CHOICES: readonly GameOverChoice[] = ['reset', 'title']
 
 // Selection state for the Game Over options. Disabled choices are skipped by keyboard
 // navigation and cannot be confirmed.

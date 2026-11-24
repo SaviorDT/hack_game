@@ -102,12 +102,16 @@ export class GameScene extends Phaser.Scene {
         )
         this.outcomePanel = new PhaserGameOutcomePanel(
             this,
-            () => this.session.hasSavedState(),
-            (choice) =>
-                this.scene.restart({
-                    resumeFromSave: choice === 'load-save',
-                    startingRoomId: this.startingRoomId,
-                }),
+            (choice) => {
+                if (choice === 'reset') {
+                    this.scene.restart({
+                        resumeFromSave: true,
+                        startingRoomId: this.startingRoomId,
+                    })
+                } else {
+                    this.scene.start('title')
+                }
+            },
         )
 
         this.mousePoint = undefined
@@ -181,7 +185,7 @@ export class GameScene extends Phaser.Scene {
                 this.tutorial3RecordedSlot = undefined
                 this.tutorial3ExecutedSlot = undefined
             }
-            // Entering a room is a Save Point, so a defeat there offers LOAD SAVE from the room's start.
+            // Entering a room is a Save Point, so RESET reloads from the room's entrance state.
             if (worldState.outcome === 'playing') {
                 this.session.saveCurrentState()
             }
@@ -298,9 +302,9 @@ export class GameScene extends Phaser.Scene {
 
         if (this.outcomePanel?.menuActive) {
             event.preventDefault()
-            if (key === 'arrowleft') {
+            if (key === 'arrowleft' || key === 'a' || key === 'arrowup' || key === 'w') {
                 this.outcomePanel.moveSelection(-1)
-            } else if (key === 'arrowright') {
+            } else if (key === 'arrowright' || key === 'd' || key === 'arrowdown' || key === 's') {
                 this.outcomePanel.moveSelection(1)
             } else if (key === 'enter' && !event.repeat) {
                 this.outcomePanel.confirmSelection()
@@ -411,7 +415,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Room Reset: back to the Save Slot's record (written on entering the room), without
-    // rewriting it. With no record yet, this is a fresh start like the RESTART choice.
+    // rewriting it. With no record yet, this is a fresh start like the RESET choice.
     private resetRoom(): void {
         if (!this.session.loadSavedState()) {
             this.scene.restart({ resumeFromSave: false, startingRoomId: this.startingRoomId })

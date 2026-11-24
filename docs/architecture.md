@@ -266,12 +266,12 @@ Room 1 initializes with Player Character (upper-left, named `hacker`), Dagger (l
 
 ### Game Over Choices
 
-When `outcome === 'game-over'`, `PhaserGameOutcomePanel` shows two buttons below the message: `RESTART` and `LOAD SAVE`. Selection state lives in `GameOverMenu` (Phaser-free, unit-tested).
+When `outcome === 'game-over'`, `PhaserGameOutcomePanel` shows the `[RESET]` and `[TITLE]` choices below the message in the terminal-style Pause Menu theme. Selection state lives in `GameOverMenu` (Phaser-free, unit-tested).
 
-- **Keyboard**: Left/Right moves the selection (wraps, skips disabled), Enter confirms. While the menu is active `GameScene.handleKeyDown` swallows all other keys, so letters cannot enter Command Mode; if the player dies while in Command Mode the scene returns to Movement Mode and clears the draft.
-- **Mouse**: hovering selects an enabled button, clicking confirms it.
-- **Default selection**: `RESTART`. `LOAD SAVE` is greyed out and unselectable unless `hasSavedState()` was `true` at the moment of death.
-- **Effect**: both choices call `scene.restart({ resumeFromSave })`. `RESTART` rebuilds the session from the initial Room 1 state and leaves the Save Slot untouched; `LOAD SAVE` rebuilds the session, calls `loadSavedState()` before the views mount, then plays on.
+- **Keyboard**: Left/Right, Up/Down, or WASD moves the selection with wrap-around, and Enter confirms. `[RESET]` reloads the Save Slot state at the room entry point with `resumeFromSave: true`; `[TITLE]` starts the Title Scene directly while leaving the Save Slot untouched. While the menu is active `GameScene.handleKeyDown` swallows all other keys, so letters cannot enter Command Mode; if the player dies while in Command Mode the scene returns to Movement Mode and clears the draft.
+- **Mouse**: hovering selects an option, clicking confirms it.
+- **Default selection**: `[RESET]`.
+- **Effect**: `[RESET]` restarts the scene with `resumeFromSave: true` and falls back to a fresh room start when no usable save exists. `[TITLE]` starts `TitleScene` directly and leaves the Save Slot untouched.
 
 ## Class Relationships
 

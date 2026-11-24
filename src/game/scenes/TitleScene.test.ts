@@ -583,6 +583,7 @@ describe('TitleScene', () => {
       const navY = call[1]
       expect(navY).toBeLessThan(bottomPromptY)
       expect(navY).toBe(860)
+      expect((call[3] as any)?.color).toBe('#505050')
     })
   })
 

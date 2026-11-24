@@ -277,7 +277,7 @@ export function buildSubscreenChrome(
   const navText = scene.add.text(960, 860, navHint, {
     fontFamily: TERMINAL_FONT,
     fontSize: '14px',
-    color: COLOR_MUTED,
+    color: COLOR_DIM,
     align: 'center',
   }).setOrigin(0.5, 0.5)
 

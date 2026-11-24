@@ -414,6 +414,7 @@ describe('PauseScene', () => {
       call => call[1] === 860 && typeof call[2] === 'string' && call[2].includes('<SPACE/P> RESUME'),
     )
     expect(navPrompt).toBeDefined()
+    expect((navPrompt?.[3] as any)?.color).toBe('#505050')
   })
 
   it('types ./main and resumes after confirming RESUME', () => {

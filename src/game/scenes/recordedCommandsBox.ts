@@ -2,7 +2,6 @@ import type Phaser from 'phaser'
 import { VALID_COMMAND_SLOTS, type CommandSlotMap } from '../application/commandSlots.ts'
 import {
   COLOR_DIM,
-  COLOR_MUTED,
   COLOR_PROMPT,
   TERMINAL_FONT,
 } from './pauseSceneHelpers.ts'
@@ -37,15 +36,6 @@ export function buildRecordedCommandsBox(
     })
     boxContainer.add(text)
   })
-
-  const footer = scene.add
-    .text(1520, 625, '8,9,0: EXEC    HOLD 8,9,0: RECORD', {
-      fontFamily: TERMINAL_FONT,
-      fontSize: '12px',
-      color: COLOR_MUTED,
-    })
-    .setOrigin(0.5, 0.5)
-  boxContainer.add(footer)
 
   container.add(boxContainer)
   return boxContainer

@@ -27,7 +27,7 @@ describe('recordedCommandsBox', () => {
     expect(texts.some((t) => t.text === '8: acc dagger $mouse')).toBe(true)
     expect(texts.some((t) => t.text === '9: (empty)')).toBe(true)
     expect(texts.some((t) => t.text === '0: (empty)')).toBe(true)
-    expect(texts.some((t) => t.text.includes('8,9,0: EXEC'))).toBe(true)
+    expect(texts.some((t) => t.text.includes('8,9,0: EXEC'))).toBe(false)
     expect(texts.filter((t) => t.text.match(/^[890]:/)).every((t) => t.color !== '#ffffff')).toBe(true)
   })
 })

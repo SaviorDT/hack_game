@@ -409,7 +409,7 @@ export class TitleScene extends Phaser.Scene {
     const navText = this.add.text(960, 860, '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
-      color: COLOR_MUTED,
+      color: COLOR_DIM,
       align: 'center',
     }).setOrigin(0.5, 0.5)
 

@@ -15,7 +15,6 @@ import {
   buildHelpScreen,
   buildSettingScreen,
   COLOR_DIM,
-  COLOR_MUTED,
   COLOR_PROMPT,
   COLOR_WHITE,
   expandFromPoint,
@@ -142,7 +141,7 @@ export class PauseScene extends Phaser.Scene {
       '<W A S D> <ARROWS> SELECT    <ENTER> CONFIRM    <SPACE/P> RESUME', {
       fontFamily: TERMINAL_FONT,
       fontSize: '14px',
-      color: COLOR_MUTED,
+      color: COLOR_DIM,
       align: 'center',
     }).setOrigin(0.5, 0.5))
     const prompt = this.add.text(80, 920, 'guest_terminal:~$ ', {
